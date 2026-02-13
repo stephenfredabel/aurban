@@ -1,0 +1,19 @@
+import UserDashboardLayout from "../../layout/UserDashboardLayout";
+
+function Messages() {
+  return (
+    <UserDashboardLayout>
+
+      <h2 className="font-semibold mb-2">
+        Messages
+      </h2>
+
+      <p className="text-gray-500 text-sm">
+        Chat with agents and service providers.
+      </p>
+
+    </UserDashboardLayout>
+  );
+}
+
+export default Messages;

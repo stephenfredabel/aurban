@@ -1,0 +1,19 @@
+import Header from "../components/Header";
+
+function Layouts({ children }) {
+  return (
+    <div className="bg-white min-h-screen text-aurban-gray">
+
+      {/* GLOBAL HEADER */}
+      <Header />
+
+      {/* PAGE CONTENT */}
+      <main className="max-w-7xl mx-auto px-4">
+        {children}
+      </main>
+
+    </div>
+  );
+}
+
+export default Layouts;

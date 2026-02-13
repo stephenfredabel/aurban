@@ -1,0 +1,44 @@
+{
+  "allProperties": "All Properties",
+  "results": "{{count}} result",
+  "results_plural": "{{count}} results",
+  "resultsFor": "{{count}} results for \"{{query}}\"",
+  "clearFilters": "Clear Filters",
+  "noProperties": "No properties found",
+  "noPropertiesDesc": "Try adjusting your filters or search terms",
+  "gridView": "Grid view",
+  "listView": "List view",
+  "filter": "Filter",
+  "types": {
+    "apartment": "Apartment",
+    "duplex": "Duplex",
+    "terrace": "Terrace",
+    "minFlat": "Mini Flat",
+    "commercial": "Commercial",
+    "land": "Land",
+    "bungalow": "Bungalow",
+    "studio": "Studio",
+    "mansion": "Mansion"
+  },
+  "category": {
+    "rental": "Rentals",
+    "lease": "Lease Properties",
+    "buy": "Properties for Sale",
+    "land": "Lands"
+  },
+  "amenities": {
+    "wifi": "WiFi",
+    "generator": "Generator",
+    "security": "Security",
+    "parking": "Parking",
+    "pool": "Pool",
+    "bq": "Boys Quarters",
+    "cctv": "CCTV",
+    "smartHome": "Smart Home",
+    "elevator": "Elevator",
+    "water": "Water",
+    "balcony": "Balcony",
+    "gym": "Gym",
+    "gatedCommunity": "Gated Community"
+  }
+}

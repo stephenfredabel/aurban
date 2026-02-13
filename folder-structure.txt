@@ -1,0 +1,309 @@
+├── .claude
+│   └── settings.local.json
+├── .env.example
+├── .gitignore
+├── Aurban Updated Folder structure.txt
+├── config
+│   ├── countries.js
+│   ├── currencies.js
+│   ├── languages.js
+│   ├── payments.js
+│   └── verification.js
+├── eslint.config.js
+├── export-structure.js
+├── exported_files
+│   ├── .gitignore.txt
+│   ├── eslint.config.js.txt
+│   ├── export-project.cjs.txt
+│   ├── exported_files
+│   │   ├── .gitignore.txt.txt
+│   │   ├── eslint.config.js.txt.txt
+│   │   └── export-project.cjs.txt.txt
+│   ├── index.html.txt
+│   ├── package-lock.json.txt
+│   ├── package.json.txt
+│   ├── postcss.config.js.txt
+│   ├── public
+│   │   └── vite.svg.txt
+│   ├── README.md.txt
+│   ├── src
+│   │   ├── App.css.txt
+│   │   ├── App.jsx.txt
+│   │   ├── assets
+│   │   │   └── aurban_logo.svg.txt
+│   │   ├── components
+│   │   │   ├── FeaturedCategories.jsx.txt
+│   │   │   ├── FilterDrawer.jsx.txt
+│   │   │   ├── Header.jsx.txt
+│   │   │   ├── HeaderNavigation.jsx.txt
+│   │   │   ├── HorizontalSection.jsx.txt
+│   │   │   ├── ImageGallery.jsx.txt
+│   │   │   ├── ProductCard.jsx.txt
+│   │   │   ├── PropertyCard.jsx.txt
+│   │   │   ├── PropertyFilters.jsx.txt
+│   │   │   ├── PropertyMap.jsx.txt
+│   │   │   ├── SearchDropdown.jsx.txt
+│   │   │   ├── SectionHeader.jsx.txt
+│   │   │   └── ServiceCard.jsx.txt
+│   │   ├── context
+│   │   │   ├── AuthContext.jsx.txt
+│   │   │   └── PropertyContext.jsx.txt
+│   │   ├── data
+│   │   │   ├── featuredCategories.js.txt
+│   │   │   ├── homeSections.js.txt
+│   │   │   ├── navItems.js.txt
+│   │   │   ├── properties.js.txt
+│   │   │   └── propertyCategories.js.txt
+│   │   ├── index.css.txt
+│   │   ├── Layout
+│   │   │   ├── DashboardLayout.jsx.txt
+│   │   │   ├── layouts.jsx.txt
+│   │   │   └── UserDashboardLayout.jsx.txt
+│   │   ├── main.jsx.txt
+│   │   ├── pages
+│   │   │   ├── Dashboard.jsx.txt
+│   │   │   ├── Home.jsx.txt
+│   │   │   ├── Login.jsx.txt
+│   │   │   ├── Properties.jsx.txt
+│   │   │   ├── Property.jsx.txt
+│   │   │   ├── RegisterAgent.jsx.txt
+│   │   │   ├── RegisterHost.jsx.txt
+│   │   │   ├── RegisterSeller.jsx.txt
+│   │   │   ├── RegisterService.jsx.txt
+│   │   │   └── user
+│   │   │       ├── Agreements.jsx.txt
+│   │   │       ├── History.jsx.txt
+│   │   │       ├── Messages.jsx.txt
+│   │   │       ├── Settings.jsx.txt
+│   │   │       ├── UserDashboard.jsx.txt
+│   │   │       └── Wishlist.jsx.txt
+│   │   ├── Routes
+│   │   │   └── ProtectedRoute.jsx.txt
+│   │   └── utils
+│   │       ├── filterStorage.js.txt
+│   │       └── searchHelper.js.txt
+│   ├── tailwind.config.js.txt
+│   └── vite.config.js.txt
+├── index.html
+├── My Conversation with ChatGpt.txt
+├── nul
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── public
+│   └── vite.svg
+├── README.md
+├── src
+│   ├── App.css
+│   ├── App.jsx
+│   ├── assets
+│   │   └── aurban_logo.svg
+│   ├── components
+│   │   ├── AurbanLogo.jsx
+│   │   ├── booking
+│   │   │   └── InspectionBooking.jsx
+│   │   ├── BottomNav.jsx
+│   │   ├── CarouselSection.jsx
+│   │   ├── FeaturedCategories.jsx
+│   │   ├── FilterDrawer.jsx
+│   │   ├── Footer.jsx
+│   │   ├── Header.jsx
+│   │   ├── HeaderNavigation.jsx
+│   │   ├── HorizontalSection.jsx
+│   │   ├── ImageGallery.jsx
+│   │   ├── language
+│   │   │   ├── LanguageSwitcher.jsx
+│   │   │   └── RTLWrapper.jsx
+│   │   ├── listings
+│   │   │   ├── CreateListing.jsx
+│   │   │   ├── InspectionAvailability.jsx
+│   │   │   ├── MarketplaceListingForm.jsx
+│   │   │   ├── PhotoUploader.jsx
+│   │   │   ├── PropertyListingForm.jsx
+│   │   │   ├── RoommateListingForm.jsx
+│   │   │   ├── ServiceListingForm.jsx
+│   │   │   └── YouTubeInput.jsx
+│   │   ├── messaging
+│   │   │   ├── CallModal.jsx
+│   │   │   ├── ConversationList.jsx
+│   │   │   ├── MessageInput.jsx
+│   │   │   └── MessageThread.jsx
+│   │   ├── onboarding
+│   │   │   ├── index.jsx
+│   │   │   ├── OnboardingShell.jsx
+│   │   │   ├── steps
+│   │   │   │   ├── Step00_CountryLanguage.jsx
+│   │   │   │   ├── Step01_ProviderType.jsx
+│   │   │   │   ├── Step02_AccountType.jsx
+│   │   │   │   ├── Step03_AccountBasics.jsx
+│   │   │   │   ├── Step04_Identity.jsx
+│   │   │   │   ├── Step05_Address.jsx
+│   │   │   │   ├── Step06_BusinessDocs.jsx
+│   │   │   │   ├── Step07_IndividualDocs.jsx
+│   │   │   │   ├── Step08_Offerings.jsx
+│   │   │   │   ├── Step09_Payment.jsx
+│   │   │   │   └── Step10_Agreements.jsx
+│   │   │   ├── StepWrapper.jsx
+│   │   │   └── TierBadge.jsx
+│   │   ├── payment
+│   │   │   ├── EscrowStatus.jsx
+│   │   │   └── Invoice.jsx
+│   │   ├── ProductCard.jsx
+│   │   ├── PropertyCard.jsx
+│   │   ├── PropertyFilters.jsx
+│   │   ├── PropertyMap.jsx
+│   │   ├── SearchDropdown.jsx
+│   │   ├── SectionHeader.jsx
+│   │   ├── ServiceCard.jsx
+│   │   ├── ThemeToggle.jsx
+│   │   └── ui
+│   │       ├── Badge.jsx
+│   │       ├── Button.jsx
+│   │       ├── FileUpload.jsx
+│   │       ├── Input.jsx
+│   │       ├── Modal.jsx
+│   │       ├── PhoneInput.jsx
+│   │       ├── ProgressBar.jsx
+│   │       ├── Select.jsx
+│   │       ├── Toggle.jsx
+│   │       └── Tooltip.jsx
+│   ├── config
+│   │   ├── countries.js
+│   │   ├── currencies.js
+│   │   └── languages.js
+│   ├── context
+│   │   ├── AuthContext.jsx
+│   │   ├── LocaleContext.jsx
+│   │   ├── MessagingContext.jsx
+│   │   ├── OnboardingContext.jsx
+│   │   ├── PropertyContext.jsx
+│   │   └── ThemeContext.jsx
+│   ├── data
+│   │   ├── featuredCategories.js
+│   │   ├── homeSections.js
+│   │   ├── listingOptions.js
+│   │   ├── marketplaceOptions.js
+│   │   ├── navItems.js
+│   │   ├── products.js
+│   │   ├── properties.js
+│   │   ├── propertyCategories.js
+│   │   ├── serviceOptions.js
+│   │   └── services.js
+│   ├── hook
+│   │   ├── useCountry.js
+│   │   ├── useCurrency.js
+│   │   ├── useImageCompress.js
+│   │   ├── useLanguage.js
+│   │   ├── useLocale.js
+│   │   └── useOnboarding.js
+│   ├── hooks
+│   │   ├── useCountry.js
+│   │   ├── useCurrency.js
+│   │   ├── useImageCompress.js
+│   │   ├── useLanguage.js
+│   │   ├── useLocale.js
+│   │   └── useOnboarding.js
+│   ├── i18n
+│   │   ├── config.js
+│   │   ├── index.js
+│   │   └── locales
+│   │       ├── am
+│   │       │   └── common.json
+│   │       ├── ar
+│   │       │   └── common.json
+│   │       ├── de
+│   │       │   └── common.json
+│   │       ├── en
+│   │       │   ├── common.json
+│   │       │   ├── dashboard.json
+│   │       │   ├── errors.json
+│   │       │   ├── onboarding.json
+│   │       │   └── properties.json
+│   │       ├── es
+│   │       │   └── common.json
+│   │       ├── fr
+│   │       │   └── common.json
+│   │       ├── ha
+│   │       │   └── common.json
+│   │       ├── ig
+│   │       │   └── common.json
+│   │       ├── pcm
+│   │       │   └── common.json
+│   │       ├── pt
+│   │       │   └── common.json
+│   │       ├── sw
+│   │       │   └── common.json
+│   │       ├── yo
+│   │       │   └── common.json
+│   │       ├── zh
+│   │       │   └── common.json
+│   │       └── zu
+│   │           └── common.json
+│   ├── index.css
+│   ├── Layout
+│   │   ├── DashboardLayout.jsx
+│   │   ├── layouts.jsx
+│   │   └── UserDashboardLayout.jsx
+│   ├── main.jsx
+│   ├── pages
+│   │   ├── CommunityGuidelines.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── ForgotPassword.jsx
+│   │   ├── Home.jsx
+│   │   ├── listings
+│   │   │   └── CreateListing.jsx
+│   │   ├── Login.jsx
+│   │   ├── Marketplace.jsx
+│   │   ├── NotFound.jsx
+│   │   ├── onboarding
+│   │   ├── Privacy.jsx
+│   │   ├── ProductDetail.jsx
+│   │   ├── Properties.jsx
+│   │   ├── Property.jsx
+│   │   ├── provider
+│   │   │   ├── Agreements.jsx
+│   │   │   ├── Analytics.jsx
+│   │   │   ├── CreateListing.jsx
+│   │   │   ├── History.jsx
+│   │   │   ├── ProviderDashboard.jsx
+│   │   │   ├── ProviderProfile.jsx
+│   │   │   └── Settings.jsx
+│   │   ├── ProviderDashboard.jsx
+│   │   ├── RegisterAgent.jsx
+│   │   ├── RegisterHost.jsx
+│   │   ├── RegisterSeller.jsx
+│   │   ├── RegisterService.jsx
+│   │   ├── ResetPassword.jsx
+│   │   ├── Roommates.jsx
+│   │   ├── ServiceDetail.jsx
+│   │   ├── Services.jsx
+│   │   ├── SignUp.jsx
+│   │   ├── Terms.jsx
+│   │   ├── TwoFactorSetup.jsx
+│   │   ├── TwoFactorVerify.jsx
+│   │   ├── user
+│   │   │   ├── Agreements.jsx
+│   │   │   ├── History.jsx
+│   │   │   ├── Messages.jsx
+│   │   │   ├── Settings.jsx
+│   │   │   ├── UserDashboard.jsx
+│   │   │   └── Wishlist.jsx
+│   │   └── VerifyEmail.jsx
+│   ├── Routes
+│   │   └── ProtectedRoute.jsx
+│   ├── services
+│   │   ├── api.js
+│   │   ├── auth.service.js
+│   │   ├── geo.service.js
+│   │   ├── payment.service.js
+│   │   ├── property.service.js
+│   │   └── upload.service.js
+│   └── utils
+│       ├── contactMask.js
+│       ├── filterStorage.js
+│       ├── phoneValidator.js
+│       ├── rtl.js
+│       ├── searchHelper.js
+│       └── security.js
+├── tailwind.config.js
+└── vite.config.js

@@ -1,0 +1,62 @@
+const fs = require("fs");
+const path = require("path");
+
+const ROOT_DIR = process.cwd();
+const OUTPUT_DIR = path.join(ROOT_DIR, "exported_files");
+
+const IGNORE_FOLDERS = ["node_modules", ".git", "dist", "build"];
+
+if (!fs.existsSync(OUTPUT_DIR)) {
+    fs.mkdirSync(OUTPUT_DIR);
+}
+
+let treeOutput = "";
+
+function walk(dir, prefix = "") {
+    const files = fs.readdirSync(dir);
+
+    files.forEach((file, index) => {
+        if (IGNORE_FOLDERS.includes(file)) return;
+
+        const fullPath = path.join(dir, file);
+        const relativePath = path.relative(ROOT_DIR, fullPath);
+
+        const isLast = index === files.length - 1;
+        const connector = isLast ? "└── " : "├── ";
+
+        treeOutput += prefix + connector + file + "\n";
+
+        if (fs.statSync(fullPath).isDirectory()) {
+            walk(fullPath, prefix + (isLast ? "    " : "│   "));
+        } else {
+            exportFileContent(fullPath, relativePath);
+        }
+    });
+}
+
+function exportFileContent(filePath, relativePath) {
+    try {
+        const content = fs.readFileSync(filePath, "utf8");
+
+        const outputPath = path.join(
+            OUTPUT_DIR,
+            relativePath + ".txt"
+        );
+
+        const outputFolder = path.dirname(outputPath);
+        fs.mkdirSync(outputFolder, { recursive: true });
+
+        fs.writeFileSync(outputPath, content);
+    } catch (err) {
+        console.log("Skipped:", filePath);
+    }
+}
+
+walk(ROOT_DIR);
+
+fs.writeFileSync(
+    path.join(ROOT_DIR, "folder-structure.txt"),
+    treeOutput
+);
+
+console.log("✅ Export completed.");

@@ -1,0 +1,19 @@
+import UserDashboardLayout from "../../layout/UserDashboardLayout";
+
+function Wishlist() {
+  return (
+    <UserDashboardLayout>
+
+      <h2 className="font-semibold mb-2">
+        Wishlist
+      </h2>
+
+      <p className="text-gray-500 text-sm">
+        Saved properties and services will appear here.
+      </p>
+
+    </UserDashboardLayout>
+  );
+}
+
+export default Wishlist;

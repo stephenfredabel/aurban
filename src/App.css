@@ -1,0 +1,88 @@
+/* App-level styles — main styles live in index.css *//* ════════════════════════════════════════════════════════════
+   APP.CSS — App-level overrides
+   Main styles live in index.css. This file is for
+   component-specific or page-specific tweaks only.
+════════════════════════════════════════════════════════════ */
+
+/* ── Smooth page transitions ──────────────────────────── */
+#main-content {
+  animation: fade-in 0.15s ease;
+}
+
+/* ── Property image gallery touch scrolling ───────────── */
+.property-gallery {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+.property-gallery > * {
+  scroll-snap-align: start;
+}
+
+/* ── Map container ────────────────────────────────────── */
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+/* ── Print styles (for Invoice component) ─────────────── */
+@media print {
+  header,
+  nav,
+  .bottom-nav,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* ── Thin scrollbar — both light and dark modes ────────── */
+@media (min-width: 1024px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.15);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.08) transparent;
+  }
+  .dark * {
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  }
+}
+
+/* ── Selection color ──────────────────────────────────── */
+::selection {
+  background: rgba(239, 181, 11, 0.2);
+  color: #2D2D2F;
+}
+.dark ::selection {
+  background: rgba(239, 181, 11, 0.3);
+  color: #ffffff;
+}

@@ -1,0 +1,30 @@
+export const properties = [
+  {
+    id: "1",
+    title: "2 Bedroom Apartment",
+    location: "Lekki",
+    type: "rent",
+    price: "₦1,500,000 / year",
+    images: [
+      "/images/p1.jpg",
+      "/images/p1-2.jpg",
+      "/images/p1-3.jpg",
+      "/images/p1-4.jpg",
+    ],
+  },
+
+  {
+    id: "2",
+    title: "Luxury Duplex",
+    location: "Ikoyi",
+    type: "buy",
+    price: "₦120,000,000",
+    images: [
+      "/images/p2.jpg",
+      "/images/p2-2.jpg",
+      "/images/p2-3.jpg",
+    ],
+  },
+
+  // continue until each category has at least 12 items
+];

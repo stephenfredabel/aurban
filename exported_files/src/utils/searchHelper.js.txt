@@ -1,0 +1,11 @@
+export function searchProperties(properties, query) {
+  if (!query) return [];
+
+  const q = query.toLowerCase();
+
+  return properties.filter((property) =>
+    property.title.toLowerCase().includes(q) ||
+    property.location.toLowerCase().includes(q) ||
+    property.type.toLowerCase().includes(q)
+  );
+}

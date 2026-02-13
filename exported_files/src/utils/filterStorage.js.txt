@@ -1,0 +1,12 @@
+export const saveFilters = (filters) => {
+  localStorage.setItem(
+    "aurban_filters",
+    JSON.stringify(filters)
+  );
+};
+
+export const getSavedFilters = () => {
+  return JSON.parse(
+    localStorage.getItem("aurban_filters")
+  );
+};

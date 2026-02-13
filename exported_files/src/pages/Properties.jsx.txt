@@ -1,0 +1,85 @@
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { properties } from "../data/properties";
+import PropertyCard from "../components/PropertyCard";
+import PropertyFilters from "../components/PropertyFilters";
+import PropertyMap from "../components/PropertyMap";
+
+function Properties() {
+  const [searchParams] = useSearchParams();
+  const [mapView, setMapView] = useState(false);
+
+  const types =
+    searchParams.get("type")?.split(",") || [];
+
+  const sort = searchParams.get("sort");
+
+  let filteredProperties = properties.filter((property) => {
+    const matchType =
+      types.length === 0 || types.includes(property.type);
+
+    return matchType;
+  });
+
+  if (sort === "low") {
+    filteredProperties.sort(
+      (a, b) => a.priceValue - b.priceValue
+    );
+  }
+
+  if (sort === "high") {
+    filteredProperties.sort(
+      (a, b) => b.priceValue - a.priceValue
+    );
+  }
+
+  if (sort === "newest") {
+    filteredProperties.sort(
+      (a, b) =>
+        new Date(b.createdAt) - new Date(a.createdAt)
+    );
+  }
+
+  return (
+    <div>
+
+      <PropertyFilters
+        mapView={mapView}
+        setMapView={setMapView}
+      />
+
+      {mapView ? (
+        <div className="grid md:grid-cols-2 h-[calc(100vh-120px)]">
+
+          {/* MAP */}
+          <div className="hidden md:block">
+            <PropertyMap properties={filteredProperties} />
+          </div>
+
+          {/* PROPERTY LIST */}
+          <div className="overflow-y-auto p-4 grid grid-cols-2 gap-4">
+            {filteredProperties.map((property) => (
+              <PropertyCard
+                key={property.id}
+                property={property}
+              />
+            ))}
+          </div>
+
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {filteredProperties.map((property) => (
+            <PropertyCard
+              key={property.id}
+              property={property}
+            />
+          ))}
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+export default Properties;

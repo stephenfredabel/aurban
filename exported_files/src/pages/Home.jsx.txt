@@ -1,0 +1,50 @@
+import HorizontalSection from "../components/HorizontalSection";
+import { properties } from "../data/properties";
+
+function Home() {
+
+  const rent = properties.filter(p => p.type === "rent");
+  const lease = properties.filter(p => p.type === "lease");
+  const buy = properties.filter(p => p.type === "buy");
+  const land = properties.filter(p => p.type === "land");
+  const services = properties.filter(p => p.type === "service");
+  const market = properties.filter(p => p.type === "market");
+
+  return (
+    <div>
+
+      <HorizontalSection
+        title="Rentals"
+        items={rent}
+      />
+
+      <HorizontalSection
+        title="Lease"
+        items={lease}
+      />
+
+      <HorizontalSection
+        title="Buy Property"
+        items={buy}
+      />
+
+      <HorizontalSection
+        title="Lands"
+        items={land}
+      />
+
+      <HorizontalSection
+        title="Services"
+        items={services}
+      />
+
+      <HorizontalSection
+        title="Marketplace"
+        items={market}
+      />
+
+    </div>
+  );
+}
+
+export default Home;

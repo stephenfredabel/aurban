@@ -1,0 +1,19 @@
+import DashboardLayout from "../layout/DashboardLayout";
+
+function Dashboard() {
+  return (
+    <DashboardLayout>
+
+      <h1 className="text-xl font-semibold">
+        Dashboard Overview
+      </h1>
+
+      <p className="text-gray-500 mt-2">
+        Manage your properties, services and products here.
+      </p>
+
+    </DashboardLayout>
+  );
+}
+
+export default Dashboard;

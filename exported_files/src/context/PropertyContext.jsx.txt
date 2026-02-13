@@ -1,0 +1,42 @@
+import { createContext, useContext, useState } from "react";
+import { properties as initialProperties } from "../data/properties";
+
+const PropertyContext = createContext();
+
+export const useProperties = () => useContext(PropertyContext);
+
+export function PropertyProvider({ children }) {
+  const [properties, setProperties] =
+    useState(initialProperties);
+
+  const addProperty = (property) => {
+    setProperties((prev) => [...prev, property]);
+  };
+
+  const updateProperty = (updatedProperty) => {
+    setProperties((prev) =>
+      prev.map((p) =>
+        p.id === updatedProperty.id ? updatedProperty : p
+      )
+    );
+  };
+
+  const deleteProperty = (id) => {
+    setProperties((prev) =>
+      prev.filter((p) => p.id !== id)
+    );
+  };
+
+  return (
+    <PropertyContext.Provider
+      value={{
+        properties,
+        addProperty,
+        updateProperty,
+        deleteProperty,
+      }}
+    >
+      {children}
+    </PropertyContext.Provider>
+  );
+}

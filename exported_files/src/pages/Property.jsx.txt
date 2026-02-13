@@ -1,0 +1,168 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { properties } from "../data/properties";
+import PropertyCard from "../components/PropertyCard";
+
+function Property() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const property = properties.find((p) => p.id === id);
+
+  const [activeImage, setActiveImage] = useState(0);
+
+  if (!property) {
+    return (
+      <div className="py-10">
+        <p>Property not found</p>
+      </div>
+    );
+  }
+
+  const nextImage = () => {
+    setActiveImage((prev) =>
+      prev === property.images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setActiveImage((prev) =>
+      prev === 0 ? property.images.length - 1 : prev - 1
+    );
+  };
+
+  const similarProperties = properties.filter(
+    (p) => p.id !== property.id
+  );
+
+  return (
+    <div className="py-6">
+
+      {/* BACK BUTTON */}
+      <button
+        onClick={() => navigate(-1)}
+        className="text-sm text-gray-500 mb-4"
+      >
+        ← Back
+      </button>
+
+      {/* ===================== */}
+      {/* TOP SECTION */}
+      {/* ===================== */}
+      <div className="grid md:grid-cols-2 gap-6">
+
+        {/* IMAGE GALLERY */}
+        <div>
+
+          <div className="relative">
+
+            <img
+              src={property.images[activeImage]}
+              alt={property.title}
+              className="w-full h-[350px] object-cover"
+            />
+
+            {/* LEFT */}
+            <button
+              onClick={prevImage}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/40 px-2"
+            >
+              ‹
+            </button>
+
+            {/* RIGHT */}
+            <button
+              onClick={nextImage}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-black/40 px-2"
+            >
+              ›
+            </button>
+          </div>
+
+          {/* THUMBNAILS */}
+          <div className="flex gap-2 mt-2 overflow-x-auto">
+            {property.images.map((img, index) => (
+              <img
+                key={index}
+                src={img}
+                alt="thumbnail"
+                onClick={() => setActiveImage(index)}
+                className={`h-16 w-24 object-cover cursor-pointer border ${
+                  activeImage === index
+                    ? "border-aurban-accent"
+                    : "border-gray-200"
+                }`}
+              />
+            ))}
+          </div>
+
+        </div>
+
+        {/* PROPERTY INFO */}
+        <div>
+
+          <h1 className="text-xl font-semibold">
+            {property.title}
+          </h1>
+
+          <p className="text-gray-500 mt-1">
+            {property.location}
+          </p>
+
+          <p className="text-lg font-semibold mt-3">
+            {property.price}
+          </p>
+
+          {/* CONTACT SECTION */}
+          <div className="border border-gray-200 mt-6 p-4">
+            <p className="text-sm mb-3">
+              Interested in this property?
+            </p>
+
+            <button className="w-full bg-aurban-gray text-white py-2 text-sm">
+              Contact Agent
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ===================== */}
+      {/* DESCRIPTION */}
+      {/* ===================== */}
+      <div className="mt-8">
+        <h2 className="font-semibold mb-2">
+          Property Description
+        </h2>
+
+        <p className="text-sm text-gray-600 leading-relaxed">
+          This is a sample property description. Later this
+          will come from the backend database and include
+          full property details, amenities, and additional
+          information for buyers or renters.
+        </p>
+      </div>
+
+      {/* ===================== */}
+      {/* SIMILAR PROPERTIES */}
+      {/* ===================== */}
+      <div className="mt-10">
+
+        <h2 className="font-semibold mb-4">
+          Similar Properties
+        </h2>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {similarProperties.map((p) => (
+            <PropertyCard key={p.id} property={p} />
+          ))}
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+export default Property;

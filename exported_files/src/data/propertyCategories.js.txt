@@ -1,0 +1,7 @@
+export const propertyCategories = [
+  "Shortlet",
+  "Shared Apartment",
+  "Rentals",
+  "Buy",
+  "Land",
+];

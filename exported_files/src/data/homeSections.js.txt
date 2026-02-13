@@ -1,0 +1,14 @@
+export const homeSections = [
+  {
+    title: "Popular rentals in Lagos",
+    type: "rent",
+  },
+  {
+    title: "Available this weekend",
+    type: "shortlet",
+  },
+  {
+    title: "Properties for sale",
+    type: "buy",
+  },
+];

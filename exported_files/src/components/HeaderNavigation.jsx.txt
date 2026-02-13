@@ -1,0 +1,30 @@
+import { Link } from "react-router-dom";
+import { navItems } from "../data/navItems";
+
+function HeaderNavigation() {
+  return (
+    <nav className="border-t border-gray-200 bg-white">
+
+      <div className="max-w-7xl mx-auto px-6">
+
+        <div className="flex items-center gap-6 h-12 text-sm">
+
+          {navItems.map((item, index) => (
+            <Link
+              key={index}
+              to={item.link}
+              className="text-gray-600 hover:text-aurban-gray"
+            >
+              {item.label}
+            </Link>
+          ))}
+
+        </div>
+
+      </div>
+
+    </nav>
+  );
+}
+
+export default HeaderNavigation;

@@ -1,0 +1,17 @@
+function SectionHeader({ title, action }) {
+  return (
+    <div className="flex items-center justify-between py-4">
+      <h2 className="text-lg font-semibold text-aurban-gray">
+        {title}
+      </h2>
+
+      {action && (
+        <button className="text-sm text-aurban-accent">
+          {action}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default SectionHeader;

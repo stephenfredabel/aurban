@@ -1,0 +1,41 @@
+import { useEffect, useRef } from "react";
+import mapboxgl from "mapbox-gl";
+
+mapboxgl.accessToken = "YOUR_MAPBOX_PUBLIC_TOKEN";
+
+function PropertyMap({ properties }) {
+  const mapContainer = useRef(null);
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    if (mapRef.current) return;
+
+    mapRef.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/light-v11",
+      center: [3.4, 6.45],
+      zoom: 11,
+    });
+
+    properties.forEach((property) => {
+      const marker = document.createElement("div");
+      marker.className =
+        "bg-aurban-gray text-white text-xs px-2 py-1";
+
+      marker.innerText = "₦";
+
+      new mapboxgl.Marker(marker)
+        .setLngLat(property.coordinates)
+        .addTo(mapRef.current);
+    });
+  }, [properties]);
+
+  return (
+    <div
+      ref={mapContainer}
+      className="w-full h-full"
+    />
+  );
+}
+
+export default PropertyMap;

@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== AURBAN GLOBAL BASE ===== */
+
+body {
+  background-color: #fafafa;
+  color: #1f2937;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* remove default outline glow */
+input:focus,
+button:focus {
+  outline: none;
+}
+
+/* clean scrollbar */
+::-webkit-scrollbar {
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}

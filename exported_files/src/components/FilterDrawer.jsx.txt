@@ -1,0 +1,57 @@
+import { useSearchParams } from "react-router-dom";
+
+function FilterDrawer({ open, setOpen }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const types = ["Shortlet", "Shared Apartment", "Rentals", "Buy", "Land"];
+
+  const selectedTypes =
+    searchParams.get("type")?.split(",") || [];
+
+  const toggleType = (type) => {
+    let updated = [...selectedTypes];
+
+    if (updated.includes(type)) {
+      updated = updated.filter((t) => t !== type);
+    } else {
+      updated.push(type);
+    }
+
+    const params = Object.fromEntries(searchParams.entries());
+
+    if (updated.length === 0) delete params.type;
+    else params.type = updated.join(",");
+
+    setSearchParams(params);
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-white z-50 p-4 overflow-y-auto">
+
+      <div className="flex justify-between mb-4">
+        <h2 className="font-semibold">Filters</h2>
+        <button onClick={() => setOpen(false)}>Close</button>
+      </div>
+
+      <h3 className="text-sm mb-2">Property Type</h3>
+
+      <div className="flex flex-col gap-2">
+        {types.map((type) => (
+          <label key={type} className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={selectedTypes.includes(type)}
+              onChange={() => toggleType(type)}
+            />
+            <span className="text-sm">{type}</span>
+          </label>
+        ))}
+      </div>
+
+    </div>
+  );
+}
+
+export default FilterDrawer;

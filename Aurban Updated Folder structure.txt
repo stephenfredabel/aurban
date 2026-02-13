@@ -1,0 +1,223 @@
+aurban/
+├── .env.example                        ← NEW  (all API keys as templates)
+├── .gitignore                          ← UPDATED (add .env, /dist, uploads)
+├── index.html                          ← UPDATED (i18n meta, RTL-ready)
+├── package.json                        ← UPDATED (new deps)
+├── postcss.config.js                   ← unchanged
+├── tailwind.config.js                  ← UPDATED (new fonts, RTL plugin)
+├── vite.config.js                      ← UPDATED (env vars, aliases)
+└── README.md                           ← UPDATED
+│
+└── src/
+    ├── main.jsx                        ← UPDATED (i18n + locale provider)
+    ├── App.jsx                         ← UPDATED (new routes, RTL wrapper)
+    ├── index.css                       ← UPDATED (new fonts, RTL rules)
+    ├── App.css                         ← unchanged
+    │
+    ├── assets/
+    │   └── aurban_logo.svg             ← your file
+    │
+    ├── i18n/                           ← NEW DIRECTORY
+    │   ├── index.js                    ← i18next initialiser + config
+    │   ├── config.js                   ← supported languages registry
+    │   └── locales/
+    │       ├── en/                     ← English (base — all keys live here)
+    │       │   ├── common.json         ← nav, buttons, shared UI strings
+    │       │   ├── onboarding.json     ← all onboarding step copy
+    │       │   ├── dashboard.json      ← dashboard UI copy
+    │       │   ├── properties.json     ← property listing copy
+    │       │   └── errors.json         ← all error messages
+    │       ├── ha/                     ← Hausa
+    │       │   └── common.json
+    │       ├── yo/                     ← Yoruba
+    │       │   └── common.json
+    │       ├── ig/                     ← Igbo
+    │       │   └── common.json
+    │       ├── pcm/                    ← Nigerian Pidgin
+    │       │   └── common.json
+    │       ├── fr/                     ← French (West/Central Africa)
+    │       │   └── common.json
+    │       ├── sw/                     ← Swahili (East Africa)
+    │       │   └── common.json
+    │       ├── am/                     ← Amharic (Ethiopia)
+    │       │   └── common.json
+    │       ├── ar/                     ← Arabic (RTL — North Africa)
+    │       │   └── common.json
+    │       ├── pt/                     ← Portuguese (Angola, Mozambique)
+    │       │   └── common.json
+    │       ├── zu/                     ← Zulu (South Africa)
+    │       │   └── common.json
+    │       ├── es/                     ← Spanish (Global Phase 3)
+    │       │   └── common.json
+    │       ├── de/                     ← German
+    │       │   └── common.json
+    │       └── zh/                     ← Mandarin Chinese
+    │           └── common.json
+    │
+    ├── config/                         ← NEW DIRECTORY (global config data)
+    │   ├── countries.js                ← full country list: name, code, currency,
+    │   │                                  phone prefix, flag emoji, ID types,
+    │   │                                  business registry name, region
+    │   ├── currencies.js               ← 15+ currencies: code, symbol, locale,
+    │   │                                  Intl format options
+    │   ├── languages.js                ← language registry: code, name, native
+    │   │                                  name, rtl flag, flag emoji, region group
+    │   ├── payments.js                 ← payment providers by country/region:
+    │   │                                  Paystack, OPay, Flutterwave, Stripe,
+    │   │                                  M-Pesa, MTN MoMo, Airtel Money
+    │   └── verification.js             ← KYC doc types by country, file rules,
+    │                                      Smile Identity / Onfido config
+    │
+    ├── components/
+    │   │
+    │   ├── Header.jsx                  ← UPDATED (language switcher integrated)
+    │   ├── HeaderNavigation.jsx        ← UPDATED (i18n labels)
+    │   ├── BottomNav.jsx               ← UPDATED (i18n labels)
+    │   ├── SearchDropdown.jsx          ← UPDATED (i18n placeholder)
+    │   ├── PropertyCard.jsx            ← UPDATED (currency formatter)
+    │   ├── ServiceCard.jsx             ← UPDATED (currency formatter)
+    │   ├── ProductCard.jsx             ← UPDATED (currency formatter)
+    │   ├── FeaturedCategories.jsx      ← UPDATED (i18n labels)
+    │   ├── HorizontalSection.jsx       ← unchanged
+    │   ├── SectionHeader.jsx           ← unchanged
+    │   ├── FilterDrawer.jsx            ← UPDATED (i18n copy)
+    │   ├── PropertyFilters.jsx         ← UPDATED (i18n copy)
+    │   ├── ImageGallery.jsx            ← unchanged
+    │   ├── PropertyMap.jsx             ← unchanged
+    │   │
+    │   ├── ui/                         ← NEW DIRECTORY (reusable primitives)
+    │   │   ├── Button.jsx              ← unified button with variants
+    │   │   ├── Input.jsx               ← unified input with error state
+    │   │   ├── Select.jsx              ← searchable select / dropdown
+    │   │   ├── FileUpload.jsx          ← drag-drop + mobile-friendly uploader
+    │   │   │                              with preview, compression, size check
+    │   │   ├── Toggle.jsx              ← accessible on/off toggle
+    │   │   ├── Badge.jsx               ← tier + verification badges
+    │   │   ├── Modal.jsx               ← accessible modal / bottom sheet
+    │   │   ├── ProgressBar.jsx         ← step progress indicator
+    │   │   ├── Tooltip.jsx             ← "why we need this" info tooltips
+    │   │   └── PhoneInput.jsx          ← country-code picker + number field
+    │   │                                  (libphonenumber validation)
+    │   │
+    │   ├── language/                   ← NEW DIRECTORY
+    │   │   ├── LanguageSwitcher.jsx    ← grouped panel (Nigerian / African /
+    │   │   │                              Global), searchable, RTL-aware
+    │   │   └── RTLWrapper.jsx          ← sets dir="rtl" + Tailwind rtl: classes
+    │   │
+    │   └── onboarding/                 ← NEW DIRECTORY
+    │       ├── OnboardingShell.jsx     ← step router, progress bar, auto-save
+    │       │                              draft to sessionStorage, resume logic
+    │       ├── StepWrapper.jsx         ← common layout: back btn, title,
+    │       │                              estimated time, skip option, tooltip
+    │       ├── TierBadge.jsx           ← live tier preview card
+    │       └── steps/
+    │           ├── Step00_CountryLanguage.jsx   ← NEW (runs before all)
+    │           │                                   country picker → sets currency,
+    │           │                                   language, ID types, phone prefix
+    │           ├── Step01_ProviderType.jsx       ← 4 options (clean, no roommate)
+    │           ├── Step02_AccountType.jsx        ← Individual vs Company
+    │           ├── Step03_AccountBasics.jsx      ← name, email, phone OTP,
+    │           │                                   password, profile photo
+    │           │                                   (Google sign-in ready)
+    │           ├── Step04_Identity.jsx           ← ID type (country-filtered),
+    │           │                                   upload front/back, selfie
+    │           ├── Step05_Address.jsx            ← dynamic address form by
+    │           │                                   country, GPS auto-fill,
+    │           │                                   proof of address upload
+    │           ├── Step06_BusinessDocs.jsx       ← CAC / business registry
+    │           │                                   (label = country-specific),
+    │           │                                   TIN optional, contacts
+    │           ├── Step07_IndividualDocs.jsx     ← service category, certs,
+    │           │                                   license (conditional), portfolio
+    │           ├── Step08_PropertyDocs.jsx       ← ownership, property type,
+    │           │                                   address, photos, amenities
+    │           ├── Step09_Offerings.jsx          ← tagline, description,
+    │           │                                   rate card builder,
+    │           │                                   availability calendar,
+    │           │                                   service area
+    │           ├── Step10_Payment.jsx            ← bank details, payout method
+    │           │                                   (OPay, Paystack, Flutterwave,
+    │           │                                   M-Pesa, Stripe — by country)
+    │           └── Step11_Agreements.jsx         ← consent checkboxes,
+    │                                               T&Cs, tier assignment,
+    │                                               summary + finish
+    │
+    ├── context/
+    │   ├── AuthContext.jsx             ← UPDATED (role, tier, locale in session)
+    │   ├── PropertyContext.jsx         ← UPDATED (currency-aware)
+    │   ├── OnboardingContext.jsx       ← NEW (multi-step state, draft save,
+    │   │                                  tier calculation, step navigation)
+    │   └── LocaleContext.jsx           ← NEW (country, language, currency,
+    │                                      RTL flag, Intl formatters)
+    │
+    ├── data/
+    │   ├── properties.js               ← unchanged
+    │   ├── navItems.js                 ← UPDATED (i18n keys instead of strings)
+    │   ├── featuredCategories.js       ← UPDATED (i18n keys)
+    │   ├── homeSections.js             ← unchanged
+    │   └── propertyCategories.js       ← unchanged
+    │
+    ├── hooks/                          ← NEW DIRECTORY
+    │   ├── useCountry.js               ← reads LocaleContext, country helpers
+    │   ├── useCurrency.js              ← Intl.NumberFormat currency formatter
+    │   ├── useLanguage.js              ← i18n language helpers, RTL detection
+    │   ├── useOnboarding.js            ← onboarding step helpers, validation
+    │   └── useImageCompress.js         ← browser-side image compression before
+    │                                      upload (canvas API, target < 500KB)
+    │
+    ├── Layout/
+    │   ├── layouts.jsx                 ← UPDATED (RTLWrapper, locale-aware)
+    │   ├── UserDashboardLayout.jsx     ← UPDATED (i18n nav labels)
+    │   └── DashboardLayout.jsx         ← UPDATED (i18n nav labels)
+    │
+    ├── pages/
+    │   ├── Home.jsx                    ← UPDATED (i18n, currency)
+    │   ├── Properties.jsx              ← UPDATED (i18n, currency)
+    │   ├── Property.jsx                ← UPDATED (i18n, currency)
+    │   ├── Login.jsx                   ← UPDATED (i18n, global phone)
+    │   ├── Services.jsx                ← UPDATED (i18n)
+    │   ├── Dashboard.jsx               ← UPDATED (i18n, tier display)
+    │   │
+    │   ├── RegisterHost.jsx            ← DEPRECATED — kept for redirect only
+    │   ├── RegisterAgent.jsx           ← DEPRECATED — kept for redirect only
+    │   ├── RegisterSeller.jsx          ← DEPRECATED — kept for redirect only
+    │   ├── RegisterService.jsx         ← DEPRECATED — kept for redirect only
+    │   │
+    │   ├── onboarding/
+    │   │   └── index.jsx               ← NEW main onboarding page
+    │   │                                  (mounts OnboardingShell)
+    │   │
+    │   └── user/
+    │       ├── UserDashboard.jsx       ← UPDATED (i18n, tier card)
+    │       ├── Wishlist.jsx            ← UPDATED (i18n)
+    │       ├── Messages.jsx            ← UPDATED (i18n)
+    │       ├── History.jsx             ← UPDATED (i18n)
+    │       ├── Agreements.jsx          ← UPDATED (i18n)
+    │       └── Settings.jsx            ← UPDATED (language pref, i18n)
+    │
+    ├── Routes/
+    │   └── ProtectedRoute.jsx          ← UPDATED (tier-based guard)
+    │
+    ├── services/                       ← NEW DIRECTORY (API abstraction)
+    │   ├── api.js                      ← base fetch config, auth headers,
+    │   │                                  error normaliser
+    │   ├── auth.service.js             ← login, register, OTP, refresh
+    │   ├── property.service.js         ← CRUD for listings
+    │   ├── upload.service.js           ← file upload with compression +
+    │   │                                  progress tracking
+    │   └── payment.service.js          ← payment provider abstraction:
+    │                                      processPayment(amount, country)
+    │                                      routes to OPay / Paystack /
+    │                                      Flutterwave / Stripe / M-Pesa
+    │
+    └── utils/
+        ├── searchHelper.js             ← UPDATED (i18n-aware)
+        ├── filterStorage.js            ← unchanged
+        ├── imageCompress.js            ← NEW canvas-based compression,
+        │                                  shows data cost estimate
+        ├── phoneValidator.js           ← NEW libphonenumber-js wrapper,
+        │                                  validates by country code
+        ├── currency.js                 ← NEW Intl.NumberFormat wrapper,
+        │                                  multi-currency, symbol + code
+        └── rtl.js                      ← NEW RTL language detection,
+                                           dir attribute setter

@@ -1,0 +1,56 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Layout from "./layout/layouts";
+import Home from "./pages/Home";
+import Property from "./pages/Property";
+import Properties from "./pages/Properties";
+import Login from "./pages/Login";
+
+import UserDashboard from "./pages/user/UserDashboard";
+import Wishlist from "./pages/user/Wishlist";
+import Messages from "./pages/user/Messages";
+import History from "./pages/user/History";
+import Agreements from "./pages/user/Agreements";
+import Settings from "./pages/user/Settings";
+
+import { AuthProvider } from "./context/AuthContext";
+import { PropertyProvider } from "./context/PropertyContext";
+import ProtectedRoute from "./routes/ProtectedRoute";
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <PropertyProvider>
+          <Layout>
+
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/properties" element={<Properties />} />
+              <Route path="/property/:id" element={<Property />} />
+              <Route path="/login" element={<Login />} />
+
+              <Route
+                path="/user"
+                element={
+                  <ProtectedRoute>
+                    <UserDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route path="/user/wishlist" element={<Wishlist />} />
+              <Route path="/user/messages" element={<Messages />} />
+              <Route path="/user/history" element={<History />} />
+              <Route path="/user/agreements" element={<Agreements />} />
+              <Route path="/user/settings" element={<Settings />} />
+
+            </Routes>
+
+          </Layout>
+        </PropertyProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
+export default App;

@@ -1,0 +1,28 @@
+import PropertyCard from "./PropertyCard";
+
+function HorizontalSection({ title, items }) {
+  return (
+    <section className="max-w-7xl mx-auto px-6 py-8">
+
+      <h2 className="text-lg font-semibold text-aurban-gray mb-4">
+        {title}
+      </h2>
+
+      <div className="flex gap-4 overflow-x-auto pb-2">
+
+        {items.slice(0, 12).map((item) => (
+          <div
+            key={item.id}
+            className="min-w-[50%] md:min-w-[16.6%]"
+          >
+            <PropertyCard property={item} />
+          </div>
+        ))}
+
+      </div>
+
+    </section>
+  );
+}
+
+export default HorizontalSection;

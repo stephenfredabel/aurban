@@ -1,0 +1,69 @@
+import { useState } from "react";
+
+function ImageGallery({ images, startIndex, onClose }) {
+  const [activeImage, setActiveImage] = useState(startIndex);
+
+  const nextImage = () => {
+    setActiveImage((prev) =>
+      prev === images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setActiveImage((prev) =>
+      prev === 0 ? images.length - 1 : prev - 1
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+
+      {/* HEADER */}
+      <div className="flex justify-between items-center p-4 border-b">
+        <p className="text-sm">Gallery</p>
+        <button onClick={onClose}>Close</button>
+      </div>
+
+      {/* IMAGE AREA */}
+      <div className="flex-1 flex items-center justify-center relative">
+
+        <button
+          onClick={prevImage}
+          className="absolute left-4 text-xl"
+        >
+          ‹
+        </button>
+
+        <img
+          src={images[activeImage]}
+          className="max-h-[80vh] object-contain"
+        />
+
+        <button
+          onClick={nextImage}
+          className="absolute right-4 text-xl"
+        >
+          ›
+        </button>
+      </div>
+
+      {/* THUMBNAILS */}
+      <div className="flex gap-2 overflow-x-auto p-3 border-t">
+        {images.map((img, index) => (
+          <img
+            key={index}
+            src={img}
+            onClick={() => setActiveImage(index)}
+            className={`h-14 w-20 object-cover cursor-pointer border ${
+              activeImage === index
+                ? "border-aurban-accent"
+                : "border-gray-200"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default ImageGallery;

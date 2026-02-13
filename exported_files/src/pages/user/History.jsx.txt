@@ -1,0 +1,19 @@
+import UserDashboardLayout from "../../layout/UserDashboardLayout";
+
+function History() {
+  return (
+    <UserDashboardLayout>
+
+      <h2 className="font-semibold mb-2">
+        History
+      </h2>
+
+      <p className="text-gray-500 text-sm">
+        Your booking and viewing history will appear here.
+      </p>
+
+    </UserDashboardLayout>
+  );
+}
+
+export default History;

@@ -1,0 +1,261 @@
+/* ════════════════════════════════════════════════════════════
+   AURBAN — Global Styles
+   Fonts: Urbanist (headings) + Onest (body)
+   Brand: Gold #EFB50B · Charcoal #4B4B4D · White bg
+════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800;900&family=Onest:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Layer ────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: 'Onest', system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #FFFFFF;
+    color: #1A1A1A;
+    overscroll-behavior-y: none;
+  }
+
+  .dark body {
+    background-color: #0a0a0a;
+    color: #f5f5f5;
+  }
+
+  /* Desktop: subtle outer background so the app block stands out */
+  @media (min-width: 1280px) {
+    body {
+      background-color: #f0f0f0;
+    }
+    .dark body {
+      background-color: #050505;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar hiding (applied via .scroll-x / .scroll-y classes) */
+  .scroll-x {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scroll-x::-webkit-scrollbar { display: none; }
+
+  .scroll-y {
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scroll-y::-webkit-scrollbar { display: none; }
+
+  /* Focus visible — accessibility ring */
+  *:focus-visible {
+    outline: 2px solid rgba(239, 181, 11, 0.5);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+}
+
+/* ─── Component Layer ───────────────────────────────────── */
+@layer components {
+
+  /* ── Buttons ────────────────────────────────────────── */
+  .btn-primary {
+    @apply bg-brand-gold text-brand-charcoal-dark font-semibold
+      px-5 py-2.5 rounded-xl transition-colors
+      hover:bg-brand-gold-dark
+      active:scale-[0.98]
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-outline {
+    @apply border border-gray-200 dark:border-white/15 text-brand-charcoal dark:text-gray-300
+      font-medium px-5 py-2.5 rounded-xl transition-colors
+      hover:bg-gray-50 dark:hover:bg-white/5
+      active:scale-[0.98]
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply text-brand-charcoal dark:text-gray-300 font-medium
+      px-4 py-2 rounded-xl transition-colors
+      hover:bg-gray-50 dark:hover:bg-white/5
+      active:scale-[0.98];
+  }
+
+  .btn-danger {
+    @apply bg-red-500 text-white font-semibold
+      px-5 py-2.5 rounded-xl transition-colors
+      hover:bg-red-600
+      active:scale-[0.98];
+  }
+
+  /* ── Input fields ───────────────────────────────────── */
+  .input-field {
+    @apply w-full px-3.5 py-2.5 bg-gray-50 dark:bg-white/5
+      border border-gray-200 dark:border-white/10
+      rounded-xl text-sm text-brand-charcoal-dark dark:text-white
+      placeholder-gray-400
+      transition-colors
+      focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold/50;
+  }
+
+  .input-field.error,
+  .input-field[aria-invalid="true"] {
+    @apply border-red-300 focus:ring-red-300/30 focus:border-red-300;
+  }
+
+  /* ── Cards ──────────────────────────────────────────── */
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-2xl shadow-card;
+  }
+
+  .card-hover {
+    @apply transition-shadow card hover:shadow-card-hover;
+  }
+
+  /* ── Section titles ─────────────────────────────────── */
+  .section-title {
+    @apply text-xl font-bold font-display text-brand-charcoal-dark dark:text-white;
+  }
+
+  .section-subtitle {
+    @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
+  }
+
+  /* ── Badges ─────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full
+      text-xs font-semibold;
+  }
+
+  .badge-gold {
+    @apply badge bg-brand-gold/10 text-brand-gold;
+  }
+
+  .badge-green {
+    @apply text-green-600 badge bg-green-50 dark:bg-green-500/10;
+  }
+
+  .badge-red {
+    @apply text-red-600 badge bg-red-50 dark:bg-red-500/10;
+  }
+
+  /* ── Divider with text ──────────────────────────────── */
+  .divider {
+    @apply flex items-center gap-3;
+  }
+  .divider::before,
+  .divider::after {
+    content: '';
+    @apply flex-1 h-px bg-gray-100 dark:bg-white/10;
+  }
+
+  /* ── Skeleton loader ────────────────────────────────── */
+  .skeleton {
+    @apply bg-gray-200 dark:bg-white/10 rounded-xl animate-pulse;
+  }
+
+  /* ── Progress bar ───────────────────────────────────── */
+  .progress-track {
+    @apply h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden;
+  }
+  .progress-fill {
+    @apply h-full transition-all duration-500 ease-out rounded-full bg-brand-gold;
+  }
+}
+
+/* ─── Utility Layer ─────────────────────────────────────── */
+@layer utilities {
+
+  /* Font families */
+  .font-display {
+    font-family: 'Urbanist', system-ui, sans-serif;
+  }
+  .font-body {
+    font-family: 'Onest', system-ui, sans-serif;
+  }
+
+  /* Touch target minimum (44x44 for mobile accessibility) */
+  .touch-target {
+    @apply min-w-[44px] min-h-[44px] flex items-center justify-center;
+  }
+
+  /* Line clamping */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  /* Safe area padding (notch devices) */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* ─── Animations ────────────────────────────────────────── */
+@keyframes fade-up {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slide-in {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes slide-in-right {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  0%   { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-up       { animation: fade-up 0.3s ease forwards; }
+.animate-fade-in       { animation: fade-in 0.2s ease forwards; }
+.animate-slide-in      { animation: slide-in 0.3s ease forwards; }
+.animate-slide-in-right{ animation: slide-in-right 0.3s ease forwards; }
+.animate-scale-in      { animation: scale-in 0.25s ease forwards; }
+.animate-shimmer       { animation: shimmer 1.5s infinite; background-size: 200% 100%; }

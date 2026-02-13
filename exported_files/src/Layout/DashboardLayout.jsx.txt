@@ -1,0 +1,32 @@
+import { Link } from "react-router-dom";
+
+function DashboardLayout({ children }) {
+  return (
+    <div className="grid md:grid-cols-[240px_1fr] min-h-[80vh]">
+
+      {/* SIDEBAR */}
+      <aside className="border-r p-4">
+
+        <h2 className="font-semibold mb-4">
+          Dashboard
+        </h2>
+
+        <nav className="flex flex-col gap-2 text-sm">
+          <Link to="/dashboard">Overview</Link>
+          <Link to="/dashboard/properties">My Properties</Link>
+          <Link to="/dashboard/services">My Services</Link>
+          <Link to="/dashboard/products">My Products</Link>
+        </nav>
+
+      </aside>
+
+      {/* CONTENT */}
+      <main className="p-6">
+        {children}
+      </main>
+
+    </div>
+  );
+}
+
+export default DashboardLayout;

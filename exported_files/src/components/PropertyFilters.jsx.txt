@@ -1,0 +1,67 @@
+import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import FilterDrawer from "./FilterDrawer";
+
+function PropertyFilters({ mapView, setMapView }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [openDrawer, setOpenDrawer] = useState(false);
+
+  const sort = searchParams.get("sort") || "";
+
+  const updateFilter = (key, value) => {
+    const params = Object.fromEntries(searchParams.entries());
+
+    if (!value) delete params[key];
+    else params[key] = value;
+
+    setSearchParams(params);
+  };
+
+  return (
+    <>
+      <div className="sticky top-0 bg-white border-b border-gray-200 z-10">
+
+        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap gap-3 items-center">
+
+          {/* MOBILE FILTER BUTTON */}
+          <button
+            onClick={() => setOpenDrawer(true)}
+            className="border px-3 py-2 text-sm"
+          >
+            Filters
+          </button>
+
+          {/* SORT */}
+          <select
+            value={sort}
+            onChange={(e) =>
+              updateFilter("sort", e.target.value)
+            }
+            className="border px-3 py-2 text-sm"
+          >
+            <option value="">Sort</option>
+            <option value="newest">Newest</option>
+            <option value="low">Price Low → High</option>
+            <option value="high">Price High → Low</option>
+          </select>
+
+          {/* MAP TOGGLE */}
+          <button
+            onClick={() => setMapView(!mapView)}
+            className={`text-sm ${
+              mapView ? "text-aurban-accent" : ""
+            }`}
+          >
+            Map View
+          </button>
+
+        </div>
+
+      </div>
+
+      <FilterDrawer open={openDrawer} setOpen={setOpenDrawer} />
+    </>
+  );
+}
+
+export default PropertyFilters;

@@ -1,0 +1,46 @@
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+function Login() {
+  const [email, setEmail] = useState("");
+  const { login } = useAuth();
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Default redirect for end users
+  const from = location.state?.from?.pathname || "/";
+
+  const handleLogin = () => {
+    login(email);
+    navigate(from, { replace: true });
+  };
+
+  return (
+    <div className="max-w-md mx-auto py-10">
+
+      <h1 className="text-xl font-semibold mb-4">
+        Login
+      </h1>
+
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="w-full border border-gray-200 px-3 py-2 mb-3"
+      />
+
+      <button
+        onClick={handleLogin}
+        className="w-full bg-aurban-gray text-white py-2"
+      >
+        Login
+      </button>
+
+    </div>
+  );
+}
+
+export default Login;

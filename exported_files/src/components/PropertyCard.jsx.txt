@@ -1,0 +1,59 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+function PropertyCard({ property }) {
+  const navigate = useNavigate();
+  const [hover, setHover] = useState(false);
+
+  return (
+    <div
+      className="cursor-pointer group"
+      onClick={() => navigate(`/property/${property.id}`)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {/* IMAGE */}
+      <div className="relative overflow-hidden">
+
+        <img
+          src={property.images[0]}
+          alt={property.title}
+          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+
+        {/* THUMBNAILS (DESKTOP HOVER) */}
+        {hover && (
+          <div className="hidden md:flex absolute bottom-2 left-2 gap-1">
+            {property.images.slice(1, 4).map((img, i) => (
+              <img
+                key={i}
+                src={img}
+                alt=""
+                className="w-12 h-10 object-cover border border-white"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* INFO */}
+      <div className="mt-2 space-y-1">
+
+        <p className="text-sm font-medium text-aurban-gray">
+          {property.title}
+        </p>
+
+        <p className="text-xs text-gray-500">
+          {property.location}
+        </p>
+
+        <p className="text-sm font-semibold">
+          {property.price}
+        </p>
+
+      </div>
+    </div>
+  );
+}
+
+export default PropertyCard;

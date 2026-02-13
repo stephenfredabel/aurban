@@ -1,0 +1,19 @@
+import UserDashboardLayout from "../../layout/UserDashboardLayout";
+
+function Agreements() {
+  return (
+    <UserDashboardLayout>
+
+      <h2 className="font-semibold mb-2">
+        Legal Agreements
+      </h2>
+
+      <p className="text-gray-500 text-sm">
+        Rental and purchase agreements will appear here.
+      </p>
+
+    </UserDashboardLayout>
+  );
+}
+
+export default Agreements;

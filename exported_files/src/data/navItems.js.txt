@@ -1,0 +1,32 @@
+export const navItems = [
+  {
+    label: "Rental",
+    link: "/properties?type=rent",
+    description: "All properties available for rent",
+  },
+  {
+    label: "Lease",
+    link: "/properties?type=lease",
+    description: "All properties and lands for lease",
+  },
+  {
+    label: "Buy",
+    link: "/properties?type=buy",
+    description: "All properties for sale",
+  },
+  {
+    label: "Lands",
+    link: "/properties?type=land",
+    description: "Lands available for sale",
+  },
+  {
+    label: "Services",
+    link: "/services",
+    description: "All available services",
+  },
+  {
+    label: "Marketplace",
+    link: "/marketplace",
+    description: "Building materials and interior products",
+  },
+];

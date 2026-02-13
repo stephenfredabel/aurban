@@ -1,0 +1,27 @@
+export const featuredCategories = [
+  {
+    title: "Rentals",
+    link: "/properties?type=rent",
+    image: "https://images.unsplash.com/photo-1505691938895-1758d7feb511",
+  },
+  {
+    title: "Buy Property",
+    link: "/properties?type=buy",
+    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6",
+  },
+  {
+    title: "Lands",
+    link: "/properties?type=land",
+    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
+  },
+  {
+    title: "Services",
+    link: "/services",
+    image: "https://images.unsplash.com/photo-1581093458791-9f3c3250e27f",
+  },
+  {
+    title: "Marketplace",
+    link: "/marketplace",
+    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952",
+  },
+];

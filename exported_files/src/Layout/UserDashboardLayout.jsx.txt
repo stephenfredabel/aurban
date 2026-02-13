@@ -1,0 +1,38 @@
+import { Link } from "react-router-dom";
+
+function UserDashboardLayout({ children }) {
+  return (
+    <div className="max-w-5xl mx-auto py-6">
+
+      <h1 className="text-xl font-semibold mb-6">
+        My Account
+      </h1>
+
+      <div className="grid md:grid-cols-[200px_1fr] gap-6">
+
+        {/* SIDEBAR */}
+        <aside className="border border-gray-200 p-4 text-sm">
+
+          <nav className="flex flex-col gap-3">
+            <Link to="/user">Overview</Link>
+            <Link to="/user/wishlist">Wishlist</Link>
+            <Link to="/user/messages">Messages</Link>
+            <Link to="/user/history">History</Link>
+            <Link to="/user/agreements">Agreements</Link>
+            <Link to="/user/settings">Settings</Link>
+          </nav>
+
+        </aside>
+
+        {/* CONTENT */}
+        <main className="border border-gray-200 p-6">
+          {children}
+        </main>
+
+      </div>
+
+    </div>
+  );
+}
+
+export default UserDashboardLayout;
