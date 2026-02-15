@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { AuthContext } from "../../context/AuthContext";
 import AurbanLogo from "../../components/AurbanLogo";
-import { isSupabaseConfigured } from '/Users/USER/Desktop/aurban-web/src/lib/supabase.js';
+import supabase from "@/lib/supabase";
 import { signInWithEmail, signInWithGoogle } from '/Users/USER/Desktop/aurban-web/src/services/supabase-auth.service.js';
 
 /* ════════════════════════════════════════════════════════════
