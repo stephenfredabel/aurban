@@ -120,7 +120,7 @@ export async function getSignedUrl(key, expiresInSeconds = 300) {
 
 function uploadWithProgress(path, formData, onProgress, signal) {
   return new Promise((resolve, reject) => {
-    const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.aurban.com/v1';
+    const BASE_URL = import.meta.env.VITE_SUPABASE_URL
 
     // Token
     let token = null;

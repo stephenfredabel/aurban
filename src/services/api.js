@@ -7,7 +7,7 @@
  * - Abort-controller support
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.aurban.com/v1';
+const BASE_URL = import.meta.env.VITE_SUPABASE_URL
 const TIMEOUT_MS = 15_000;
 
 // In-flight request registry (for dedup / abort)
