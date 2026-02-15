@@ -5,10 +5,16 @@ import {
   CheckCircle2, Loader, Shield, Smartphone,
   Send, LogIn, Building2, Briefcase,
 } from 'lucide-react';
-import { AuthContext } from "../../context/AuthContext";
-import AurbanLogo from "../../components/AurbanLogo";
+
+import { useAuth } from "@/context/AuthContext";
+import AurbanLogo from "@/components/AurbanLogo";
 import supabase from "@/lib/supabase";
-import { signInWithEmail, signInWithGoogle } from '/Users/USER/Desktop/aurban-web/src/services/supabase-auth.service.js';
+
+import {
+  signInWithEmail,
+  signInWithGoogle
+} from "@/services/supabase-auth.service";
+
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER LOGIN — Provider-specific authentication
