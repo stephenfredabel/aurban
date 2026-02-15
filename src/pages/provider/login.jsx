@@ -6,7 +6,7 @@ import {
   Send, LogIn, Building2, Briefcase,
 } from 'lucide-react';
 import { useAuth } from '/Users/USER/Desktop/aurban-web/src/context/AuthContext.jsx';
-import AurbanLogo  from '/Users/USER/Desktop/aurban-web/src/components/AurbanLogo.jsx';
+import AurbanLogo from "../../components/AurbanLogo";
 import { isSupabaseConfigured } from '/Users/USER/Desktop/aurban-web/src/lib/supabase.js';
 import { signInWithEmail, signInWithGoogle } from '/Users/USER/Desktop/aurban-web/src/services/supabase-auth.service.js';
 
