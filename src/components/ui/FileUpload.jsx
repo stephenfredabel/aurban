@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, X, FileText, Image, CheckCircle2, AlertCircle, Eye } from 'lucide-react';
-import { useImageCompress } from '../../hook/useImageCompress.js';
+import { useImageCompress } from '../../hooks/useImageCompress.js';
 
 /**
  * Drag-drop + mobile-friendly file uploader

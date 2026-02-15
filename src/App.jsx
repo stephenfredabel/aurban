@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -10,6 +10,10 @@ import { LocaleProvider }    from './context/LocaleContext.jsx';
 import { PropertyProvider }  from './context/PropertyContext.jsx';
 import { MessagingProvider } from './context/MessagingContext.jsx';
 import { BookingProvider }  from './context/BookingContext.jsx';
+import { CartProvider }    from './context/CartContext.jsx';
+import { OrderProvider }   from './context/OrderContext.jsx';
+import { ProListingProvider } from './context/ProListingContext.jsx';
+import { ProBookingProvider } from './context/ProBookingContext.jsx';
 import RTLWrapper           from './components/language/RTLWrapper.jsx';
 import Header               from './components/Header.jsx';
 import HeaderNavigation     from './components/HeaderNavigation.jsx';
@@ -22,6 +26,15 @@ import ProviderHeader        from './components/ProviderHeader.jsx';
 import ProviderBottomNav     from './components/ProviderBottomNav.jsx';
 import UserHeader            from './components/UserHeader.jsx';
 import UserBottomNav         from './components/UserBottomNav.jsx';
+import AdminHeader           from './components/admin/AdminHeader.jsx';
+import AdminFooter           from './components/admin/AdminFooter.jsx';
+import AdminBottomNav        from './components/admin/AdminBottomNav.jsx';
+import EscalationPanel       from './components/admin/EscalationPanel.jsx';
+import AdminMessagingPanel   from './components/admin/AdminMessagingPanel.jsx';
+import AdminQuickAction     from './components/admin/AdminQuickAction.jsx';
+import { getTotalUnread }    from './services/adminMessaging.service.js';
+import { ADMIN_ENTRY_PATH } from './utils/rbac.js';
+import useAdminSecurity    from './hooks/useAdminSecurity.js';
 
 /* ════════════════════════════════════════════════════════════
    APP.JSX — Root application component
@@ -53,10 +66,14 @@ import UserBottomNav         from './components/UserBottomNav.jsx';
    • /              → Home
    • /properties    → Property listing grid
    • /property/:id  → Property detail
-   • /services      → Services directory
-   • /service/:id   → Service provider profile
    • /marketplace   → Products marketplace
    • /product/:id   → Product detail
+   • /vendor/:id    → Public vendor store
+   • /checkout      → Checkout wizard (protected)
+   • /relocation    → Relocation services marketplace
+   • /relocation/:id→ Relocation provider detail
+   • /shortlets     → Short-term accommodation listings
+   • /shared        → Shared/co-living accommodation listings
    • /roommates     → Roommate finder (coming soon)
    • /providers/:id → Provider public profile
 
@@ -84,6 +101,8 @@ import UserBottomNav         from './components/UserBottomNav.jsx';
    • /dashboard/messages    → User inbox
    • /dashboard/history     → Recently viewed
    • /dashboard/agreements  → Contracts & leases
+   • /dashboard/orders      → User marketplace orders
+   • /dashboard/orders/:id  → Order detail + tracking
    • /dashboard/settings    → User account settings
 
    PROVIDER DASHBOARD (protected, provider role required)
@@ -115,10 +134,12 @@ import Login from './pages/Login.jsx';
 // Public pages
 const Properties    = lazy(() => import('./pages/Properties.jsx'));
 const Property      = lazy(() => import('./pages/Property.jsx'));
-const Services      = lazy(() => import('./pages/Services.jsx'));
-const ServiceDetail = lazy(() => import('./pages/ServiceDetail.jsx'));
-const Marketplace   = lazy(() => import('./pages/Marketplace.jsx'));
-const ProductDetail = lazy(() => import('./pages/ProductDetail.jsx'));
+const Marketplace          = lazy(() => import('./pages/Marketplace.jsx'));
+const ProductDetail        = lazy(() => import('./pages/ProductDetail.jsx'));
+const Relocation           = lazy(() => import('./pages/Relocation.jsx'));
+const RelocationProvider   = lazy(() => import('./pages/RelocationProvider.jsx'));
+const Shortlets            = lazy(() => import('./pages/Shortlets.jsx'));
+const SharedAccommodation  = lazy(() => import('./pages/SharedAccommodation.jsx'));
 
 // User auth pages (Header flow → back to marketplace)
 const SignUp            = lazy(() => import('./pages/user/SignUp.jsx'));
@@ -143,11 +164,29 @@ const UserHistory   = lazy(() => import('./pages/user/History.jsx'));
 const Agreements    = lazy(() => import('./pages/user/Agreements.jsx'));
 const UserSettings  = lazy(() => import('./pages/user/Settings.jsx'));
 const UserBookings  = lazy(() => import('./pages/user/Bookings.jsx'));
+const UserOrders    = lazy(() => import('./pages/user/Orders.jsx'));
+const UserOrderDetail = lazy(() => import('./pages/user/OrderDetail.jsx'));
+const UserProBookings = lazy(() => import('./pages/user/ProBookings.jsx'));
+const UserProBookingDetail = lazy(() => import('./pages/user/ProBookingDetail.jsx'));
+const UserAnalytics = lazy(() => import('./pages/user/UserAnalytics.jsx'));
 
 // Legal pages
 const Terms               = lazy(() => import('./pages/Terms.jsx'));
 const Privacy             = lazy(() => import('./pages/Privacy.jsx'));
 const CommunityGuidelines = lazy(() => import('./pages/CommunityGuidelines.jsx'));
+
+// Marketplace flow
+const Checkout          = lazy(() => import('./pages/Checkout.jsx'));
+const VendorStore       = lazy(() => import('./pages/VendorStore.jsx'));
+
+// Aurban Pro (service marketplace)
+const ProServices       = lazy(() => import('./pages/ProServices.jsx'));
+const ProServiceDetail  = lazy(() => import('./pages/ProServiceDetail.jsx'));
+const ProBooking        = lazy(() => import('./pages/ProBooking.jsx'));
+const ProLanding        = lazy(() => import('./pages/ProLanding.jsx'));
+
+// Company storefront (public view)
+const CompanyStorePage  = lazy(() => import('./pages/provider/CompanyStore.jsx'));
 
 // Feature pages
 const Roommates         = lazy(() => import('./pages/Roommates.jsx'));
@@ -155,8 +194,11 @@ const Roommates         = lazy(() => import('./pages/Roommates.jsx'));
 // Provider dashboard pages
 const ProviderDash      = lazy(() => import('./pages/ProviderDashboard.jsx'));
 const ProviderAnalytics = lazy(() => import('./pages/provider/Analytics.jsx'));
-const ProviderProfile   = lazy(() => import('./pages/provider/Profile.jsx'));
+const ProviderPublicProfile = lazy(() => import('./pages/ProviderPublicProfile.jsx'));
 const CreateListing     = lazy(() => import('./pages/provider/CreateListing.jsx'));
+
+// Admin auth (isolated from user/provider flows)
+const AdminLogin        = lazy(() => import('./pages/admin/AdminLogin.jsx'));
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -211,11 +253,17 @@ function PageLoader() {
 
    HeaderNavigation + Footer are always shown (category nav + desktop footer).
 ═══════════════════════════════════════════════════════════ */
-const PROVIDER_ROLES = ['provider', 'admin', 'host', 'agent', 'seller', 'service'];
+import { isAdminRole } from './utils/rbac.js';
+
+const PROVIDER_ROLES = [
+  'provider', 'admin', 'host', 'agent', 'seller', 'service',
+  'super_admin', 'operations_admin', 'moderator',
+  'verification_admin', 'support_admin', 'finance_admin', 'compliance_admin',
+];
 
 function AppLayout({ children }) {
   const { user } = useAuth();
-  const isProvider = user && PROVIDER_ROLES.includes(user.role);
+  const isProvider = user && (PROVIDER_ROLES.includes(user.role) || isAdminRole(user.role));
   const isUser     = user && !isProvider;
 
   return (
@@ -238,13 +286,57 @@ function AppLayout({ children }) {
    No user-facing Header, HeaderNavigation, Footer, or BottomNav.
 ═══════════════════════════════════════════════════════════ */
 function ProviderAppLayout({ children }) {
+  const { isAdmin } = useAuth();
+  const [escalationOpen, setEscalationOpen] = useState(false);
+  const [messagingOpen, setMessagingOpen]   = useState(false);
+  const messagingUnread = isAdmin ? getTotalUnread() : 0;
+
+  // Anti-screenshot, anti-screenrecord, anti-console on admin panels
+  useAdminSecurity({ enabled: isAdmin });
+
+  // Block search engine indexing on all provider/admin pages
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="robots"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'robots');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', 'noindex, nofollow');
+    return () => { if (meta.parentNode) meta.parentNode.removeChild(meta); };
+  }, []);
+
   return (
     <>
-      <ProviderHeader />
+      {isAdmin ? (
+        <AdminHeader
+          onToggleEscalation={() => setEscalationOpen(v => !v)}
+          escalationCount={3}
+          onToggleMessaging={() => setMessagingOpen(v => !v)}
+          messagingUnread={messagingUnread}
+        />
+      ) : (
+        <ProviderHeader />
+      )}
       <main id="main-content" className="flex-1 min-h-0">
         {children}
       </main>
-      <ProviderBottomNav />
+      {isAdmin ? (
+        <>
+          <AdminFooter />
+          <AdminBottomNav />
+          <EscalationPanel isOpen={escalationOpen} onClose={() => setEscalationOpen(false)} />
+          <AdminMessagingPanel isOpen={messagingOpen} onClose={() => setMessagingOpen(false)} />
+          {!messagingOpen && (
+            <AdminQuickAction
+              unreadCount={messagingUnread}
+              onClick={() => setMessagingOpen(v => !v)}
+            />
+          )}
+        </>
+      ) : (
+        <ProviderBottomNav />
+      )}
     </>
   );
 }
@@ -295,6 +387,10 @@ export default function App() {
             <PropertyProvider>
               <MessagingProvider>
               <BookingProvider>
+              <CartProvider>
+              <OrderProvider>
+              <ProListingProvider>
+              <ProBookingProvider>
               <RTLWrapper>
                 <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 font-body text-brand-charcoal dark:text-white
                   xl:max-w-[1440px] xl:mx-auto xl:shadow-[0_0_40px_rgba(0,0,0,0.06)] xl:border-x xl:border-gray-200/60
@@ -316,10 +412,27 @@ export default function App() {
                       <Route path="/"             element={<AppLayout><Home /></AppLayout>} />
                       <Route path="/properties"   element={<AppLayout><Properties /></AppLayout>} />
                       <Route path="/property/:id" element={<AppLayout><Property /></AppLayout>} />
-                      <Route path="/services"     element={<AppLayout><Services /></AppLayout>} />
-                      <Route path="/service/:id"  element={<AppLayout><ServiceDetail /></AppLayout>} />
                       <Route path="/marketplace"  element={<AppLayout><Marketplace /></AppLayout>} />
                       <Route path="/product/:id"  element={<AppLayout><ProductDetail /></AppLayout>} />
+                      <Route path="/relocation"     element={<AppLayout><Relocation /></AppLayout>} />
+                      <Route path="/relocation/:id" element={<AppLayout><RelocationProvider /></AppLayout>} />
+                      <Route path="/shortlets"      element={<AppLayout><Shortlets /></AppLayout>} />
+                      <Route path="/shared"         element={<AppLayout><SharedAccommodation /></AppLayout>} />
+                      <Route path="/vendor/:id"     element={<AppLayout><VendorStore /></AppLayout>} />
+                      <Route path="/company/:id"    element={<AppLayout><CompanyStorePage /></AppLayout>} />
+                      <Route path="/pro"            element={<AppLayout><ProServices /></AppLayout>} />
+                      <Route path="/pro/about"      element={<AppLayout><ProLanding /></AppLayout>} />
+                      <Route path="/pro/:id"        element={<AppLayout><ProServiceDetail /></AppLayout>} />
+                      <Route path="/pro/book/:id"   element={
+                        <ProtectedRoute>
+                          <AppLayout><ProBooking /></AppLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/checkout"       element={
+                        <ProtectedRoute>
+                          <AppLayout><Checkout /></AppLayout>
+                        </ProtectedRoute>
+                      } />
 
                       {/* ══ USER AUTH (Header flow — no layout) ══
                            These are for end-users/visitors ONLY.
@@ -336,6 +449,14 @@ export default function App() {
                       ═════════════════════════════════════════════ */}
                       <Route path="/provider/login" element={<ProviderLogin />} />
                       <Route path="/onboarding"     element={<OnboardingPage />} />
+
+                      {/* ══ ADMIN AUTH (isolated — no layout, no marketplace links) ══
+                           Admins ONLY. Completely separate from user/provider flows.
+                           Non-obvious path to prevent discovery via URL scanning.
+                           After login  → /provider (admin dashboard)
+                           After logout → ADMIN_ENTRY_PATH (back here)
+                      ═════════════════════════════════════════════════ */}
+                      <Route path={ADMIN_ENTRY_PATH} element={<AdminLogin />} />
 
                       {/* ══ SHARED AUTH PAGES ═════════════════════ */}
                       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -386,6 +507,31 @@ export default function App() {
                           <UserAppLayout><UserDashboardLayout><UserBookings /></UserDashboardLayout></UserAppLayout>
                         </ProtectedRoute>
                       } />
+                      <Route path="/dashboard/orders" element={
+                        <ProtectedRoute>
+                          <UserAppLayout><UserDashboardLayout><UserOrders /></UserDashboardLayout></UserAppLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/dashboard/orders/:id" element={
+                        <ProtectedRoute>
+                          <UserAppLayout><UserDashboardLayout><UserOrderDetail /></UserDashboardLayout></UserAppLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/dashboard/pro-bookings" element={
+                        <ProtectedRoute>
+                          <UserAppLayout><UserDashboardLayout><UserProBookings /></UserDashboardLayout></UserAppLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/dashboard/pro-bookings/:id" element={
+                        <ProtectedRoute>
+                          <UserAppLayout><UserDashboardLayout><UserProBookingDetail /></UserDashboardLayout></UserAppLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/dashboard/analytics" element={
+                        <ProtectedRoute>
+                          <UserAppLayout><UserDashboardLayout><UserAnalytics /></UserDashboardLayout></UserAppLayout>
+                        </ProtectedRoute>
+                      } />
 
                       {/* ══ LEGAL PAGES ════════════════════════════ */}
                       <Route path="/terms"                element={<AppLayout><Terms /></AppLayout>} />
@@ -396,7 +542,7 @@ export default function App() {
                       <Route path="/roommates" element={<AppLayout><Roommates /></AppLayout>} />
 
                       {/* ══ PROVIDER PUBLIC PROFILE ═════════════════ */}
-                      <Route path="/providers/:id" element={<AppLayout><ProviderProfile /></AppLayout>} />
+                      <Route path="/providers/:id" element={<AppLayout><ProviderPublicProfile /></AppLayout>} />
 
                       {/* ══ PROVIDER DASHBOARD ═══════════════════
                            For providers ONLY (role: provider/host/agent/seller/service).
@@ -490,6 +636,10 @@ export default function App() {
                   </Suspense>
                 </div>
               </RTLWrapper>
+              </ProBookingProvider>
+              </ProListingProvider>
+              </OrderProvider>
+              </CartProvider>
               </BookingProvider>
               </MessagingProvider>
             </PropertyProvider>

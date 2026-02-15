@@ -45,16 +45,43 @@ class ApiError extends Error {
   }
 }
 
+/**
+ * Sanitise server error messages before exposing to UI.
+ * Strips internal paths, admin URLs, server names, and stack traces
+ * that backends may accidentally include in error responses.
+ */
+function sanitizeErrorMessage(msg) {
+  if (!msg || typeof msg !== 'string') return 'Request failed';
+  // Strip anything that looks like an internal path or admin URL
+  let clean = msg
+    .replace(/\/admin\/[^\s'"]*/gi, '[redacted]')
+    .replace(/\/ax7-internal[^\s'"]*/gi, '[redacted]')
+    .replace(/\/internal\/[^\s'"]*/gi, '[redacted]')
+    .replace(/https?:\/\/[a-z0-9-]+\.aurban\.com[^\s'"]*/gi, '[redacted]')
+    .replace(/at\s+\S+\s+\(.*:\d+:\d+\)/g, '')  // stack frames
+    .replace(/\/usr\/|\/var\/|\/home\/|C:\\|D:\\/gi, '[redacted]')
+    .replace(/node_modules\/[^\s'"]*/g, '[redacted]');
+  // If the whole message was redacted, return a generic one
+  if (clean.replace(/\[redacted\]/g, '').trim().length < 3) {
+    return 'Request failed';
+  }
+  return clean.trim();
+}
+
 async function parseResponse(res) {
   const contentType = res.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
     const body = await res.json();
     if (!res.ok) {
-      throw new ApiError(body.message || 'Request failed', res.status, body);
+      throw new ApiError(
+        sanitizeErrorMessage(body.message) || 'Request failed',
+        res.status,
+        body,
+      );
     }
     return body;
   }
-  if (!res.ok) throw new ApiError(res.statusText || 'Request failed', res.status);
+  if (!res.ok) throw new ApiError(sanitizeErrorMessage(res.statusText) || 'Request failed', res.status);
   return res.text();
 }
 
@@ -110,7 +137,7 @@ async function request(method, path, {
         await new Promise((r) => setTimeout(r, (retry - triesLeft + 1) * 800));
         return attempt(triesLeft - 1);
       }
-      throw new ApiError(err.message || 'Network error', 0);
+      throw new ApiError(sanitizeErrorMessage(err.message) || 'Network error', 0);
     } finally {
       clearTimeout(timeout);
     }

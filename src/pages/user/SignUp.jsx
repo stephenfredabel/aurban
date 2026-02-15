@@ -7,6 +7,8 @@ import {
 import { useAuth } from '../../context/AuthContext.jsx';
 import AurbanLogo  from '../../components/AurbanLogo.jsx';
 import { sanitize } from '../../utils/security.js';
+import { isSupabaseConfigured } from '../../lib/supabase.js';
+import { signUpWithEmail, signInWithGoogle } from '../../services/supabase-auth.service.js';
 
 /* ════════════════════════════════════════════════════════════
    SIGNUP — End-user / Visitor registration
@@ -18,8 +20,7 @@ import { sanitize } from '../../utils/security.js';
      3. Google instant signup
      4. Done → returns to marketplace (/)
 
-   Providers have their own signup at /provider/signup
-   (or the onboarding flow at /onboarding)
+   Providers have their own signup via /onboarding
 ════════════════════════════════════════════════════════════ */
 
 /* ── Google icon ──────────────────────────────────────────── */
@@ -84,21 +85,32 @@ export default function SignUp() {
     setAttempts(prev => [...prev, Date.now()]);
 
     try {
-      await new Promise(r => setTimeout(r, 1200));
-
-      login({
-        id: 'u_' + Date.now(),
-        name: form.fullName.trim(),
-        email: usePhone ? '' : form.contact.trim(),
-        phone: usePhone ? form.contact.trim() : '',
-        role: 'user',  // ALWAYS user role from header signup
-        verified: false,
-      });
-
-      setSuccess('Account created! Welcome to Aurban.');
-
-      // Redirect to marketplace (not dashboard)
-      setTimeout(() => navigate('/', { replace: true }), 800);
+      if (isSupabaseConfigured()) {
+        const email = usePhone ? `${form.contact.trim().replace(/[^0-9]/g, '')}@phone.aurban.com` : form.contact.trim();
+        const res = await signUpWithEmail({
+          email,
+          password: crypto.randomUUID().slice(0, 16), // temp password — user can reset later
+          name: form.fullName.trim(),
+          phone: usePhone ? form.contact.trim() : '',
+          role: 'user',
+        });
+        if (!res.success) { setError(res.error || 'Registration failed.'); setLoading(false); return; }
+        // onAuthStateChange will pick up the session
+        setSuccess('Account created! Welcome to Aurban.');
+        setTimeout(() => navigate('/', { replace: true }), 800);
+      } else {
+        await new Promise(r => setTimeout(r, 1200));
+        login({
+          id: 'u_' + Date.now(),
+          name: form.fullName.trim(),
+          email: usePhone ? '' : form.contact.trim(),
+          phone: usePhone ? form.contact.trim() : '',
+          role: 'user',
+          verified: false,
+        });
+        setSuccess('Account created! Welcome to Aurban.');
+        setTimeout(() => navigate('/', { replace: true }), 800);
+      }
     } catch {
       setError('Registration failed. Please try again.');
     } finally {
@@ -110,17 +122,22 @@ export default function SignUp() {
   const handleGoogle = useCallback(async () => {
     setGLoading(true); setError('');
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      login({
-        id: 'g_' + Date.now(),
-        name: 'Google User',
-        email: 'user@gmail.com',
-        role: 'user',  // ALWAYS user role
-        verified: true,
-        avatar: null,
-      });
-      // Redirect to marketplace
-      navigate('/', { replace: true });
+      if (isSupabaseConfigured()) {
+        const res = await signInWithGoogle();
+        if (!res.success) { setError(res.error || 'Google signup failed.'); setGLoading(false); return; }
+        // OAuth redirect — onAuthStateChange handles session
+      } else {
+        await new Promise(r => setTimeout(r, 1500));
+        login({
+          id: 'g_' + Date.now(),
+          name: 'Google User',
+          email: 'user@gmail.com',
+          role: 'user',
+          verified: true,
+          avatar: null,
+        });
+        navigate('/', { replace: true });
+      }
     } catch {
       setError('Google signup failed. Please try again.');
     } finally {
@@ -238,7 +255,7 @@ export default function SignUp() {
           </p>
           <p className="text-xs text-gray-300 dark:text-gray-600">
             Want to list properties or offer services?{' '}
-            <Link to="/provider/signup" className="font-medium text-gray-500 dark:text-gray-400 hover:text-brand-gold">Become a provider →</Link>
+            <Link to="/onboarding" className="font-medium text-gray-500 dark:text-gray-400 hover:text-brand-gold">Become a provider →</Link>
           </p>
         </div>
       </div>

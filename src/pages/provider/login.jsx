@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '/Users/USER/Desktop/aurban-web/src/context/AuthContext.jsx';
 import AurbanLogo  from '/Users/USER/Desktop/aurban-web/src/components/AurbanLogo.jsx';
+import { isSupabaseConfigured } from '/Users/USER/Desktop/aurban-web/src/lib/supabase.js';
+import { signInWithEmail, signInWithGoogle } from '/Users/USER/Desktop/aurban-web/src/services/supabase-auth.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER LOGIN — Provider-specific authentication
@@ -76,21 +78,27 @@ export default function ProviderLogin() {
     rateLimiter.record();
 
     try {
-      await new Promise(r => setTimeout(r, 1200));
-
-      // Provider login → role is always a provider type
-      login({
-        id: 'p_' + Date.now(),
-        name: 'Provider User',
-        email: form.email,
-        role: 'provider',  // Provider role
-        verified: true,
-        tier: { type: 'individual', level: 2, label: 'Verified Provider' },
-      });
-
-      rateLimiter.reset();
-      setSuccess('Welcome back!');
-      setTimeout(() => redirectAfterLogin(), 600);
+      if (isSupabaseConfigured()) {
+        const res = await signInWithEmail(form.email, form.password);
+        if (!res.success) { setError(res.error || 'Invalid credentials.'); setLoading(false); return; }
+        // onAuthStateChange will pick up the session and load profile
+        rateLimiter.reset();
+        setSuccess('Welcome back!');
+        setTimeout(() => redirectAfterLogin(), 600);
+      } else {
+        await new Promise(r => setTimeout(r, 1200));
+        login({
+          id: 'p_' + Date.now(),
+          name: 'Provider User',
+          email: form.email,
+          role: 'provider',
+          verified: true,
+          tier: { type: 'individual', level: 2, label: 'Verified Provider' },
+        });
+        rateLimiter.reset();
+        setSuccess('Welcome back!');
+        setTimeout(() => redirectAfterLogin(), 600);
+      }
     } catch {
       setError('Invalid credentials. Please try again.');
     } finally {
@@ -102,17 +110,23 @@ export default function ProviderLogin() {
   const handleGoogle = useCallback(async () => {
     setGLoading(true); setError('');
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      login({
-        id: 'gp_' + Date.now(),
-        name: 'Provider User',
-        email: 'provider@gmail.com',
-        role: 'provider',
-        verified: true,
-        tier: { type: 'individual', level: 1, label: 'Starter Provider' },
-      });
-      rateLimiter.reset();
-      redirectAfterLogin();
+      if (isSupabaseConfigured()) {
+        const res = await signInWithGoogle();
+        if (!res.success) { setError(res.error || 'Google login failed.'); setGLoading(false); return; }
+        // OAuth redirect — onAuthStateChange handles session
+      } else {
+        await new Promise(r => setTimeout(r, 1500));
+        login({
+          id: 'gp_' + Date.now(),
+          name: 'Provider User',
+          email: 'provider@gmail.com',
+          role: 'provider',
+          verified: true,
+          tier: { type: 'individual', level: 1, label: 'Starter Provider' },
+        });
+        rateLimiter.reset();
+        redirectAfterLogin();
+      }
     } catch {
       setError('Google login failed.');
     } finally {

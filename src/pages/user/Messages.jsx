@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   MessageCircle, Search, Send, ChevronLeft,
   MoreVertical, Check, CheckCheck,
@@ -6,8 +7,10 @@ import {
   User as UserIcon, Clock, Star, X,
   MapPin, Shield, BadgeCheck, Package, ChevronRight,
   Eye, EyeOff, ExternalLink, Calendar, MessageSquare,
+  PhoneOff,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useMessaging } from '../../context/MessagingContext.jsx';
 import { sanitize } from '../../utils/security.js';
 
 
@@ -22,120 +25,25 @@ import { sanitize } from '../../utils/security.js';
    • Service/product context on each conversation
    • Privacy controls — user chooses what providers see
    • Search, reply, date grouping, read receipts
+   • Voice call overlay via shared MessagingContext
 ════════════════════════════════════════════════════════════ */
 
-const MOCK_CONVERSATIONS = [
-  {
-    id: 'c1',
-    providerId: 'p_tunde01',
-    providerName: 'Tunde Properties',
-    providerRole: 'Agent',
-    providerAvatar: null,
-    listingTitle: '3 Bedroom Flat in Lekki Phase 1',
-    listingType: 'rental',
-    unread: 2,
-    lastMessageTime: '2026-02-13T08:30:00Z',
-    providerInfo: {
-      rating: 4.8,
-      reviewCount: 23,
-      verified: true,
-      joinedDate: 'Jan 2023',
-      location: 'Lekki, Lagos',
-      responseTime: 'Within 2 hours',
-      completedDeals: 47,
-      listings: [
-        { id: 'l1', title: '3 Bedroom Flat in Lekki Phase 1', type: 'rental', price: '₦2,500,000/yr' },
-        { id: 'l2', title: '2 Bedroom Shortlet — Victoria Island', type: 'shortlet', price: '₦85,000/night' },
-        { id: 'l3', title: '4 Bedroom Duplex — Ikeja GRA', type: 'rental', price: '₦4,500,000/yr' },
-      ],
-      recentReviews: [
-        { id: 'r1', author: 'Chioma N.', rating: 5, text: 'Very professional agent. Helped me find the perfect apartment quickly.', date: 'Jan 2026' },
-        { id: 'r2', author: 'Femi A.', rating: 4, text: 'Good service, responsive and knowledgeable about the area.', date: 'Dec 2025' },
-      ],
-      visibility: { location: true, rating: true, listings: true, reviews: true },
-    },
-    messages: [
-      { id: 'm1', from: 'user', text: 'Hi, is this property still available for viewing?', time: '2026-02-12T10:00:00Z', read: true },
-      { id: 'm2', from: 'provider', text: 'Good morning! Yes, the property is available. When would you like to schedule an inspection?', time: '2026-02-12T10:15:00Z', read: true },
-      { id: 'm3', from: 'user', text: 'This Saturday around 2PM would work for me. Is that okay?', time: '2026-02-12T10:20:00Z', read: true },
-      { id: 'm4', from: 'provider', text: 'Saturday 2PM works perfectly. The address is 15B Admiralty Way, Lekki Phase 1. Please come with a valid ID. I will meet you at the gate.', time: '2026-02-12T11:00:00Z', read: true },
-      { id: 'm5', from: 'provider', text: 'Also, the annual rent is ₦2.5M with a caution fee of ₦500K. Service charge is ₦350K. Let me know if you have questions about the fees.', time: '2026-02-13T08:30:00Z', read: false },
-    ],
-  },
-  {
-    id: 'c2',
-    providerId: 'p_lagos_land',
-    providerName: 'Lagos Land Hub',
-    providerRole: 'Seller',
-    providerAvatar: null,
-    listingTitle: 'Land for Sale — 500sqm Ibeju-Lekki',
-    listingType: 'land',
-    unread: 0,
-    lastMessageTime: '2026-02-11T16:00:00Z',
-    providerInfo: {
-      rating: 4.5,
-      reviewCount: 15,
-      verified: true,
-      joinedDate: 'Mar 2022',
-      location: 'Ibeju-Lekki, Lagos',
-      responseTime: 'Within 4 hours',
-      completedDeals: 31,
-      listings: [
-        { id: 'l4', title: 'Land for Sale — 500sqm Ibeju-Lekki', type: 'land', price: '₦15,000,000' },
-        { id: 'l5', title: 'Land for Sale — 1000sqm Epe', type: 'land', price: '₦8,000,000' },
-      ],
-      recentReviews: [
-        { id: 'r3', author: 'Bola O.', rating: 5, text: 'Genuine land seller. Documents were authentic and transaction was smooth.', date: 'Feb 2026' },
-      ],
-      visibility: { location: true, rating: true, listings: true, reviews: true },
-    },
-    messages: [
-      { id: 'm6', from: 'user', text: 'What documents are available for this land? C of O or Governor consent?', time: '2026-02-11T14:00:00Z', read: true },
-      { id: 'm7', from: 'provider', text: 'The land has an approved excision and gazette. We are currently processing the C of O. Survey plan is available.', time: '2026-02-11T14:30:00Z', read: true },
-      { id: 'm8', from: 'user', text: 'Thank you. I will review and get back to you.', time: '2026-02-11T16:00:00Z', read: true },
-    ],
-  },
-  {
-    id: 'c3',
-    providerId: 'p_decor_ng',
-    providerName: 'Decor Masters NG',
-    providerRole: 'Service Provider',
-    providerAvatar: null,
-    listingTitle: 'Premium Interior Design',
-    listingType: 'service',
-    unread: 1,
-    lastMessageTime: '2026-02-13T07:00:00Z',
-    providerInfo: {
-      rating: 4.9,
-      reviewCount: 41,
-      verified: true,
-      joinedDate: 'Aug 2023',
-      location: 'Surulere, Lagos',
-      responseTime: 'Within 1 hour',
-      completedDeals: 62,
-      listings: [
-        { id: 'l6', title: 'Premium Interior Design', type: 'service', price: 'From ₦1,500,000' },
-        { id: 'l7', title: 'Office Space Design', type: 'service', price: 'From ₦800,000' },
-        { id: 'l8', title: 'Furniture Sourcing', type: 'service', price: 'Varies' },
-      ],
-      recentReviews: [
-        { id: 'r4', author: 'Ngozi E.', rating: 5, text: 'Transformed my apartment beautifully! Highly recommend.', date: 'Jan 2026' },
-        { id: 'r5', author: 'Tunde L.', rating: 5, text: 'Excellent work on my office. Modern and functional.', date: 'Dec 2025' },
-      ],
-      visibility: { location: true, rating: true, listings: true, reviews: true },
-    },
-    messages: [
-      { id: 'm9', from: 'user', text: 'I need interior design for a 3-bedroom flat in Lekki. Modern minimalist style. What is your pricing?', time: '2026-02-10T09:00:00Z', read: true },
-      { id: 'm10', from: 'provider', text: 'Hi! For a 3-bed flat, our modern minimalist packages start from ₦1.5M including furniture sourcing. We can schedule a consultation visit first — it is free.', time: '2026-02-10T10:00:00Z', read: true },
-      { id: 'm11', from: 'provider', text: 'Just following up — would you like to book a free consultation this week?', time: '2026-02-13T07:00:00Z', read: false },
-    ],
-  },
-];
-
 const TYPE_EMOJI = {
-  rental: '🏠', buy: '🏡', land: '🗺️', service: '🔧',
-  shortlet: '🏨', shared: '👥', product: '📦',
+  rental: '\u{1F3E0}', buy: '\u{1F3E1}', land: '\u{1F5FA}\uFE0F', service: '\u{1F527}',
+  shortlet: '\u{1F3E8}', shared: '\u{1F465}', product: '\u{1F4E6}',
 };
+
+/* ── Adapter: convert context message shape to local display shape ── */
+function adaptMessage(msg, userId) {
+  return {
+    id:   msg.id,
+    from: msg.senderId === userId ? 'user' : 'provider',
+    text: msg.text || '',
+    file: msg.file || null,
+    time: new Date(msg.timestamp).toISOString(),
+    read: msg.status === 'read',
+  };
+}
 
 function formatMessageTime(dateStr) {
   const date = new Date(dateStr);
@@ -182,7 +90,24 @@ function StarRating({ rating, size = 10 }) {
 
 export default function Messages() {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState(MOCK_CONVERSATIONS);
+  const userId = user?.id || 'u_user_01';
+
+  const {
+    conversations,
+    sendMessage: ctxSendMessage,
+    setActive,
+    totalUnread,
+    addConversation,
+    startCall,
+    endCall,
+    callState,
+    getPeer,
+    loading,
+    typingMap,
+    setTyping,
+  } = useMessaging();
+
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeConvo, setActiveConvo] = useState(null);
   const [search, setSearch] = useState('');
   const [replyText, setReplyText] = useState('');
@@ -190,49 +115,127 @@ export default function Messages() {
   const [providerInfoTab, setProviderInfoTab] = useState('about');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const deepLinkHandled = useRef(false);
 
-  const totalUnread = conversations.reduce((s, c) => s + c.unread, 0);
+  /* ── Deep-link: auto-create conversation from property/service context ── */
+  useEffect(() => {
+    if (deepLinkHandled.current || loading) return;
+    const listingId    = searchParams.get('listing');
+    const providerId   = searchParams.get('provider');
+    const providerName = searchParams.get('providerName');
+    const title        = searchParams.get('title');
+    const type         = searchParams.get('type') || 'rental';
+    const roomName     = searchParams.get('room');
+
+    if (!listingId || !providerId) return;
+    deepLinkHandled.current = true;
+
+    // Check if conversation already exists for this listing+provider
+    const existing = conversations.find(
+      c => c.participants?.some(p => p.id === providerId) && c.listingTitle === title
+    );
+
+    if (existing) {
+      setActiveConvo(existing.id);
+      setActive(existing.id);
+      setSearchParams({}, { replace: true });
+      return;
+    }
+
+    // Build initial message based on context
+    let initialMsg = `Hi, I'm interested in "${title}".`;
+    if (roomName) {
+      initialMsg = `Hi, I'd like to inquire about the room "${roomName}" in "${title}".`;
+    }
+    if (type === 'shortlet') {
+      initialMsg = `Hi, I'm interested in booking "${title}". Is it available?`;
+    }
+    if (type === 'shared') {
+      initialMsg = roomName
+        ? `Hi, I'd like to inquire about the room "${roomName}" in "${title}". Is it still available?`
+        : `Hi, I'm interested in a room at "${title}". Can you share more details?`;
+    }
+    if (type === 'stay') {
+      initialMsg = `Hi, I'm interested in a long-term stay at "${title}". Can we discuss availability and terms?`;
+    }
+
+    const decodedName  = decodeURIComponent(providerName || 'Provider');
+    const decodedTitle = decodeURIComponent(title || 'Listing');
+    const roleLabel    = (type === 'shortlet' || type === 'shared' || type === 'stay') ? 'Host' : 'Agent';
+
+    const newConvo = {
+      id:           `c_${Date.now()}`,
+      listingId,
+      listingTitle: decodedTitle,
+      listingType:  type,
+      listingImage: null,
+      listingPrice: '',
+      type:         'inquiry',
+      participants: [
+        { id: providerId, name: decodedName, role: 'provider', roleLabel, avatar: null, online: false, verified: true },
+        { id: userId, name: user?.name || 'You', role: 'user', roleLabel: 'User', avatar: null, online: true, verified: true },
+      ],
+      peerMeta: {
+        rating: 4.5,
+        reviewCount: 0,
+        joinedDate: 'Jan 2024',
+        location: 'Lagos, Nigeria',
+        responseTime: 'Within 2 hours',
+        completedDeals: 0,
+        totalInquiries: 0,
+        listings: [{ id: listingId, title: decodedTitle, type, price: '' }],
+        recentReviews: [],
+        visibility: { location: true, rating: true, listings: true, reviews: true },
+      },
+      lastMessage: { text: initialMsg, timestamp: Date.now(), senderId: userId },
+      unreadCount: 0,
+      messages: [
+        {
+          id:        `m_${Date.now()}`,
+          senderId:  userId,
+          text:      initialMsg,
+          file:      null,
+          timestamp: Date.now(),
+          status:    'sent',
+          type:      'text',
+        },
+      ],
+    };
+
+    addConversation(newConvo);
+    setActiveConvo(newConvo.id);
+    setActive(newConvo.id);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, conversations, setSearchParams, loading, addConversation, setActive, userId, user]);
 
   /* ── Open conversation ──────────────────────────────────── */
   const openConvo = useCallback((id) => {
     setActiveConvo(id);
-    setConversations((prev) =>
-      prev.map((c) => c.id === id ? {
-        ...c, unread: 0,
-        messages: c.messages.map((m) => ({ ...m, read: true })),
-      } : c)
-    );
+    setActive(id);
     setReplyText('');
     setShowProviderInfo(false);
-  }, []);
+  }, [setActive]);
 
   /* ── Send message ───────────────────────────────────────── */
-  const sendMessage = useCallback((e) => {
+  const handleSendMessage = useCallback((e) => {
     e.preventDefault();
     const text = sanitize(replyText.trim());
     if (!text || !activeConvo) return;
 
-    const newMsg = {
-      id: 'msg_' + Date.now(),
-      from: 'user',
-      text,
-      time: new Date().toISOString(),
-      read: false,
-    };
-
-    setConversations((prev) =>
-      prev.map((c) => c.id === activeConvo ? {
-        ...c,
-        messages: [...c.messages, newMsg],
-        lastMessageTime: newMsg.time,
-      } : c)
-    );
+    ctxSendMessage(activeConvo, { text });
     setReplyText('');
     setTimeout(() => inputRef.current?.focus(), 50);
-  }, [replyText, activeConvo]);
+  }, [replyText, activeConvo, ctxSendMessage]);
+
+  /* ── Resolve active conversation data from context ──────── */
+  const activeConvoData = conversations.find((c) => c.id === activeConvo) || null;
+  const peer = activeConvoData ? getPeer(activeConvoData, userId) : null;
+  const peerMeta = activeConvoData?.peerMeta || null;
+
+  /* ── Adapt messages to local display shape ──────────────── */
+  const adaptedMessages = activeConvoData?.messages?.map(m => adaptMessage(m, userId)) || [];
 
   /* ── Auto-scroll ─────────────────────────────────────────── */
-  const activeConvoData = conversations.find((c) => c.id === activeConvo);
   useEffect(() => {
     if (activeConvoData) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -241,19 +244,24 @@ export default function Messages() {
 
   /* ── Filtered conversations ─────────────────────────────── */
   const filteredConvos = search.trim()
-    ? conversations.filter((c) =>
-        c.providerName.toLowerCase().includes(search.toLowerCase()) ||
-        c.listingTitle.toLowerCase().includes(search.toLowerCase())
-      )
+    ? conversations.filter((c) => {
+        const peerP = getPeer(c, userId);
+        const peerName = peerP?.name || '';
+        return peerName.toLowerCase().includes(search.toLowerCase()) ||
+          (c.listingTitle || '').toLowerCase().includes(search.toLowerCase());
+      })
     : conversations;
 
   /* ── Group messages by date ─────────────────────────────── */
-  const groupedMessages = activeConvoData?.messages.reduce((groups, msg) => {
+  const groupedMessages = adaptedMessages.reduce((groups, msg) => {
     const dateKey = new Date(msg.time).toDateString();
     if (!groups[dateKey]) groups[dateKey] = { date: msg.time, messages: [] };
     groups[dateKey].messages.push(msg);
     return groups;
   }, {});
+
+  /* ── Call overlay logic ─────────────────────────────────── */
+  const showCallOverlay = callState && peer && callState.peerName === peer.name;
 
   return (
       <div className="overflow-hidden bg-white dark:bg-gray-900 rounded-2xl shadow-card" style={{ height: 'calc(100vh - 200px)', minHeight: '500px' }}>
@@ -287,57 +295,67 @@ export default function Messages() {
               </div>
             </div>
 
-            {/* Conversation list */}
-            <div className="flex-1 overflow-y-auto scroll-y">
-              {filteredConvos.length === 0 ? (
-                <div className="p-8 text-center">
-                  <MessageCircle size={32} className="mx-auto mb-3 text-gray-200 dark:text-gray-700" />
-                  <p className="text-sm text-gray-400">No conversations yet</p>
-                </div>
-              ) : (
-                filteredConvos.map((convo) => {
-                  const lastMsg = convo.messages[convo.messages.length - 1];
-                  return (
-                    <button key={convo.id} onClick={() => openConvo(convo.id)}
-                      className={`w-full flex items-start gap-3 p-4 text-left border-b border-gray-50 dark:border-white/5 transition-colors
-                        ${activeConvo === convo.id
-                          ? 'bg-brand-gold/5 dark:bg-brand-gold/10'
-                          : 'hover:bg-gray-50 dark:hover:bg-white/5'
-                        }`}>
-                      <div className="relative flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full dark:bg-white/10 shrink-0">
-                        <span className="text-lg">{TYPE_EMOJI[convo.listingType] || '💬'}</span>
-                        {convo.unread > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-brand-gold text-white text-[8px] font-bold flex items-center justify-center">
-                            {convo.unread}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className={`text-sm font-semibold truncate ${convo.unread > 0 ? 'text-brand-charcoal-dark dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-                              {convo.providerName}
+            {/* Loading state */}
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="w-6 h-6 mx-auto mb-3 border-2 rounded-full border-brand-gold border-t-transparent animate-spin" />
+                <p className="text-sm text-gray-400">Loading conversations...</p>
+              </div>
+            ) : (
+              /* Conversation list */
+              <div className="flex-1 overflow-y-auto scroll-y">
+                {filteredConvos.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <MessageCircle size={32} className="mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+                    <p className="text-sm text-gray-400">No conversations yet</p>
+                  </div>
+                ) : (
+                  filteredConvos.map((convo) => {
+                    const convoPeer = getPeer(convo, userId);
+                    const lastMsg = convo.lastMessage;
+                    const lastMsgIsUser = lastMsg?.senderId === userId;
+                    return (
+                      <button key={convo.id} onClick={() => openConvo(convo.id)}
+                        className={`w-full flex items-start gap-3 p-4 text-left border-b border-gray-50 dark:border-white/5 transition-colors
+                          ${activeConvo === convo.id
+                            ? 'bg-brand-gold/5 dark:bg-brand-gold/10'
+                            : 'hover:bg-gray-50 dark:hover:bg-white/5'
+                          }`}>
+                        <div className="relative flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full dark:bg-white/10 shrink-0">
+                          <span className="text-lg">{TYPE_EMOJI[convo.listingType] || '\u{1F4AC}'}</span>
+                          {convo.unreadCount > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-brand-gold text-white text-[8px] font-bold flex items-center justify-center">
+                              {convo.unreadCount}
                             </span>
-                            {convo.providerInfo?.verified && <BadgeCheck size={12} className="text-blue-500 shrink-0" />}
-                          </div>
-                          <span className="text-[10px] text-gray-400 shrink-0 ml-2">
-                            {formatMessageTime(convo.lastMessageTime)}
-                          </span>
+                          )}
                         </div>
-                        <p className="text-[11px] text-gray-400 truncate mb-0.5">
-                          <span className="mr-1">{TYPE_EMOJI[convo.listingType] || '📋'}</span>
-                          {convo.listingTitle}
-                        </p>
-                        <p className={`text-xs truncate ${convo.unread > 0 ? 'text-brand-charcoal dark:text-gray-300 font-medium' : 'text-gray-400'}`}>
-                          {lastMsg?.from === 'user' ? 'You: ' : ''}{lastMsg?.text}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className={`text-sm font-semibold truncate ${convo.unreadCount > 0 ? 'text-brand-charcoal-dark dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                                {convoPeer?.name || 'Unknown'}
+                              </span>
+                              {convoPeer?.verified && <BadgeCheck size={12} className="text-blue-500 shrink-0" />}
+                            </div>
+                            <span className="text-[10px] text-gray-400 shrink-0 ml-2">
+                              {lastMsg?.timestamp ? formatMessageTime(new Date(lastMsg.timestamp).toISOString()) : ''}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-gray-400 truncate mb-0.5">
+                            <span className="mr-1">{TYPE_EMOJI[convo.listingType] || '\u{1F4CB}'}</span>
+                            {convo.listingTitle || 'Support'}
+                          </p>
+                          <p className={`text-xs truncate ${convo.unreadCount > 0 ? 'text-brand-charcoal dark:text-gray-300 font-medium' : 'text-gray-400'}`}>
+                            {lastMsgIsUser ? 'You: ' : ''}{lastMsg?.text || ''}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            )}
           </div>
 
           {/* ══ THREAD VIEW ═══════════════════════════════ */}
@@ -347,6 +365,25 @@ export default function Messages() {
               {/* Messages column */}
               <div className={`flex flex-col flex-1 min-w-0 ${showProviderInfo ? 'hidden lg:flex' : ''}`}>
 
+                {/* Call overlay */}
+                {showCallOverlay && (
+                  <div className="flex items-center justify-between px-4 py-3 bg-emerald-500 text-white animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <Phone size={16} />
+                      <span className="text-sm font-semibold">
+                        {callState.type === 'outgoing' && `Calling ${callState.peerName}...`}
+                        {callState.type === 'incoming' && `Incoming call from ${callState.peerName}...`}
+                        {callState.type === 'active' && `In call with ${callState.peerName}`}
+                      </span>
+                    </div>
+                    <button onClick={() => endCall()}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium transition-colors">
+                      <PhoneOff size={14} />
+                      End
+                    </button>
+                  </div>
+                )}
+
                 {/* Thread header */}
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-white/10">
                   <button onClick={() => { setActiveConvo(null); setShowProviderInfo(false); }}
@@ -354,20 +391,20 @@ export default function Messages() {
                     <ChevronLeft size={20} />
                   </button>
 
-                  {/* Clickable avatar → opens provider info */}
+                  {/* Clickable avatar - opens provider info */}
                   <button onClick={() => setShowProviderInfo(!showProviderInfo)}
                     className="flex items-center justify-center bg-gray-100 rounded-full w-9 h-9 dark:bg-white/10 shrink-0 hover:ring-2 hover:ring-brand-gold/30 transition-all">
-                    <span className="text-base">{TYPE_EMOJI[activeConvoData.listingType] || '💬'}</span>
+                    <span className="text-base">{TYPE_EMOJI[activeConvoData.listingType] || '\u{1F4AC}'}</span>
                   </button>
 
                   <div className="flex-1 min-w-0">
                     <button onClick={() => setShowProviderInfo(!showProviderInfo)}
                       className="text-sm font-semibold truncate text-brand-charcoal-dark dark:text-white hover:text-brand-gold transition-colors text-left flex items-center gap-1.5">
-                      {activeConvoData.providerName}
-                      {activeConvoData.providerInfo?.verified && <BadgeCheck size={12} className="text-blue-500 shrink-0" />}
+                      {peer?.name || 'Unknown'}
+                      {peer?.verified && <BadgeCheck size={12} className="text-blue-500 shrink-0" />}
                     </button>
                     <p className="text-[10px] text-gray-400 truncate">
-                      {activeConvoData.providerRole} · {activeConvoData.listingTitle}
+                      {peer?.roleLabel || peer?.role || ''} · {activeConvoData.listingTitle || 'Support'}
                     </p>
                   </div>
 
@@ -377,25 +414,30 @@ export default function Messages() {
                       title="Provider info">
                       <UserIcon size={16} />
                     </button>
-                    <button className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5">
+                    <button
+                      onClick={() => { if (peer) startCall(peer.id, peer.name); }}
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
+                      title="Call">
                       <Phone size={16} />
                     </button>
                   </div>
                 </div>
 
                 {/* Listing context card */}
-                <div className="flex items-center gap-3 px-4 py-2.5 bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
-                  <span className="text-base">{TYPE_EMOJI[activeConvoData.listingType] || '📋'}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-gray-400">Enquiry about</p>
-                    <p className="text-xs font-medium truncate text-brand-charcoal-dark dark:text-white">{activeConvoData.listingTitle}</p>
+                {activeConvoData.listingTitle && (
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
+                    <span className="text-base">{TYPE_EMOJI[activeConvoData.listingType] || '\u{1F4CB}'}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-gray-400">Enquiry about</p>
+                      <p className="text-xs font-medium truncate text-brand-charcoal-dark dark:text-white">{activeConvoData.listingTitle}</p>
+                    </div>
+                    <ChevronRight size={14} className="text-gray-300 shrink-0" />
                   </div>
-                  <ChevronRight size={14} className="text-gray-300 shrink-0" />
-                </div>
+                )}
 
                 {/* Messages area */}
                 <div className="flex-1 px-4 py-3 space-y-1 overflow-y-auto scroll-y">
-                  {groupedMessages && Object.values(groupedMessages).map((group) => (
+                  {Object.values(groupedMessages).map((group) => (
                     <div key={group.date}>
                       <div className="flex items-center gap-3 my-3">
                         <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
@@ -428,17 +470,26 @@ export default function Messages() {
                   <div ref={messagesEndRef} />
                 </div>
 
+                {/* Typing indicator */}
+                {activeConvo && typingMap[activeConvo] && (
+                  <div className="px-4 py-1.5">
+                    <span className="text-xs text-gray-400 italic animate-pulse">
+                      {typingMap[activeConvo]} is typing…
+                    </span>
+                  </div>
+                )}
+
                 {/* Reply input */}
                 <div className="px-4 py-3 border-t border-gray-100 dark:border-white/10">
-                  <form onSubmit={sendMessage} className="flex items-end gap-2">
+                  <form onSubmit={handleSendMessage} className="flex items-end gap-2">
                     <div className="relative flex-1">
                       <textarea ref={inputRef} value={replyText}
-                        onChange={(e) => setReplyText(sanitize(e.target.value))}
+                        onChange={(e) => { setReplyText(sanitize(e.target.value)); if (activeConvo) setTyping(activeConvo, true); }}
                         placeholder="Type a message..."
                         className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-gold/30 max-h-24"
                         rows={1} maxLength={1000}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(e); }
+                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }
                         }}
                       />
                     </div>
@@ -452,7 +503,7 @@ export default function Messages() {
               </div>
 
               {/* ── Provider info panel ────────────────────── */}
-              {showProviderInfo && activeConvoData.providerInfo && (
+              {showProviderInfo && peerMeta && (
                 <div className="flex flex-col w-full border-l border-gray-100 lg:w-80 shrink-0 dark:border-white/10 bg-white dark:bg-gray-900">
                   <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-white/10">
                     <p className="text-sm font-semibold text-brand-charcoal-dark dark:text-white">Provider Info</p>
@@ -468,19 +519,19 @@ export default function Messages() {
                         <UserIcon size={24} className="text-gray-400" />
                       </div>
                       <p className="mt-2 text-sm font-semibold text-brand-charcoal-dark dark:text-white flex items-center justify-center gap-1.5">
-                        {activeConvoData.providerName}
-                        {activeConvoData.providerInfo.verified && <BadgeCheck size={13} className="text-blue-500" />}
+                        {peer?.name || 'Unknown'}
+                        {peer?.verified && <BadgeCheck size={13} className="text-blue-500" />}
                       </p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{activeConvoData.providerRole}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{peer?.roleLabel || peer?.role || ''}</p>
 
-                      {activeConvoData.providerInfo.visibility.rating && (
+                      {peerMeta.visibility?.rating && (
                         <div className="flex items-center justify-center gap-2 mt-2">
-                          <StarRating rating={activeConvoData.providerInfo.rating} size={12} />
+                          <StarRating rating={peerMeta.rating} size={12} />
                           <span className="text-xs font-semibold text-brand-charcoal-dark dark:text-white">
-                            {activeConvoData.providerInfo.rating}
+                            {peerMeta.rating}
                           </span>
                           <span className="text-[10px] text-gray-400">
-                            ({activeConvoData.providerInfo.reviewCount} reviews)
+                            ({peerMeta.reviewCount} reviews)
                           </span>
                         </div>
                       )}
@@ -508,23 +559,23 @@ export default function Messages() {
                       {/* About tab */}
                       {providerInfoTab === 'about' && (
                         <div className="space-y-3">
-                          {activeConvoData.providerInfo.visibility.location && (
+                          {peerMeta.visibility?.location && (
                             <div className="flex items-center gap-2.5 text-xs">
                               <MapPin size={13} className="text-gray-400 shrink-0" />
-                              <span className="text-brand-charcoal-dark dark:text-white">{activeConvoData.providerInfo.location}</span>
+                              <span className="text-brand-charcoal-dark dark:text-white">{peerMeta.location}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-2.5 text-xs">
                             <Calendar size={13} className="text-gray-400 shrink-0" />
-                            <span className="text-brand-charcoal-dark dark:text-white">Joined {activeConvoData.providerInfo.joinedDate}</span>
+                            <span className="text-brand-charcoal-dark dark:text-white">Joined {peerMeta.joinedDate}</span>
                           </div>
                           <div className="flex items-center gap-2.5 text-xs">
                             <Clock size={13} className="text-gray-400 shrink-0" />
-                            <span className="text-brand-charcoal-dark dark:text-white">Responds {activeConvoData.providerInfo.responseTime.toLowerCase()}</span>
+                            <span className="text-brand-charcoal-dark dark:text-white">Responds {(peerMeta.responseTime || '').toLowerCase()}</span>
                           </div>
                           <div className="flex items-center gap-2.5 text-xs">
                             <Package size={13} className="text-gray-400 shrink-0" />
-                            <span className="text-brand-charcoal-dark dark:text-white">{activeConvoData.providerInfo.completedDeals} completed deals</span>
+                            <span className="text-brand-charcoal-dark dark:text-white">{peerMeta.completedDeals} completed deals</span>
                           </div>
 
                           {/* Trust badge */}
@@ -538,11 +589,11 @@ export default function Messages() {
                       )}
 
                       {/* Listings tab */}
-                      {providerInfoTab === 'listings' && activeConvoData.providerInfo.visibility.listings && (
+                      {providerInfoTab === 'listings' && peerMeta.visibility?.listings && (
                         <div className="space-y-2">
-                          {activeConvoData.providerInfo.listings.map((l) => (
+                          {(peerMeta.listings || []).map((l) => (
                             <div key={l.id} className="flex items-center gap-3 p-3 border border-gray-100 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
-                              <span className="text-base">{TYPE_EMOJI[l.type] || '📋'}</span>
+                              <span className="text-base">{TYPE_EMOJI[l.type] || '\u{1F4CB}'}</span>
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium truncate text-brand-charcoal-dark dark:text-white">{l.title}</p>
                                 <p className="text-[10px] text-brand-gold font-semibold">{l.price}</p>
@@ -551,27 +602,27 @@ export default function Messages() {
                             </div>
                           ))}
                           <p className="text-[10px] text-gray-400 text-center pt-1">
-                            {activeConvoData.providerInfo.listings.length} listing{activeConvoData.providerInfo.listings.length !== 1 ? 's' : ''}
+                            {(peerMeta.listings || []).length} listing{(peerMeta.listings || []).length !== 1 ? 's' : ''}
                           </p>
                         </div>
                       )}
 
                       {/* Reviews tab */}
-                      {providerInfoTab === 'reviews' && activeConvoData.providerInfo.visibility.reviews && (
+                      {providerInfoTab === 'reviews' && peerMeta.visibility?.reviews && (
                         <div className="space-y-3">
                           {/* Summary */}
                           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
                             <div className="text-center">
-                              <p className="text-2xl font-bold font-display text-brand-charcoal-dark dark:text-white">{activeConvoData.providerInfo.rating}</p>
-                              <StarRating rating={activeConvoData.providerInfo.rating} size={10} />
+                              <p className="text-2xl font-bold font-display text-brand-charcoal-dark dark:text-white">{peerMeta.rating}</p>
+                              <StarRating rating={peerMeta.rating} size={10} />
                             </div>
                             <div className="text-xs text-gray-400">
-                              <p>{activeConvoData.providerInfo.reviewCount} reviews</p>
+                              <p>{peerMeta.reviewCount} reviews</p>
                             </div>
                           </div>
 
                           {/* Review list */}
-                          {activeConvoData.providerInfo.recentReviews.map((r) => (
+                          {(peerMeta.recentReviews || []).map((r) => (
                             <div key={r.id} className="p-3 border border-gray-100 dark:border-white/10 rounded-xl">
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs font-medium text-brand-charcoal-dark dark:text-white">{r.author}</span>

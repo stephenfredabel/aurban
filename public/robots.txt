@@ -1,0 +1,20 @@
+# Aurban — Public marketplace pages only
+# Admin/provider dashboard pages must never be indexed.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /ax7-internal
+Disallow: /provider
+Disallow: /api/
+
+# Block common admin path guesses (defense in depth)
+Disallow: /console
+Disallow: /dashboard
+Disallow: /ops
+Disallow: /manage
+Disallow: /backstage
+Disallow: /internal
+
+# Sitemaps
+# Sitemap: https://aurban.com/sitemap.xml

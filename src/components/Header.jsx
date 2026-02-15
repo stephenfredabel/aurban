@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Search, X, Menu, User, Heart, Bell, MessageSquare,
+  Search, X, Menu, User, Heart, Bell, MessageSquare, ShoppingCart,
   LogOut, LayoutDashboard, ChevronDown,
   Settings, History, Sun, Moon,
 } from 'lucide-react';
@@ -10,9 +10,11 @@ import { useAuth }     from '../context/AuthContext.jsx';
 import { useProperty } from '../context/PropertyContext.jsx';
 import { sanitize }    from '../utils/security.js';
 import { useMessaging } from '../context/MessagingContext.jsx';
+import { useCart }      from '../context/CartContext.jsx';
 import AurbanLogo       from './AurbanLogo.jsx';
 import LanguageSwitcher from './language/LanguageSwitcher.jsx';
 import CurrencySwitcher from './CurrencySwitcher.jsx';
+import CartDrawer       from './marketplace/CartDrawer.jsx';
 
 /* ────────────────────────────────────────────────────────────
    HEADER — Top bar of Aurban
@@ -38,9 +40,11 @@ export default function Header() {
   const navigate                        = useNavigate();
   const location                        = useLocation();
 
+  const { itemCount }                 = useCart();
   const [searchOpen,  setSearchOpen]  = useState(false);
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [cartOpen,    setCartOpen]    = useState(false);
   const [inputValue,  setInputValue]  = useState(searchQuery || '');
 
   const searchInputRef = useRef(null);
@@ -189,6 +193,18 @@ export default function Header() {
                 <Bell size={16} />
               </button>
 
+              {/* Cart */}
+              <button onClick={() => setCartOpen(true)}
+                className="relative flex items-center justify-center w-8 h-8 text-gray-400 transition-colors rounded-lg hover:bg-gray-50 dark:hover:bg-white/5"
+                aria-label={`Cart${itemCount ? ` (${itemCount})` : ''}`}>
+                <ShoppingCart size={16} />
+                {itemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 bg-brand-gold rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+                    {itemCount > 9 ? '9+' : itemCount}
+                  </span>
+                )}
+              </button>
+
               {/* ── User Avatar (mobile: replaces "My Account" text) ── */}
               <div ref={profileRef} className="relative">
                 <button onClick={() => setProfileOpen(!profileOpen)}
@@ -266,8 +282,19 @@ export default function Header() {
               </div>
             </>
           ) : (
-            /* ── Guest: Login / Sign Up (END-USERS ONLY) ──── */
+            /* ── Guest: Cart + Login / Sign Up ──── */
             <div className="flex items-center gap-2">
+              {/* Cart — always visible, even for guests */}
+              <button onClick={() => setCartOpen(true)}
+                className="relative flex items-center justify-center w-8 h-8 text-gray-400 transition-colors rounded-lg hover:bg-gray-50 dark:hover:bg-white/5"
+                aria-label={`Cart${itemCount ? ` (${itemCount})` : ''}`}>
+                <ShoppingCart size={16} />
+                {itemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 bg-brand-gold rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+                    {itemCount > 9 ? '9+' : itemCount}
+                  </span>
+                )}
+              </button>
               <Link to="/login"
                 className="hidden px-3 py-1.5 text-sm font-medium transition-colors sm:block text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
                 {t('nav.login', 'Log in')}
@@ -310,6 +337,9 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* ═══ Cart drawer ═══ */}
+      {cartOpen && <CartDrawer onClose={() => setCartOpen(false)} />}
     </header>
   );
 }

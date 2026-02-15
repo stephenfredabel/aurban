@@ -13,6 +13,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { sanitize, RateLimiter } from '../../utils/security.js';
+import CategoryFieldsStep from '../../components/marketplace/CategoryFieldsStep.jsx';
+import ProductPreferenceSelector from '../../components/marketplace/ProductPreferenceSelector.jsx';
+import { getPreferenceGroupForSubcategory } from '../../data/productPreferences.js';
+import { PRODUCT_CATEGORY_MAP } from '../../data/categoryFields.js';
 
 /* ════════════════════════════════════════════════════════════
    SECURITY
@@ -49,6 +53,7 @@ const LISTING_TYPES = {
     categories: [
       { id: 'rental',   label: 'Rental',           emoji: '🏠' },
       { id: 'shortlet', label: 'Shortlet',         emoji: '🏨' },
+      { id: 'stay',     label: 'Furnished Stay',   emoji: '🛋️' },
       { id: 'buy',      label: 'For Sale',         emoji: '🏡' },
       { id: 'land',     label: 'Land',             emoji: '🗺️' },
       { id: 'shared',   label: 'Shared Apartment', emoji: '👥' },
@@ -84,20 +89,16 @@ const LISTING_TYPES = {
     icon: ShoppingBag,
     color: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600',
     categories: [
-      { id: 'cement',      label: 'Cement / Blocks',       emoji: '🧱' },
-      { id: 'roofing',     label: 'Roofing Materials',     emoji: '🏗️' },
-      { id: 'tiles',       label: 'Tiles / Flooring',      emoji: '🔲' },
-      { id: 'plumbing_mat',label: 'Plumbing Materials',    emoji: '🚿' },
-      { id: 'electrical_mat', label: 'Electrical Materials',emoji: '💡' },
-      { id: 'paint',       label: 'Paints / Finishes',     emoji: '🪣' },
-      { id: 'doors_windows', label: 'Doors & Windows',     emoji: '🚪' },
-      { id: 'furniture',   label: 'Furniture',             emoji: '🪑' },
-      { id: 'appliances',  label: 'Appliances',            emoji: '🔌' },
-      { id: 'generator',   label: 'Generators',            emoji: '⚙️' },
-      { id: 'tank',        label: 'Water Tanks',           emoji: '🛢️' },
-      { id: 'sand_granite',label: 'Sand / Granite',        emoji: '⛰️' },
-      { id: 'iron_steel',  label: 'Iron & Steel',          emoji: '🔩' },
-      { id: 'other_product', label: 'Other',               emoji: '📦' },
+      { id: 'building_materials',    label: 'Building Materials',    emoji: '🧱' },
+      { id: 'furniture_fittings',    label: 'Furniture & Fittings',  emoji: '🪑' },
+      { id: 'home_appliances',       label: 'Home Appliances',       emoji: '🔌' },
+      { id: 'interior_decor',        label: 'Interior Décor',        emoji: '🎨' },
+      { id: 'plumbing_sanitary',     label: 'Plumbing & Sanitary',   emoji: '🚿' },
+      { id: 'electrical_lighting',   label: 'Electrical & Lighting', emoji: '💡' },
+      { id: 'garden_outdoor',        label: 'Garden & Outdoor',      emoji: '🌿' },
+      { id: 'security_safety',       label: 'Security & Safety',     emoji: '🔒' },
+      { id: 'cleaning_maintenance',  label: 'Cleaning & Maintenance',emoji: '🧹' },
+      { id: 'professional_services', label: 'Professional Services', emoji: '👷' },
     ],
   },
 };
@@ -134,11 +135,32 @@ const AMENITIES = [
 const PRICE_PERIODS = {
   rental:   [{ id: 'year', label: '/year' }, { id: 'month', label: '/month' }, { id: '6months', label: '/6 months' }],
   shortlet: [{ id: 'night', label: '/night' }, { id: 'week', label: '/week' }, { id: 'weekend', label: '/weekend' }],
+  stay:     [{ id: 'month', label: '/month' }, { id: 'week', label: '/week' }, { id: 'year', label: '/year' }],
   buy:      [{ id: 'total', label: 'Total' }],
   land:     [{ id: 'total', label: 'Total' }, { id: 'sqm', label: '/sqm' }],
   shared:   [{ id: 'month', label: '/month' }, { id: 'year', label: '/year' }],
-  lease:    [{ id: 'year', label: '/year' }],
+  lease:    [{ id: 'year', label: '/year' }, { id: 'month', label: '/month' }],
   commercial: [{ id: 'year', label: '/year' }, { id: 'month', label: '/month' }, { id: 'sqm', label: '/sqm' }],
+};
+
+/* ── Categories that support multi-period "smart pricing" ── */
+const MULTI_PRICE_CATEGORIES = ['shortlet', 'stay', 'rental', 'lease'];
+
+const EXTRA_PRICE_FIELDS = {
+  shortlet: [
+    { id: 'weeklyPrice',  label: 'Weekly Rate (₦)',  hint: 'Discount for 7+ night stays',   period: '/week' },
+    { id: 'monthlyPrice', label: 'Monthly Rate (₦)', hint: 'Discount for 30+ night stays',  period: '/month' },
+  ],
+  stay: [
+    { id: 'weeklyPrice',  label: 'Weekly Rate (₦)',  hint: 'For short furnished stays',      period: '/week' },
+    { id: 'dailyPrice',   label: 'Daily Rate (₦)',   hint: 'For stays under a week',          period: '/day' },
+  ],
+  rental: [
+    { id: 'monthlyPrice', label: 'Monthly Rate (₦)', hint: 'For shorter-term rentals',       period: '/month' },
+  ],
+  lease: [
+    { id: 'monthlyPrice', label: 'Monthly Rate (₦)', hint: 'Monthly equivalent of lease',    period: '/month' },
+  ],
 };
 
 /* ════════════════════════════════════════════════════════════
@@ -158,7 +180,7 @@ const STATES = [
 const STEPS = {
   property: ['Type', 'Details', 'Photos', 'Amenities', 'Pricing', 'Inspection', 'Preview'],
   service:  ['Type', 'Details', 'Photos', 'Pricing', 'Availability', 'Preview'],
-  product:  ['Type', 'Details', 'Photos', 'Pricing', 'Preview'],
+  product:  ['Type', 'Details', 'Specs', 'Photos', 'Pricing', 'Preview'],
 };
 
 /* ════════════════════════════════════════════════════════════
@@ -256,6 +278,10 @@ export default function CreateListing() {
     // Pricing
     price: '',
     pricePeriod: '',
+    weeklyPrice: '',
+    monthlyPrice: '',
+    dailyPrice: '',
+    cleaningFee: '',
     cautionFee: '',
     serviceFee: '',
     legalFee: '',
@@ -285,6 +311,10 @@ export default function CreateListing() {
     deliveryAvailable: false,
     deliveryFee: '',
     warranty: '',
+    subcategory: '',
+    condition: 'new',
+    categoryFields: {},
+    preferences: null,     // structured preference engine: { product, attributes: {} }
 
     // Contact override
     contactPhone: '',
@@ -782,20 +812,66 @@ export default function CreateListing() {
 
           {/* Product-specific */}
           {listingType === 'product' && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              {/* Subcategory */}
+              {form.category && PRODUCT_CATEGORY_MAP[form.category]?.subcategories?.length > 0 && (
+                <div>
+                  <label className="block text-sm font-semibold text-brand-charcoal-dark dark:text-gray-200 mb-1.5">Subcategory</label>
+                  <select value={form.subcategory} onChange={(e) => set('subcategory', e.target.value)} className="input-field">
+                    <option value="">Select subcategory</option>
+                    {PRODUCT_CATEGORY_MAP[form.category].subcategories.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              )}
+              {/* Condition */}
               <div>
-                <label className="block text-sm font-semibold text-brand-charcoal-dark dark:text-gray-200 mb-1.5">Brand / Manufacturer</label>
-                <input type="text" value={form.brand} onChange={(e) => set('brand', e.target.value)}
-                  className="input-field" placeholder="e.g. Dangote, BUA" maxLength={80} />
+                <label className="block text-sm font-semibold text-brand-charcoal-dark dark:text-gray-200 mb-1.5">Condition</label>
+                <div className="flex gap-2">
+                  {['new', 'refurbished', 'used'].map(c => (
+                    <button key={c} type="button" onClick={() => set('condition', c)}
+                      className={`flex-1 py-2.5 text-xs font-bold rounded-xl border capitalize transition-colors ${
+                        form.condition === c
+                          ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                          : 'border-gray-200 dark:border-white/10 text-gray-500 hover:border-brand-gold/50'
+                      }`}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-brand-charcoal-dark dark:text-gray-200 mb-1.5">Warranty</label>
-                <input type="text" value={form.warranty} onChange={(e) => set('warranty', e.target.value)}
-                  className="input-field" placeholder="e.g. 1 year" maxLength={60} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-brand-charcoal-dark dark:text-gray-200 mb-1.5">Brand / Manufacturer</label>
+                  <input type="text" value={form.brand} onChange={(e) => set('brand', e.target.value)}
+                    className="input-field" placeholder="e.g. Dangote, BUA" maxLength={80} />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-brand-charcoal-dark dark:text-gray-200 mb-1.5">Warranty</label>
+                  <input type="text" value={form.warranty} onChange={(e) => set('warranty', e.target.value)}
+                    className="input-field" placeholder="e.g. 1 year" maxLength={60} />
+                </div>
               </div>
             </div>
           )}
         </div>
+      )}
+      {/* ══════════════════════════════════════════════════════
+          SPECS STEP (Products only — category-specific fields)
+      ══════════════════════════════════════════════════════ */}
+      {currentStepLabel === 'Specs' && (
+        form.subcategory && getPreferenceGroupForSubcategory(form.subcategory) ? (
+          <ProductPreferenceSelector
+            subcategory={form.subcategory}
+            values={form.preferences}
+            onChange={(prefs) => setForm(prev => ({ ...prev, preferences: prefs }))}
+          />
+        ) : (
+          <CategoryFieldsStep
+            category={form.category}
+            values={form.categoryFields}
+            onChange={(fields) => setForm(prev => ({ ...prev, categoryFields: fields }))}
+          />
+        )
       )}
       {/* ══════════════════════════════════════════════════════
           PHOTOS / MEDIA STEP
@@ -1072,6 +1148,60 @@ export default function CreateListing() {
                 ))}
               </div>
               {errors.pricePeriod && <p role="alert" className="mt-1 text-xs text-red-500">{errors.pricePeriod}</p>}
+            </div>
+          )}
+
+          {/* ── Smart Pricing — Multi-period rates (Airbnb-style) ── */}
+          {listingType === 'property' && MULTI_PRICE_CATEGORIES.includes(form.category) && EXTRA_PRICE_FIELDS[form.category] && (
+            <div className="p-4 space-y-3 border-2 border-dashed border-brand-gold/30 bg-brand-gold/5 dark:bg-brand-gold/5 rounded-2xl">
+              <div className="flex items-center gap-2 mb-1">
+                <DollarSign size={14} className="text-brand-gold" />
+                <span className="text-sm font-semibold text-brand-charcoal-dark dark:text-white">Smart Pricing</span>
+                <span className="text-[10px] px-2 py-0.5 bg-brand-gold/20 text-brand-gold rounded-full font-bold">Optional</span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Set additional rates to attract more bookings. Guests see the best rate for their stay duration.
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {EXTRA_PRICE_FIELDS[form.category].map((field) => (
+                  <div key={field.id}>
+                    <label className="block mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">{field.label}</label>
+                    <div className="relative">
+                      <span className="absolute text-xs text-gray-400 -translate-y-1/2 left-3 top-1/2">₦</span>
+                      <input
+                        type="text"
+                        value={formatPrice(form[field.id])}
+                        onChange={(e) => set(field.id, e.target.value.replace(/[^0-9]/g, ''))}
+                        className="text-sm input-field pl-7"
+                        placeholder="0"
+                        inputMode="numeric"
+                        maxLength={12}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{field.hint}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Cleaning fee for shortlet/stay */}
+              {(form.category === 'shortlet' || form.category === 'stay') && (
+                <div>
+                  <label className="block mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Cleaning Fee (₦)</label>
+                  <div className="relative">
+                    <span className="absolute text-xs text-gray-400 -translate-y-1/2 left-3 top-1/2">₦</span>
+                    <input
+                      type="text"
+                      value={formatPrice(form.cleaningFee)}
+                      onChange={(e) => set('cleaningFee', e.target.value.replace(/[^0-9]/g, ''))}
+                      className="text-sm input-field pl-7"
+                      placeholder="0"
+                      inputMode="numeric"
+                      maxLength={12}
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-0.5">One-time cleaning fee charged per booking</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -1456,6 +1586,22 @@ export default function CreateListing() {
               )}
               {form.negotiable && <span className="badge-green text-[10px] ml-2">Negotiable</span>}
             </div>
+
+            {/* Multi-period rates */}
+            {EXTRA_PRICE_FIELDS[form.category] && EXTRA_PRICE_FIELDS[form.category].some(f => Number(form[f.id]) > 0) && (
+              <div className="flex flex-wrap gap-2 -mt-2">
+                {EXTRA_PRICE_FIELDS[form.category].filter(f => Number(form[f.id]) > 0).map(f => (
+                  <span key={f.id} className="text-xs px-2.5 py-1 rounded-lg bg-brand-gold/10 text-brand-gold font-semibold">
+                    ₦{formatPrice(form[f.id])}{f.period}
+                  </span>
+                ))}
+                {Number(form.cleaningFee) > 0 && (
+                  <span className="text-xs px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400">
+                    +₦{formatPrice(form.cleaningFee)} cleaning
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Property specs */}
             {listingType === 'property' && form.category !== 'land' && (form.bedrooms || form.bathrooms) && (

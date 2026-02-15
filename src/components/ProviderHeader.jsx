@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   MessageSquare, Bell, Sun, Moon, ChevronDown,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth }      from '../context/AuthContext.jsx';
 import { useMessaging } from '../context/MessagingContext.jsx';
+import { isAdminRole, normalizeRole, ROLE_LABELS, ROLE_COLORS, ADMIN_ENTRY_PATH } from '../utils/rbac.js';
 import AurbanLogo       from './AurbanLogo.jsx';
 import LanguageSwitcher from './language/LanguageSwitcher.jsx';
 import CurrencySwitcher from './CurrencySwitcher.jsx';
@@ -21,30 +22,11 @@ import CurrencySwitcher from './CurrencySwitcher.jsx';
    for all /provider/* routes).
 ════════════════════════════════════════════════════════════ */
 
-const roleLabels = {
-  host:     'Host',
-  agent:    'Agent',
-  seller:   'Seller',
-  service:  'Service Provider',
-  provider: 'Provider',
-  admin:    'Admin',
-};
-
-const roleBadgeColors = {
-  host:     'bg-blue-50 dark:bg-blue-500/10 text-blue-600',
-  agent:    'bg-purple-50 dark:bg-purple-500/10 text-purple-600',
-  seller:   'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600',
-  service:  'bg-orange-50 dark:bg-orange-500/10 text-orange-600',
-  provider: 'bg-brand-gold/10 text-brand-gold',
-  admin:    'bg-red-50 dark:bg-red-500/10 text-red-600',
-};
 
 export default function ProviderHeader() {
   const { t }            = useTranslation();
   const { user, logout } = useAuth();
   const { totalUnread }  = useMessaging();
-  const navigate         = useNavigate();
-
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
 
@@ -75,8 +57,13 @@ export default function ProviderHeader() {
   /* ── Logout ─────────────────────────────────────────────── */
   const handleLogout = async () => {
     setProfileOpen(false);
+    // Capture admin state BEFORE logout clears user
+    const wasAdmin = isAdminRole(user?.role);
     await logout();
-    navigate('/');
+    // Admin → admin login portal (fully isolated)
+    // Provider → marketplace home
+    // Use window.location for full page reload to clear all state
+    window.location.href = wasAdmin ? ADMIN_ENTRY_PATH : '/';
   };
 
   /* ── User initials for avatar ───────────────────────────── */
@@ -86,8 +73,9 @@ export default function ProviderHeader() {
     return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
   };
 
-  const roleLabel = roleLabels[user?.role] || 'Provider';
-  const badgeColor = roleBadgeColors[user?.role] || 'bg-brand-gold/10 text-brand-gold';
+  const nRole      = normalizeRole(user?.role);
+  const roleLabel  = ROLE_LABELS[nRole] || 'Provider';
+  const badgeColor = ROLE_COLORS[nRole] || 'bg-brand-gold/10 text-brand-gold';
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 dark:bg-gray-950 dark:border-white/5">

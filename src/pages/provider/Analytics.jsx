@@ -9,6 +9,9 @@ import {
   AlertCircle, Info, ChevronRight, Filter,
   DollarSign, Percent, Activity, Layers,
   Shield, CheckCircle2, XCircle, Minus,
+  Camera, Play, FileText, Lightbulb,
+  Home, Wrench, ShoppingBag, LayoutGrid,
+  Building2, TrendingUp as TrendingUpIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { sanitize } from '../../utils/security.js';
@@ -134,6 +137,137 @@ const MOCK_QUALITY = {
   reviews: 85,
 };
 
+/* ── Competitive mock data — Individual providers ─────────── */
+const MOCK_COMPETITIVE_INDIVIDUAL = {
+  properties: {
+    yourRank: 12, totalProviders: 245, percentile: 'Top 5%',
+    avgQuality: 82, yourQuality: 87,
+    byType: [
+      { type: 'Rental', yourListings: 3, avgListings: 2.1, yourAvgPrice: 2500000, areaAvg: 2800000, yourViews: 1240, avgViews: 890, yourConversion: 3.3, avgConversion: 2.8 },
+      { type: 'Shortlet', yourListings: 1, avgListings: 1.4, yourAvgPrice: 85000, areaAvg: 92000, yourViews: 560, avgViews: 420, yourConversion: 5.1, avgConversion: 4.2 },
+      { type: 'Shared', yourListings: 1, avgListings: 0.8, yourAvgPrice: 450000, areaAvg: 480000, yourViews: 320, avgViews: 280, yourConversion: 2.1, avgConversion: 1.9 },
+    ],
+    strengths: ['Response time (1.2hrs vs avg 3.5hrs)', 'Photo quality (9.2/10)', 'Verification complete (trusted badge)'],
+    weaknesses: ['Missing virtual tours on 3 listings', 'Only 2 verified reviews', 'No shortlet in Abuja coverage'],
+  },
+  aurbanPro: {
+    yourRank: 5, totalProviders: 67, percentile: 'Top 8%',
+    categories: ['Plumbing'],
+    completedJobs: 23, avgJobs: 18,
+    yourRating: 4.8, avgRating: 4.3,
+    repeatClientRate: 42, avgRepeat: 28,
+    avgResponseTime: '1.2hrs', platformAvg: '3.5hrs',
+    suggestions: [
+      'Add electrical services to increase booking volume by ~30%',
+      'Get 2 more certifications to unlock Tier 3',
+      'Your response time is 3x faster than avg — highlight this in your profile',
+    ],
+  },
+  marketplace: {
+    yourRank: 8, totalSellers: 156, percentile: 'Top 5%',
+    totalProducts: 12, avgProducts: 7,
+    yourAvgPrice: 5200, categoryAvg: 5800,
+    yourOrderCount: 45, avgOrderCount: 28,
+    topCategories: [
+      { name: 'Building Materials', yourSales: 34, avgSales: 19 },
+      { name: 'Plumbing Supplies', yourSales: 11, avgSales: 9 },
+    ],
+    suggestions: [
+      'Your cement prices are 10% below average — consider a slight increase',
+      'Add delivery to Ogun state to capture 15% more orders',
+      'Bundle products (cement + rods) to increase average order value',
+    ],
+  },
+  summary: {
+    scores: { properties: 82, proServices: 75, marketplace: 88, quality: 87, growth: 72 },
+    topRecommendations: [
+      { title: 'Add virtual tours', description: 'Listings with virtual tours get 2.4x more inquiries', impact: 'High' },
+      { title: 'Expand Pro categories', description: 'Adding electrical services opens a ₦4.2M opportunity', impact: 'High' },
+      { title: 'Collect more reviews', description: 'Providers with 5+ reviews rank 40% higher', impact: 'Medium' },
+    ],
+    healthScore: 81,
+  },
+};
+
+const MOCK_COMPETITIVE_COMPANY = {
+  properties: {
+    yourRank: 3, totalProviders: 245, percentile: 'Top 1%',
+    avgQuality: 82, yourQuality: 91,
+    byType: [
+      { type: 'Rental', yourListings: 18, avgListings: 8, yourAvgPrice: 3200000, areaAvg: 2800000, yourViews: 8400, avgViews: 2100, yourConversion: 4.1, avgConversion: 2.8 },
+      { type: 'Sale', yourListings: 6, avgListings: 3, yourAvgPrice: 85000000, areaAvg: 72000000, yourViews: 4200, avgViews: 1800, yourConversion: 1.2, avgConversion: 0.8 },
+      { type: 'Lease', yourListings: 4, avgListings: 2, yourAvgPrice: 12000000, areaAvg: 10500000, yourViews: 1890, avgViews: 950, yourConversion: 2.8, avgConversion: 2.1 },
+      { type: 'Shortlet', yourListings: 8, avgListings: 3, yourAvgPrice: 95000, areaAvg: 92000, yourViews: 3200, avgViews: 1100, yourConversion: 6.2, avgConversion: 4.2 },
+      { type: 'Shared', yourListings: 3, avgListings: 1, yourAvgPrice: 480000, areaAvg: 480000, yourViews: 980, avgViews: 420, yourConversion: 3.1, avgConversion: 1.9 },
+    ],
+    strengths: ['Largest portfolio in Lekki area', 'Fastest response time in category', '91/100 quality score'],
+    weaknesses: ['Below-average review count per listing', 'No coverage in Abuja market', 'Higher pricing than area avg on sales'],
+    companyBenchmarks: [
+      { metric: 'Listings per team member', yours: '5.6', top10Avg: '7.2' },
+      { metric: 'Revenue per listing', yours: '₦890K', top10Avg: '₦1.2M' },
+      { metric: 'Client retention rate', yours: '68%', top10Avg: '82%' },
+      { metric: 'Avg. inquiry response', yours: '1.2hrs', top10Avg: '2.4hrs' },
+    ],
+    teamSize: 8, avgTeamSize: 4,
+    portfolioValue: '₦2.4B', avgPortfolioValue: '₦890M',
+    branchCount: 3,
+    managedUnits: 45, avgManagedUnits: 22,
+    marketShare: '3.2%', areaMarketShare: '8.5%',
+  },
+  aurbanPro: {
+    yourRank: 2, totalProviders: 67, percentile: 'Top 3%',
+    categories: ['Plumbing', 'Electrical', 'Painting'],
+    completedJobs: 142, avgJobs: 18,
+    yourRating: 4.9, avgRating: 4.3,
+    repeatClientRate: 56, avgRepeat: 28,
+    avgResponseTime: '0.8hrs', platformAvg: '3.5hrs',
+    teamUtilization: 78, industryAvg: 65,
+    avgJobsPerTechnician: 12, industryAvgPerTech: 8,
+    revenuePerEmployee: '₦450K/mo', industryAvgRevPerEmp: '₦320K/mo',
+    suggestions: [
+      'Add HVAC services — no company offers this on Aurban yet',
+      'Your team utilization is 78% — hire 2 more technicians to capture unmet demand',
+      'Create service bundles (plumbing + electrical) for new builds',
+    ],
+  },
+  marketplace: {
+    yourRank: 2, totalSellers: 156, percentile: 'Top 1%',
+    totalProducts: 48, avgProducts: 7,
+    yourAvgPrice: 6800, categoryAvg: 5800,
+    yourOrderCount: 312, avgOrderCount: 28,
+    topCategories: [
+      { name: 'Building Materials', yourSales: 189, avgSales: 19 },
+      { name: 'Plumbing Supplies', yourSales: 78, avgSales: 9 },
+      { name: 'Electrical', yourSales: 45, avgSales: 12 },
+    ],
+    storeRating: 4.7, avgStoreRating: 4.2,
+    fulfillmentRate: 96, avgFulfillment: 89,
+    returnRate: 2.1, avgReturn: 4.5,
+    inventoryTurnover: 3.2, avgTurnover: 2.1,
+    suggestions: [
+      'Your fulfillment rate (96%) is best-in-class — promote this in store branding',
+      'Add bulk pricing tiers to capture contractor orders',
+      'Expand to finishing materials — highest margin category on Aurban',
+    ],
+  },
+  summary: {
+    scores: { properties: 91, proServices: 88, marketplace: 94, quality: 91, growth: 85 },
+    topRecommendations: [
+      { title: 'Expand to Abuja', description: 'Your brand strength in Lagos can translate — Abuja has 40% less competition', impact: 'High' },
+      { title: 'Add HVAC services', description: 'Zero competition on Aurban, growing demand with new builds', impact: 'High' },
+      { title: 'Improve client retention', description: 'Your 68% retention vs top-10 avg of 82% — implement follow-up campaigns', impact: 'Medium' },
+    ],
+    healthScore: 90,
+  },
+};
+
+const COMP_SUB_TABS = [
+  { id: 'properties', label: 'Properties', icon: Home },
+  { id: 'aurbanPro',  label: 'Aurban Pro', icon: Wrench },
+  { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag },
+  { id: 'summary',    label: 'Summary',     icon: LayoutGrid },
+];
+
 /* ── Helpers ──────────────────────────────────────────────── */
 function formatNum(n) {
   if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
@@ -196,6 +330,10 @@ export default function Analytics() {
   const [activeSection, setActiveSection] = useState('overview');
   const [expandedListing, setExpandedListing] = useState(null);
   const [sortBy, setSortBy] = useState('views');
+  const [compTab, setCompTab] = useState('properties');
+
+  const isCompany = user?.accountType === 'company';
+  const compData = isCompany ? MOCK_COMPETITIVE_COMPANY : MOCK_COMPETITIVE_INDIVIDUAL;
 
   const kpi = MOCK_KPI[period];
   const chartData = MOCK_CHART_DATA[period];
@@ -701,105 +839,492 @@ export default function Analytics() {
       )}
 
       {/* ══════════════════════════════════════════════════════
-          COMPETITIVE SECTION
+          COMPETITIVE SECTION — Intra-Aurban intelligence
       ══════════════════════════════════════════════════════ */}
       {activeSection === 'competitive' && (
         <>
-          {/* Market position overview */}
-          <div className="p-5 text-white bg-brand-charcoal-dark rounded-2xl">
-            <p className="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">Your Market Position</p>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <Award size={20} className="text-brand-gold mx-auto mb-1.5" />
-                <p className="text-2xl font-bold font-display">#3</p>
-                <p className="text-[10px] text-gray-400">Avg Search Rank</p>
-              </div>
-              <div className="text-center">
-                <Target size={20} className="text-emerald-400 mx-auto mb-1.5" />
-                <p className="text-2xl font-bold font-display">Top 15%</p>
-                <p className="text-[10px] text-gray-400">Provider Tier</p>
-              </div>
-              <div className="text-center">
-                <Crown size={20} className="text-purple-400 mx-auto mb-1.5" />
-                <p className="text-2xl font-bold font-display">82</p>
-                <p className="text-[10px] text-gray-400">Quality Score</p>
-              </div>
-            </div>
+          {/* Sub-tab navigation */}
+          <div className="flex gap-1.5 overflow-x-auto scroll-x pb-1">
+            {COMP_SUB_TABS.map(({ id, label, icon: Icon }) => (
+              <button key={id} onClick={() => setCompTab(id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 transition-all border
+                  ${compTab === id
+                    ? 'border-brand-gold bg-brand-gold/5 text-brand-charcoal-dark dark:text-white'
+                    : 'border-gray-200 dark:border-white/10 text-gray-400 hover:border-gray-300 dark:hover:border-white/20'
+                  }`}>
+                <Icon size={13} />
+                {label}
+              </button>
+            ))}
           </div>
 
-          {/* Area price comparison */}
-          <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
-            <h3 className="mb-1 text-sm font-semibold text-brand-charcoal-dark dark:text-white">Price Comparison by Area</h3>
-            <p className="text-[11px] text-gray-400 mb-4">How your pricing compares to similar listings</p>
-
-            <div className="space-y-4">
-              {sortedListings.filter((l) => l.status === 'active').map((listing) => {
-                const diff = ((listing.yourPrice - listing.avgPrice) / listing.avgPrice * 100).toFixed(0);
-                const isBelow = listing.yourPrice <= listing.avgPrice;
-                return (
-                  <div key={listing.id}>
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate mb-1.5">{listing.title}</p>
-                    <div className="relative h-8 overflow-hidden rounded-lg bg-gray-50 dark:bg-white/5">
-                      {/* Average price marker */}
-                      <div className="absolute top-0 bottom-0 w-0.5 bg-gray-300 dark:bg-white/20 z-10" style={{ left: '50%' }} />
-                      {/* Your price bar */}
-                      <div
-                        className={`absolute top-1 bottom-1 rounded-md ${isBelow ? 'bg-emerald-500/60' : 'bg-orange-500/60'}`}
-                        style={{
-                          left: isBelow ? `${50 + Number(diff) / 2}%` : '50%',
-                          width: `${Math.abs(Number(diff)) / 2}%`,
-                          minWidth: '8px',
-                        }}
-                      />
+          {/* ─── PROPERTIES SUB-TAB ─────────────────────────── */}
+          {compTab === 'properties' && (() => {
+            const p = compData.properties;
+            return (
+              <>
+                {/* Position card */}
+                <div className="p-5 text-white bg-brand-charcoal-dark rounded-2xl">
+                  <p className="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">Your Properties Position</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <Award size={20} className="text-brand-gold mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">#{p.yourRank}</p>
+                      <p className="text-[10px] text-gray-400">of {p.totalProviders} providers</p>
                     </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] text-gray-400">Area avg: {formatMoney(listing.avgPrice)}</span>
-                      <span className={`text-[10px] font-bold ${isBelow ? 'text-emerald-500' : 'text-orange-500'}`}>
-                        Your price: {formatMoney(listing.yourPrice)} ({diff}%)
-                      </span>
+                    <div className="text-center">
+                      <Target size={20} className="text-emerald-400 mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">{p.percentile}</p>
+                      <p className="text-[10px] text-gray-400">Percentile</p>
+                    </div>
+                    <div className="text-center">
+                      <Crown size={20} className="text-purple-400 mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">{p.yourQuality}</p>
+                      <p className="text-[10px] text-gray-400">vs avg {p.avgQuality}</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* How to improve */}
-          <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
-            <h3 className="flex items-center gap-2 mb-3 text-sm font-semibold text-brand-charcoal-dark dark:text-white">
-              <Zap size={14} className="text-brand-gold" /> How to Climb Rankings
-            </h3>
-            <div className="space-y-2.5">
-              {[
-                { label: 'Complete ID verification', impact: 'High', done: false, icon: Shield },
-                { label: 'Add 10+ photos per listing', impact: 'High', done: true, icon: Camera },
-                { label: 'Write 200+ word descriptions', impact: 'Medium', done: false, icon: FileText },
-                { label: 'Respond to inquiries within 1 hour', impact: 'High', done: true, icon: Clock },
-                { label: 'Add virtual tour video', impact: 'Medium', done: false, icon: Play },
-                { label: 'Get 5+ reviews from clients', impact: 'High', done: false, icon: Star },
-                { label: 'Enable fee transparency', impact: 'Medium', done: true, icon: DollarSign },
-                { label: 'Keep prices within area average', impact: 'Low', done: true, icon: Target },
-              ].map(({ label, impact, done, icon: Icon }) => (
-                <div key={label} className="flex items-center gap-3 py-1.5">
-                  {done
-                    ? <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                    : <div className="w-4 h-4 border-2 border-gray-300 rounded-full dark:border-gray-600 shrink-0" />
-                  }
-                  <span className={`text-sm flex-1 ${done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>{label}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold
-                    ${impact === 'High' ? 'bg-red-50 dark:bg-red-500/10 text-red-500'
-                      : impact === 'Medium' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600'
-                        : 'bg-gray-100 dark:bg-white/5 text-gray-400'
-                    }`}>
-                    {impact}
-                  </span>
                 </div>
-              ))}
-            </div>
-            <p className="text-[10px] text-gray-400 mt-3">
-              Complete high-impact actions first. Each action improves your quality score and search ranking.
-            </p>
-          </div>
+
+                {/* By property type table */}
+                <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                  <h3 className="mb-1 text-sm font-semibold text-brand-charcoal-dark dark:text-white">Performance by Property Type</h3>
+                  <p className="text-[11px] text-gray-400 mb-4">Your listings vs area averages across all property types</p>
+                  <div className="overflow-x-auto -mx-2">
+                    <table className="w-full min-w-[600px] text-xs">
+                      <thead>
+                        <tr className="border-b border-gray-100 dark:border-white/5">
+                          <th className="text-left py-2 px-2 font-semibold text-gray-500">Type</th>
+                          <th className="text-center py-2 px-2 font-semibold text-gray-500">Listings</th>
+                          <th className="text-center py-2 px-2 font-semibold text-gray-500">Avg Price</th>
+                          <th className="text-center py-2 px-2 font-semibold text-gray-500">Views</th>
+                          <th className="text-center py-2 px-2 font-semibold text-gray-500">Conversion</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {p.byType.map((row) => (
+                          <tr key={row.type} className="border-b border-gray-50 dark:border-white/5">
+                            <td className="py-2.5 px-2 font-semibold text-brand-charcoal-dark dark:text-white">{row.type}</td>
+                            <td className="py-2.5 px-2 text-center">
+                              <span className="font-bold text-brand-charcoal-dark dark:text-white">{row.yourListings}</span>
+                              <span className="text-gray-400 ml-1">/ {row.avgListings} avg</span>
+                            </td>
+                            <td className="py-2.5 px-2 text-center">
+                              <span className={`font-bold ${row.yourAvgPrice <= row.areaAvg ? 'text-emerald-500' : 'text-orange-500'}`}>
+                                {formatMoney(row.yourAvgPrice)}
+                              </span>
+                              <span className="text-gray-400 block text-[10px]">mkt {formatMoney(row.areaAvg)}</span>
+                            </td>
+                            <td className="py-2.5 px-2 text-center">
+                              <span className={`font-bold ${row.yourViews >= row.avgViews ? 'text-emerald-500' : 'text-orange-500'}`}>
+                                {formatNum(row.yourViews)}
+                              </span>
+                              <span className="text-gray-400 block text-[10px]">avg {formatNum(row.avgViews)}</span>
+                            </td>
+                            <td className="py-2.5 px-2 text-center">
+                              <span className={`font-bold ${row.yourConversion >= row.avgConversion ? 'text-emerald-500' : 'text-orange-500'}`}>
+                                {row.yourConversion}%
+                              </span>
+                              <span className="text-gray-400 block text-[10px]">avg {row.avgConversion}%</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Strengths & Weaknesses */}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                    <h4 className="flex items-center gap-2 mb-3 text-sm font-semibold text-emerald-600">
+                      <CheckCircle2 size={14} /> Strengths
+                    </h4>
+                    <div className="space-y-2">
+                      {p.strengths.map((s) => (
+                        <div key={s} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
+                          <CheckCircle2 size={12} className="text-emerald-500 mt-0.5 shrink-0" />
+                          <span>{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                    <h4 className="flex items-center gap-2 mb-3 text-sm font-semibold text-amber-600">
+                      <AlertCircle size={14} /> Areas to Improve
+                    </h4>
+                    <div className="space-y-2">
+                      {p.weaknesses.map((w) => (
+                        <div key={w} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
+                          <AlertCircle size={12} className="text-amber-500 mt-0.5 shrink-0" />
+                          <span>{w}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* COMPANY ONLY — Benchmarks + Market Share */}
+                {isCompany && (
+                  <>
+                    <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                      <h3 className="flex items-center gap-2 mb-4 text-sm font-semibold text-brand-charcoal-dark dark:text-white">
+                        <Building2 size={14} className="text-brand-gold" /> Company Benchmarks
+                      </h3>
+                      <div className="space-y-3">
+                        {p.companyBenchmarks.map((b) => (
+                          <div key={b.metric} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-white/5 last:border-0">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{b.metric}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-brand-charcoal-dark dark:text-white">{b.yours}</span>
+                              <span className="text-[10px] text-gray-400">top-10: {b.top10Avg}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {[
+                        { label: 'Market Share', value: p.marketShare, sub: `Area: ${p.areaMarketShare}` },
+                        { label: 'Portfolio Value', value: p.portfolioValue, sub: `Avg: ${p.avgPortfolioValue}` },
+                        { label: 'Managed Units', value: p.managedUnits, sub: `Avg: ${p.avgManagedUnits}` },
+                        { label: 'Team Size', value: p.teamSize, sub: `Avg: ${p.avgTeamSize}` },
+                      ].map((c) => (
+                        <div key={c.label} className="p-3.5 bg-white dark:bg-gray-900 rounded-2xl shadow-card text-center">
+                          <p className="text-lg font-bold font-display text-brand-charcoal-dark dark:text-white">{c.value}</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">{c.label}</p>
+                          <p className="text-[9px] text-gray-400">{c.sub}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
+
+          {/* ─── AURBAN PRO SUB-TAB ─────────────────────────── */}
+          {compTab === 'aurbanPro' && (() => {
+            const ap = compData.aurbanPro;
+            return (
+              <>
+                {/* Rank + Stats */}
+                <div className="p-5 text-white bg-brand-charcoal-dark rounded-2xl">
+                  <p className="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">Your Pro Services Position</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <Award size={20} className="text-brand-gold mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">#{ap.yourRank}</p>
+                      <p className="text-[10px] text-gray-400">of {ap.totalProviders}</p>
+                    </div>
+                    <div className="text-center">
+                      <Target size={20} className="text-emerald-400 mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">{ap.percentile}</p>
+                      <p className="text-[10px] text-gray-400">Percentile</p>
+                    </div>
+                    <div className="text-center">
+                      <Star size={20} className="text-brand-gold mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">{ap.yourRating}</p>
+                      <p className="text-[10px] text-gray-400">avg {ap.avgRating}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Categories */}
+                <div className="flex flex-wrap gap-2">
+                  {ap.categories.map((c) => (
+                    <span key={c} className="px-3 py-1.5 text-xs font-semibold rounded-full bg-brand-gold/10 text-brand-gold">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Performance bars */}
+                <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                  <h3 className="mb-4 text-sm font-semibold text-brand-charcoal-dark dark:text-white">Performance vs Platform</h3>
+                  <div className="space-y-4">
+                    {[
+                      { label: 'Completed Jobs', yours: ap.completedJobs, avg: ap.avgJobs, max: Math.max(ap.completedJobs, ap.avgJobs) * 1.2, suffix: '' },
+                      { label: 'Repeat Clients', yours: ap.repeatClientRate, avg: ap.avgRepeat, max: 100, suffix: '%' },
+                      { label: 'Rating', yours: ap.yourRating * 20, avg: ap.avgRating * 20, max: 100, suffix: '', displayYours: ap.yourRating, displayAvg: ap.avgRating },
+                    ].map((item) => (
+                      <div key={item.label}>
+                        <div className="flex items-center justify-between mb-1.5 text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
+                          <span className="font-bold text-brand-charcoal-dark dark:text-white">
+                            {item.displayYours ?? item.yours}{item.suffix}
+                            <span className="font-normal text-gray-400 ml-1.5">avg {item.displayAvg ?? item.avg}{item.suffix}</span>
+                          </span>
+                        </div>
+                        <div className="relative h-3 overflow-hidden bg-gray-100 rounded-full dark:bg-white/5">
+                          <div className="h-full rounded-full bg-brand-gold/60 transition-all duration-700"
+                            style={{ width: `${Math.min((item.yours / item.max) * 100, 100)}%` }} />
+                          <div className="absolute top-0 bottom-0 w-0.5 bg-gray-400 dark:bg-gray-500"
+                            style={{ left: `${Math.min((item.avg / item.max) * 100, 100)}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Response time highlight */}
+                  <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-start gap-2.5">
+                    <Zap size={14} className="text-emerald-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                      <strong>Response time: {ap.avgResponseTime}</strong> — platform average is {ap.platformAvg}. You're {(parseFloat(ap.platformAvg) / parseFloat(ap.avgResponseTime)).toFixed(1)}x faster.
+                    </p>
+                  </div>
+                </div>
+
+                {/* COMPANY ONLY — Team utilization */}
+                {isCompany && ap.teamUtilization && (
+                  <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                    <h3 className="flex items-center gap-2 mb-4 text-sm font-semibold text-brand-charcoal-dark dark:text-white">
+                      <Building2 size={14} className="text-brand-gold" /> Team Performance
+                    </h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="p-3 text-center bg-gray-50 dark:bg-white/5 rounded-xl">
+                        <p className="text-lg font-bold font-display text-brand-charcoal-dark dark:text-white">{ap.teamUtilization}%</p>
+                        <p className="text-[10px] text-gray-400">Utilization</p>
+                        <p className="text-[9px] text-gray-400">ind. avg {ap.industryAvg}%</p>
+                      </div>
+                      <div className="p-3 text-center bg-gray-50 dark:bg-white/5 rounded-xl">
+                        <p className="text-lg font-bold font-display text-brand-charcoal-dark dark:text-white">{ap.avgJobsPerTechnician}</p>
+                        <p className="text-[10px] text-gray-400">Jobs/Tech</p>
+                        <p className="text-[9px] text-gray-400">ind. avg {ap.industryAvgPerTech}</p>
+                      </div>
+                      <div className="p-3 text-center bg-gray-50 dark:bg-white/5 rounded-xl">
+                        <p className="text-lg font-bold font-display text-brand-charcoal-dark dark:text-white">{ap.revenuePerEmployee}</p>
+                        <p className="text-[10px] text-gray-400">Rev/Employee</p>
+                        <p className="text-[9px] text-gray-400">ind. avg {ap.industryAvgRevPerEmp}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Smart Suggestions */}
+                <div className="space-y-2.5">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-brand-charcoal-dark dark:text-white">
+                    <Lightbulb size={14} className="text-brand-gold" /> Smart Suggestions
+                  </h3>
+                  {ap.suggestions.map((s, i) => (
+                    <div key={i} className="p-3.5 bg-brand-gold/5 border border-brand-gold/20 rounded-xl flex items-start gap-2.5">
+                      <Lightbulb size={14} className="text-brand-gold mt-0.5 shrink-0" />
+                      <p className="text-xs text-gray-700 dark:text-gray-300">{s}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+
+          {/* ─── MARKETPLACE SUB-TAB ────────────────────────── */}
+          {compTab === 'marketplace' && (() => {
+            const m = compData.marketplace;
+            return (
+              <>
+                {/* Seller rank */}
+                <div className="p-5 text-white bg-brand-charcoal-dark rounded-2xl">
+                  <p className="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">Your Marketplace Position</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <Award size={20} className="text-brand-gold mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">#{m.yourRank}</p>
+                      <p className="text-[10px] text-gray-400">of {m.totalSellers} sellers</p>
+                    </div>
+                    <div className="text-center">
+                      <ShoppingBag size={20} className="text-emerald-400 mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">{m.totalProducts}</p>
+                      <p className="text-[10px] text-gray-400">avg {m.avgProducts} products</p>
+                    </div>
+                    <div className="text-center">
+                      <Target size={20} className="text-purple-400 mx-auto mb-1.5" />
+                      <p className="text-2xl font-bold font-display">{m.percentile}</p>
+                      <p className="text-[10px] text-gray-400">Percentile</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order & pricing stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                    <p className="text-[10px] text-gray-400 mb-1">Your Orders</p>
+                    <p className="text-xl font-bold font-display text-brand-charcoal-dark dark:text-white">{m.yourOrderCount}</p>
+                    <p className="text-[10px] text-gray-400">avg seller: {m.avgOrderCount}</p>
+                    <div className={`flex items-center gap-0.5 mt-1 text-[10px] font-semibold ${m.yourOrderCount > m.avgOrderCount ? 'text-emerald-500' : 'text-orange-500'}`}>
+                      {m.yourOrderCount > m.avgOrderCount ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                      {((m.yourOrderCount / m.avgOrderCount - 1) * 100).toFixed(0)}% vs avg
+                    </div>
+                  </div>
+                  <div className="p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                    <p className="text-[10px] text-gray-400 mb-1">Avg Price</p>
+                    <p className="text-xl font-bold font-display text-brand-charcoal-dark dark:text-white">₦{m.yourAvgPrice.toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-400">category: ₦{m.categoryAvg.toLocaleString()}</p>
+                    <div className={`flex items-center gap-0.5 mt-1 text-[10px] font-semibold ${m.yourAvgPrice <= m.categoryAvg ? 'text-emerald-500' : 'text-orange-500'}`}>
+                      {m.yourAvgPrice <= m.categoryAvg ? '↓ Below avg' : '↑ Above avg'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category breakdown */}
+                <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                  <h3 className="mb-4 text-sm font-semibold text-brand-charcoal-dark dark:text-white">Sales by Category</h3>
+                  <div className="space-y-3">
+                    {m.topCategories.map((cat) => {
+                      const max = Math.max(cat.yourSales, cat.avgSales) * 1.2;
+                      return (
+                        <div key={cat.name}>
+                          <div className="flex items-center justify-between mb-1.5 text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">{cat.name}</span>
+                            <span className="font-bold text-brand-charcoal-dark dark:text-white">
+                              {cat.yourSales} <span className="font-normal text-gray-400">/ avg {cat.avgSales}</span>
+                            </span>
+                          </div>
+                          <div className="flex gap-1 h-2.5">
+                            <div className="h-full rounded-full bg-brand-gold transition-all duration-700"
+                              style={{ width: `${(cat.yourSales / max) * 100}%` }} />
+                            <div className="h-full rounded-full bg-gray-200 dark:bg-white/10 transition-all duration-700"
+                              style={{ width: `${(cat.avgSales / max) * 100}%` }} />
+                          </div>
+                          <div className="flex items-center gap-3 mt-1 text-[9px] text-gray-400">
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-gold" /> You</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-200 dark:bg-white/10" /> Avg seller</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* COMPANY ONLY — Store metrics */}
+                {isCompany && m.storeRating && (
+                  <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                    <h3 className="flex items-center gap-2 mb-4 text-sm font-semibold text-brand-charcoal-dark dark:text-white">
+                      <Building2 size={14} className="text-brand-gold" /> Store Performance
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {[
+                        { label: 'Store Rating', value: m.storeRating, sub: `avg ${m.avgStoreRating}`, good: m.storeRating >= m.avgStoreRating },
+                        { label: 'Fulfillment', value: `${m.fulfillmentRate}%`, sub: `avg ${m.avgFulfillment}%`, good: m.fulfillmentRate >= m.avgFulfillment },
+                        { label: 'Return Rate', value: `${m.returnRate}%`, sub: `avg ${m.avgReturn}%`, good: m.returnRate <= m.avgReturn },
+                        { label: 'Inv. Turnover', value: `${m.inventoryTurnover}x`, sub: `avg ${m.avgTurnover}x`, good: m.inventoryTurnover >= m.avgTurnover },
+                      ].map((met) => (
+                        <div key={met.label} className="p-3 text-center bg-gray-50 dark:bg-white/5 rounded-xl">
+                          <p className={`text-lg font-bold font-display ${met.good ? 'text-emerald-500' : 'text-orange-500'}`}>{met.value}</p>
+                          <p className="text-[10px] text-gray-400">{met.label}</p>
+                          <p className="text-[9px] text-gray-400">{met.sub}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Smart Suggestions */}
+                <div className="space-y-2.5">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-brand-charcoal-dark dark:text-white">
+                    <Lightbulb size={14} className="text-brand-gold" /> Smart Suggestions
+                  </h3>
+                  {m.suggestions.map((s, i) => (
+                    <div key={i} className="p-3.5 bg-brand-gold/5 border border-brand-gold/20 rounded-xl flex items-start gap-2.5">
+                      <Lightbulb size={14} className="text-brand-gold mt-0.5 shrink-0" />
+                      <p className="text-xs text-gray-700 dark:text-gray-300">{s}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+
+          {/* ─── SUMMARY SUB-TAB ────────────────────────────── */}
+          {compTab === 'summary' && (() => {
+            const s = compData.summary;
+            const axes = [
+              { key: 'properties', label: 'Properties' },
+              { key: 'proServices', label: 'Pro Services' },
+              { key: 'marketplace', label: 'Marketplace' },
+              { key: 'quality', label: 'Quality' },
+              { key: 'growth', label: 'Growth' },
+            ];
+            return (
+              <>
+                {/* Health Score */}
+                <div className="p-5 text-white bg-brand-charcoal-dark rounded-2xl">
+                  <p className="mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">Overall Provider Health</p>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-20 h-20">
+                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                        <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                        <circle cx="18" cy="18" r="15.915" fill="none"
+                          stroke={s.healthScore >= 85 ? '#10b981' : s.healthScore >= 70 ? '#d4a843' : '#f97316'}
+                          strokeWidth="3" strokeDasharray={`${s.healthScore} ${100 - s.healthScore}`} strokeLinecap="round" />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xl font-bold font-display">{s.healthScore}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold">{s.healthScore >= 85 ? 'Excellent' : s.healthScore >= 70 ? 'Good' : 'Needs Work'}</p>
+                      <p className="text-xs text-gray-400">Weighted composite across all verticals</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Radar-style scores (CSS bars representation) */}
+                <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                  <h3 className="mb-4 text-sm font-semibold text-brand-charcoal-dark dark:text-white">Vertical Scores</h3>
+                  <div className="space-y-3">
+                    {axes.map(({ key, label }) => {
+                      const score = s.scores[key];
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center justify-between mb-1 text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">{label}</span>
+                            <span className={`font-bold text-xs ${getScoreColor(score)}`}>{score}/100</span>
+                          </div>
+                          <div className="h-2.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-700 ${getScoreBg(score)}`}
+                              style={{ width: `${score}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Top Recommendations */}
+                <div className="space-y-2.5">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-brand-charcoal-dark dark:text-white">
+                    <Zap size={14} className="text-brand-gold" /> Top Recommendations
+                  </h3>
+                  {s.topRecommendations.map((rec, i) => (
+                    <div key={i} className="p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <h4 className="text-sm font-semibold text-brand-charcoal-dark dark:text-white">
+                          {i + 1}. {rec.title}
+                        </h4>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold
+                          ${rec.impact === 'High' ? 'bg-red-50 dark:bg-red-500/10 text-red-500'
+                            : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600'
+                          }`}>
+                          {rec.impact} Impact
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{rec.description}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Account type hint */}
+                <div className="p-3.5 bg-blue-50 dark:bg-blue-500/10 rounded-xl flex items-start gap-2.5">
+                  <Info size={14} className="text-blue-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    {isCompany
+                      ? 'Company accounts get deeper benchmarks including team utilization, portfolio value, and market share comparisons on each vertical tab.'
+                      : 'Upgrade to a Company account to unlock team benchmarks, market share tracking, and portfolio-level analytics.'}
+                  </p>
+                </div>
+              </>
+            );
+          })()}
         </>
       )}
 

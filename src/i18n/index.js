@@ -8,6 +8,7 @@ import enOnboarding from './locales/en/onboarding.json';
 import enDashboard  from './locales/en/dashboard.json';
 import enProperties from './locales/en/properties.json';
 import enErrors     from './locales/en/errors.json';
+import enAdmin      from './locales/en/admin.json';
 
 // Nigerian languages — bundled (primary market)
 import haCommon  from './locales/ha/common.json';
@@ -33,7 +34,7 @@ i18next
   .use(initReactI18next)
   .init({
     resources: {
-      en:  { common: enCommon, onboarding: enOnboarding, dashboard: enDashboard, properties: enProperties, errors: enErrors },
+      en:  { common: enCommon, onboarding: enOnboarding, dashboard: enDashboard, properties: enProperties, errors: enErrors, admin: enAdmin },
       ha:  { common: haCommon },
       yo:  { common: yoCommon },
       ig:  { common: igCommon },

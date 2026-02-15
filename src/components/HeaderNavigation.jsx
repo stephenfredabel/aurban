@@ -5,7 +5,7 @@ import { useTranslation }    from 'react-i18next';
    HEADER NAVIGATION — Category tab strip below the main header
 
    RULES:
-   • Shows on PUBLIC pages (home, properties, services, marketplace)
+   • Shows on PUBLIC pages (home, properties, marketplace)
    • HIDDEN on /dashboard/* and /provider/* routes
    • Desktop: centred horizontal tabs
    • Mobile: horizontal scroll strip
@@ -27,8 +27,11 @@ export default function HeaderNavigation() {
     { label: t('nav.lease',       'Lease'),        to: '/properties?category=lease'  },
     { label: t('nav.buy',         'Buy'),          to: '/properties?category=buy'    },
     { label: t('nav.land',        'Land'),         to: '/properties?category=land'   },
-    { label: t('nav.services',    'Services'),     to: '/services'                   },
+    { label: t('nav.shortlets',   'Shortlets'),     to: '/shortlets'                  },
+    { label: t('nav.shared',      'Shared'),        to: '/shared'                     },
+    { label: t('nav.relocation', 'Relocation'),   to: '/relocation'                 },
     { label: t('nav.marketplace', 'Marketplace'),  to: '/marketplace'                },
+    { label: t('nav.pro',         'Aurban Pro'),   to: '/pro'                        },
   ];
 
   const isActive = (tab) => {

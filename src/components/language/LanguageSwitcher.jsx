@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Globe, Check, Search, ChevronDown, X } from 'lucide-react';
-import { useLanguage } from '../../hook/useLanguage.js';
+import { useLanguage } from '../../hooks/useLanguage.js';
 import { REGION_LABELS } from '../../i18n/config.js';
 
 /**

@@ -3,9 +3,9 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Heart, MessageCircle, Clock, Calendar,
-  FileText, Settings, User, LogOut, Home,
+  FileText, Settings, User, LogOut, Home, Package, Wrench,
   ChevronLeft, Menu, X,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, BarChart2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -34,6 +34,9 @@ const sidebarLinks = [
   { to: '/dashboard/wishlist',   icon: Heart,           labelKey: 'dashboard.wishlist'                },
   { to: '/dashboard/messages',   icon: MessageCircle,   labelKey: 'dashboard.messages'                },
   { to: '/dashboard/bookings',   icon: Calendar,        labelKey: 'booking.title'                     },
+  { to: '/dashboard/orders',    icon: Package,         labelKey: 'dashboard.orders',  fallback: 'Orders' },
+  { to: '/dashboard/pro-bookings', icon: Wrench,       labelKey: 'dashboard.proBookings', fallback: 'Pro Bookings' },
+  { to: '/dashboard/analytics', icon: BarChart2,      labelKey: 'dashboard.analytics', fallback: 'Analytics' },
   { to: '/dashboard/history',    icon: Clock,           labelKey: 'dashboard.history'                 },
   { to: '/dashboard/agreements', icon: FileText,        labelKey: 'dashboard.agreements'              },
   { to: '/dashboard/settings',   icon: Settings,        labelKey: 'dashboard.settings'                },
@@ -97,7 +100,7 @@ export default function UserDashboardLayout({ children }) {
 
       {/* Navigation */}
       <nav className="flex flex-col gap-0.5">
-        {sidebarLinks.map(({ to, icon: Icon, labelKey, exact }) => {
+        {sidebarLinks.map(({ to, icon: Icon, labelKey, exact, fallback }) => {
           const active = isLinkActive(to, exact);
           return (
             <NavLink
@@ -114,7 +117,7 @@ export default function UserDashboardLayout({ children }) {
               }
             >
               <Icon size={16} />
-              <span>{t(labelKey)}</span>
+              <span>{t(labelKey, fallback)}</span>
             </NavLink>
           );
         })}

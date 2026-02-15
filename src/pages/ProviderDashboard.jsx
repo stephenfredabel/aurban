@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Eye, MessageCircle, TrendingUp, Wallet,
@@ -8,7 +8,9 @@ import {
   BarChart2, DollarSign, Users, Package,
 } from 'lucide-react';
 import { useAuth }           from '../context/AuthContext.jsx';
+import { isAdminRole }       from '../utils/rbac.js';
 import DashboardLayout       from '../Layout/DashboardLayout.jsx';
+import * as propertyService  from '../services/property.service.js';
 
 /* ── Sub-page imports ─────────────────────────────────────── */
 import ProviderMessages    from './provider/Messages.jsx';
@@ -17,6 +19,43 @@ import ProviderReviews     from './provider/Reviews.jsx';
 import ProviderSettings    from './provider/Settings.jsx';
 import ProviderProfile     from './provider/Profile.jsx';
 import ProviderBookings    from './provider/Bookings.jsx';
+import ProviderOrders     from './provider/ProviderOrders.jsx';
+import ProviderOrderDetail from './provider/ProviderOrderDetail.jsx';
+
+/* ── Aurban Pro sub-page imports ───────────────────────────── */
+import ProviderProBookings    from './provider/ProBookings.jsx';
+import ProviderProBookingDetail from './provider/ProBookingDetail.jsx';
+import ProviderProListings    from './provider/ProListings.jsx';
+import CreateProListing       from './provider/CreateProListing.jsx';
+import ProEarnings            from './provider/ProEarnings.jsx';
+
+/* ── Company sub-page imports ─────────────────────────────── */
+import CompanyStore           from './provider/CompanyStore.jsx';
+import TeamManagement         from '../components/provider/TeamManagement.jsx';
+
+/* ── Admin page imports (lazy-loaded for code splitting) ──── */
+const AdminDashboard      = lazy(() => import('./admin/AdminDashboard.jsx'));
+const UserManagement      = lazy(() => import('./admin/UserManagement.jsx'));
+const ListingModeration   = lazy(() => import('./admin/ListingModeration.jsx'));
+const BookingOversight    = lazy(() => import('./admin/BookingOversight.jsx'));
+const PaymentManagement   = lazy(() => import('./admin/PaymentManagement.jsx'));
+const PlatformAnalytics   = lazy(() => import('./admin/PlatformAnalytics.jsx'));
+const AdminReports        = lazy(() => import('./admin/Reports.jsx'));
+const PlatformSettings    = lazy(() => import('./admin/PlatformSettings.jsx'));
+const AuditLogs           = lazy(() => import('./admin/AuditLogs.jsx'));
+const ProviderVerification = lazy(() => import('./admin/ProviderVerification.jsx'));
+const SupportTickets      = lazy(() => import('./admin/SupportTickets.jsx'));
+const ComplianceKYC       = lazy(() => import('./admin/ComplianceKYC.jsx'));
+const AdminManagement     = lazy(() => import('./admin/AdminManagement.jsx'));
+const MarketplaceOrders   = lazy(() => import('./admin/MarketplaceOrders.jsx'));
+const VendorModeration    = lazy(() => import('./admin/VendorModeration.jsx'));
+const DisputeResolution   = lazy(() => import('./admin/DisputeResolution.jsx'));
+/* ── Aurban Pro Admin pages ───────────────────────────────── */
+const ProEscrowDashboard       = lazy(() => import('./admin/ProEscrowDashboard.jsx'));
+const ProSafetyMonitoring      = lazy(() => import('./admin/ProSafetyMonitoring.jsx'));
+const ProRectificationMgmt     = lazy(() => import('./admin/ProRectificationManagement.jsx'));
+const ProProviderVerification  = lazy(() => import('./admin/ProProviderVerification.jsx'));
+const ProSystemConfig          = lazy(() => import('./admin/ProSystemConfig.jsx'));
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER DASHBOARD — Full dashboard for hosts, agents,
@@ -34,6 +73,7 @@ const TABS = [
   { id: 'analytics',   label: 'Analytics',   icon: BarChart2      },
   { id: 'payouts',     label: 'Payouts',     icon: Wallet         },
   { id: 'bookings',    label: 'Bookings',    icon: Calendar       },
+  { id: 'orders',      label: 'Orders',      icon: Package        },
   { id: 'messages',    label: 'Messages',    icon: MessageCircle  },
   { id: 'agreements',  label: 'Agreements',  icon: FileText       },
   { id: 'reviews',     label: 'Reviews',     icon: Star           },
@@ -43,9 +83,34 @@ const TABS = [
 const TAB_MAP = {
   '': 'overview', 'overview': 'overview', 'listings': 'listings',
   'analytics': 'analytics', 'payouts': 'payouts',
-  'bookings': 'bookings', 'messages': 'messages', 'agreements': 'agreements',
+  'bookings': 'bookings', 'orders': 'orders', 'messages': 'messages', 'agreements': 'agreements',
   'reviews': 'reviews', 'settings': 'settings', 'profile': 'profile',
+  'pro-bookings': 'pro-bookings', 'pro-listings': 'pro-listings', 'pro-earnings': 'pro-earnings',
+  'company-store': 'company-store', 'team': 'team',
 };
+
+const ADMIN_TAB_MAP = {
+  '': 'overview', 'users': 'users', 'moderation': 'moderation',
+  'bookings': 'bookings', 'payments': 'payments', 'analytics': 'analytics',
+  'reports': 'reports', 'platform-settings': 'platform-settings',
+  'verification': 'verification', 'tickets': 'tickets',
+  'kyc': 'kyc', 'audit': 'audit',
+  'admin-management': 'admin-management',
+  'marketplace-orders': 'marketplace-orders',
+  'vendor-moderation': 'vendor-moderation',
+  'disputes': 'disputes',
+  'pro-escrow': 'pro-escrow',
+  'pro-safety': 'pro-safety',
+  'pro-rectification': 'pro-rectification',
+  'pro-verification': 'pro-verification',
+  'pro-config': 'pro-config',
+};
+
+const AdminFallback = () => (
+  <div className="flex items-center justify-center py-20">
+    <div className="w-8 h-8 border-2 rounded-full border-brand-gold border-t-transparent animate-spin" />
+  </div>
+);
 
 /* ── Mock data (replace with API calls in production) ─────── */
 const MOCK_LISTINGS = [
@@ -69,15 +134,37 @@ export default function ProviderDashboard() {
   const { user }              = useAuth();
   const location              = useLocation();
   const navigate              = useNavigate();
+  const isAdmin               = isAdminRole(user?.role);
 
   /* ── Derive tab directly from URL (no state sync needed) ── */
   const segment = location.pathname.replace('/provider', '').replace(/^\//, '') || '';
-  const tab     = TAB_MAP[segment] || 'overview';
+  const baseSegment = segment.split('/')[0];
+  const tab     = isAdmin
+    ? (ADMIN_TAB_MAP[baseSegment] || ADMIN_TAB_MAP[segment] || 'overview')
+    : (TAB_MAP[baseSegment] || TAB_MAP[segment] || 'overview');
 
-  const [listings, setListings] = useState(MOCK_LISTINGS);
-  const [listingFilter, setListingFilter] = useState('all');
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [listings, setListings]             = useState(MOCK_LISTINGS);
+  const [listingsLoading, setListingsLoading] = useState(false);
+  const [listingFilter, setListingFilter]   = useState('all');
+  const [deleteConfirm, setDeleteConfirm]   = useState(null);
   const [analyticsPeriod, setAnalyticsPeriod] = useState('30d');
+
+  // Fetch listings from API (fall back to mock)
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchListings() {
+      setListingsLoading(true);
+      try {
+        const res = await propertyService.getProperties();
+        if (!cancelled && res.success && res.properties) {
+          setListings(res.properties);
+        }
+      } catch { /* keep MOCK_LISTINGS */ }
+      if (!cancelled) setListingsLoading(false);
+    }
+    fetchListings();
+    return () => { cancelled = true; };
+  }, []);
 
   // Redirect /provider/new → /listings/new
   useEffect(() => {
@@ -85,6 +172,43 @@ export default function ProviderDashboard() {
       navigate('/listings/new', { replace: true });
     }
   }, [segment, navigate]);
+
+  /* ── Admin page routing (lazy-loaded) ─────────────────────── */
+  if (isAdmin) {
+    const adminPage = (() => {
+      switch (tab) {
+        case 'overview':           return <AdminDashboard />;
+        case 'users':              return <UserManagement />;
+        case 'moderation':         return <ListingModeration />;
+        case 'bookings':           return <BookingOversight />;
+        case 'payments':           return <PaymentManagement />;
+        case 'analytics':          return <PlatformAnalytics />;
+        case 'reports':            return <AdminReports />;
+        case 'platform-settings':  return <PlatformSettings />;
+        case 'verification':       return <ProviderVerification />;
+        case 'tickets':            return <SupportTickets />;
+        case 'kyc':                return <ComplianceKYC />;
+        case 'audit':              return <AuditLogs />;
+        case 'admin-management':   return <AdminManagement />;
+        case 'marketplace-orders': return <MarketplaceOrders />;
+        case 'vendor-moderation':  return <VendorModeration />;
+        case 'disputes':           return <DisputeResolution />;
+        case 'pro-escrow':         return <ProEscrowDashboard />;
+        case 'pro-safety':         return <ProSafetyMonitoring />;
+        case 'pro-rectification':  return <ProRectificationMgmt />;
+        case 'pro-verification':   return <ProProviderVerification />;
+        case 'pro-config':         return <ProSystemConfig />;
+        default:                   return <AdminDashboard />;
+      }
+    })();
+    return (
+      <DashboardLayout>
+        <Suspense fallback={<AdminFallback />}>
+          {adminPage}
+        </Suspense>
+      </DashboardLayout>
+    );
+  }
 
   /* ── Listing actions ────────────────────────────────────── */
   const toggleListing = (id) => {
@@ -111,6 +235,25 @@ export default function ProviderDashboard() {
 
   /* ── Delegate to full sub-pages ──────────────────────────── */
   if (tab === 'bookings')   return <DashboardLayout><ProviderBookings /></DashboardLayout>;
+  if (tab === 'orders' || segment.startsWith('orders/')) {
+    const orderId = segment.startsWith('orders/') ? segment.split('/')[1] : null;
+    return <DashboardLayout>{orderId ? <ProviderOrderDetail /> : <ProviderOrders />}</DashboardLayout>;
+  }
+  /* ── Aurban Pro sub-pages ────────────────────────────────── */
+  if (tab === 'pro-bookings' || segment.startsWith('pro-bookings/')) {
+    const proBookingId = segment.startsWith('pro-bookings/') ? segment.split('/')[1] : null;
+    return <DashboardLayout>{proBookingId ? <ProviderProBookingDetail /> : <ProviderProBookings />}</DashboardLayout>;
+  }
+  if (tab === 'pro-listings' || segment.startsWith('pro-listings/')) {
+    const isNew = segment === 'pro-listings/new';
+    return <DashboardLayout>{isNew ? <CreateProListing /> : <ProviderProListings />}</DashboardLayout>;
+  }
+  if (tab === 'pro-earnings') return <DashboardLayout><ProEarnings /></DashboardLayout>;
+
+  /* ── Company sub-pages ─────────────────────────────────────── */
+  if (tab === 'company-store') return <DashboardLayout><CompanyStore preview /></DashboardLayout>;
+  if (tab === 'team')          return <DashboardLayout><TeamManagement /></DashboardLayout>;
+
   if (tab === 'messages')   return <DashboardLayout><ProviderMessages /></DashboardLayout>;
   if (tab === 'agreements') return <DashboardLayout><ProviderAgreements /></DashboardLayout>;
   if (tab === 'reviews')    return <DashboardLayout><ProviderReviews /></DashboardLayout>;

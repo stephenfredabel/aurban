@@ -125,7 +125,7 @@ export default function ProviderDashboard() {
               className="bg-brand-gold hover:bg-brand-gold-dark text-brand-charcoal-dark text-xs font-semibold px-4 py-2 rounded-full transition-colors flex items-center gap-1.5">
               <PlusCircle size={14} /> Add Listing
             </Link>
-            <Link to="../provider/Profile.jsx"
+            <Link to="/provider/profile"
               className="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors flex items-center gap-1.5">
               <Edit size={14} /> Edit Profile
             </Link>
@@ -182,10 +182,10 @@ export default function ProviderDashboard() {
             {/* Quick actions */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[
-                { label: 'Messages', count: 3, icon: MessageCircle, path: './Messages.jsx', color: 'text-blue-500' },
-                { label: 'Reviews', count: 5, icon: Star, path: './Reviews.jsx', color: 'text-brand-gold' },
-                { label: 'Agreements', count: 2, icon: Shield, path: './Agreements.jsx', color: 'text-emerald-500' },
-                { label: 'Profile', icon: Edit, path: './Profile.jsx', color: 'text-purple-500' },
+                { label: 'Messages', count: 3, icon: MessageCircle, path: '/provider/messages', color: 'text-blue-500' },
+                { label: 'Reviews', count: 5, icon: Star, path: '/provider/reviews', color: 'text-brand-gold' },
+                { label: 'Agreements', count: 2, icon: Shield, path: '/provider/agreements', color: 'text-emerald-500' },
+                { label: 'Profile', icon: Edit, path: '/provider/profile', color: 'text-purple-500' },
               ].map((a, i) => (
                 <Link key={i} to={a.path}
                   className="p-4 transition-shadow bg-white dark:bg-gray-900 rounded-2xl shadow-card hover:shadow-md group">

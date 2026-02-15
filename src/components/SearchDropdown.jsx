@@ -2,14 +2,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate }     from 'react-router-dom';
 import { Search, X, TrendingUp } from 'lucide-react';
 import { useTranslation }  from 'react-i18next';
-import { properties }      from '../data/properties.js';
 import { useProperty }     from '../context/PropertyContext.jsx';
 
 const POPULAR = ['Lekki', 'Victoria Island', 'Abuja', 'Port Harcourt', 'Nairobi'];
 
 export default function SearchDropdown() {
   const { t }                    = useTranslation();
-  const { searchQuery, setSearchQuery } = useProperty();
+  const { properties, searchQuery, setSearchQuery } = useProperty();
   const [query,   setQuery]      = useState(searchQuery || '');
   const [open,    setOpen]       = useState(false);
   const [results, setResults]    = useState([]);
@@ -38,7 +37,7 @@ export default function SearchDropdown() {
       )
       .slice(0, 5);
     setResults(matched);
-  }, []);
+  }, [properties]);
 
   const handleChange = (e) => {
     const val = e.target.value;

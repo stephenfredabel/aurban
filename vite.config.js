@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
+        'X-Robots-Tag': 'noindex, nofollow',
       },
     },
 
@@ -42,6 +43,7 @@ export default defineConfig(({ mode }) => {
             icons:     ['lucide-react'],
             i18n:      ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
             phone:     ['libphonenumber-js'],
+            supabase:  ['@supabase/supabase-js'],
           },
         },
       },

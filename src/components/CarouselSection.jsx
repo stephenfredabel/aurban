@@ -111,7 +111,7 @@ export default function CarouselSection({
               key={item.id ?? i}
               className={[
                 'flex-none',
-                'w-[calc(50%-8px)] lg:w-[calc(25%-12px)]',
+                'w-[75vw] sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)]',
                 'scroll-snap-align-start',
               ].join(' ')}
               style={{ scrollSnapAlign: 'start' }}

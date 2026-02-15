@@ -307,6 +307,7 @@ export default function Settings() {
     showJoinDate:       true,
     showListingCount:   true,
     allowUserMessages:  true,
+    allowCalls:         true,
     showOnlineStatus:   true,
   });
   const updatePrivacy = (key, value) => setPrivacy((p) => ({ ...p, [key]: value }));
@@ -847,6 +848,8 @@ export default function Settings() {
             <div className="space-y-1">
               <Toggle enabled={privacy.allowUserMessages} onChange={(v) => updatePrivacy('allowUserMessages', v)}
                 label="Allow messages from users" description="Users can initiate conversations with you" />
+              <Toggle enabled={privacy.allowCalls} onChange={(v) => updatePrivacy('allowCalls', v)}
+                label="Allow in-app calls" description="Users can call you through Aurban's in-app calling" />
               <Toggle enabled={privacy.showOnlineStatus} onChange={(v) => updatePrivacy('showOnlineStatus', v)}
                 label="Show online status" description="Users can see when you are active" />
               <Toggle enabled={privacy.showResponseTime} onChange={(v) => updatePrivacy('showResponseTime', v)}

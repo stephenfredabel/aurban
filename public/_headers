@@ -1,0 +1,42 @@
+# Aurban — Netlify HTTP Headers
+# Prevents search engine indexing of admin/provider pages.
+# Also adds security headers across the board.
+
+# ── Global security headers ────────────────────────────────
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# ── Admin login (non-obvious path) — block indexing ────────
+/ax7-internal
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+  Cache-Control: no-store, no-cache, must-revalidate, private
+  X-Frame-Options: DENY
+
+# ── Provider/admin dashboard — block indexing ──────────────
+/provider/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+  Cache-Control: no-store, no-cache, must-revalidate, private
+  X-Frame-Options: DENY
+
+# ── Block common admin path guesses ────────────────────────
+/admin/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+  Cache-Control: no-store, no-cache, must-revalidate, private
+
+/console/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/dashboard/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/ops/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/manage/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/internal/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet

@@ -1,21 +1,30 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { hasPermission, isAdminRole, normalizeRole } from '../utils/rbac.js';
 
 /* ════════════════════════════════════════════════════════════
-   PROTECTED ROUTE — Auth + optional role guard
-   
+   PROTECTED ROUTE — Auth + role + permission guard
+
    Usage:
-     <ProtectedRoute>                    — any logged-in user
-     <ProtectedRoute requiredRole="provider">  — provider only
-   
+     <ProtectedRoute>                              — any logged-in user
+     <ProtectedRoute requiredRole="provider">      — provider / admin
+     <ProtectedRoute adminOnly>                    — any admin role
+     <ProtectedRoute requiredPermission="users:view"> — RBAC permission
+
    Security:
    • Redirects unauthenticated users to /login
    • Saves intended destination for post-login redirect
    • Validates role if requiredRole is specified
+   • Validates RBAC permission if requiredPermission is specified
    • Uses safeRedirect pattern (relative paths only)
 ════════════════════════════════════════════════════════════ */
 
-export default function ProtectedRoute({ children, requiredRole }) {
+export default function ProtectedRoute({
+  children,
+  requiredRole,
+  requiredPermission,
+  adminOnly = false,
+}) {
   const { user, loading } = useAuth();
   const location          = useLocation();
 
@@ -31,20 +40,30 @@ export default function ProtectedRoute({ children, requiredRole }) {
   // Not authenticated → redirect to login with return path
   if (!user) {
     const returnTo = location.pathname + location.search;
-    // Only allow relative paths (prevent open redirect attacks)
     const safeReturn = returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/';
     return <Navigate to={`/login?redirect=${encodeURIComponent(safeReturn)}`} replace />;
   }
 
+  const role = normalizeRole(user.role);
+
+  // Admin-only check
+  if (adminOnly && !isAdminRole(role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Permission check (RBAC)
+  if (requiredPermission && !hasPermission(role, requiredPermission)) {
+    return <Navigate to="/provider" replace />;
+  }
+
   // Role check (if required)
   if (requiredRole) {
-    const providerRoles = ['provider', 'admin', 'host', 'agent', 'seller', 'service'];
+    const providerRoles = ['provider', 'host', 'agent', 'seller', 'service'];
     const hasAccess = requiredRole === 'provider'
-      ? providerRoles.includes(user.role)
-      : user.role === requiredRole;
+      ? (providerRoles.includes(user.role) || isAdminRole(role))
+      : user.role === requiredRole || role === requiredRole;
 
     if (!hasAccess) {
-      // User doesn't have the required role — send to user dashboard
       return <Navigate to="/dashboard" replace />;
     }
   }

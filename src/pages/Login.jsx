@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import AurbanLogo  from '../components/AurbanLogo.jsx';
+import { isSupabaseConfigured } from '../lib/supabase.js';
+import { signInWithEmail, signInWithGoogle, signInWithMagicLink } from '../services/supabase-auth.service.js';
 
 /* ════════════════════════════════════════════════════════════
    LOGIN — End-user / Visitor login
@@ -82,22 +84,24 @@ export default function Login() {
     rateLimiter.record();
 
     try {
-      // Simulated login — replace with real API
-      await new Promise(r => setTimeout(r, 1200));
-
-      const role = 'user'; // Header login = ALWAYS user role
-
-      // Simulate 2FA trigger (10% chance for demo)
-      if (Math.random() < 0.1) {
-        setTwoFactorData({ tempToken: 'mock-2fa-token', role });
-        setLoading(false);
-        return;
+      if (isSupabaseConfigured()) {
+        // Real Supabase auth
+        const res = await signInWithEmail(form.email, form.password);
+        if (!res.success) { setError(res.error || 'Invalid credentials.'); setLoading(false); return; }
+        // AuthContext onAuthStateChange will pick up the session
+        rateLimiter.reset();
+        setSuccess('Welcome back!');
+        setTimeout(() => redirectAfterLogin(), 600);
+      } else {
+        // Mock fallback
+        await new Promise(r => setTimeout(r, 1200));
+        const role = 'user';
+        if (Math.random() < 0.1) { setTwoFactorData({ tempToken: 'mock-2fa-token', role }); setLoading(false); return; }
+        login({ id: 'u_' + Date.now(), name: 'Demo User', email: form.email, role, verified: true });
+        rateLimiter.reset();
+        setSuccess('Welcome back!');
+        setTimeout(() => redirectAfterLogin(), 600);
       }
-
-      login({ id: 'u_' + Date.now(), name: 'Demo User', email: form.email, role, verified: true });
-      rateLimiter.reset();
-      setSuccess('Welcome back!');
-      setTimeout(() => redirectAfterLogin(), 600);
     } catch {
       setError('Invalid credentials. Please try again.');
     } finally {
@@ -128,10 +132,16 @@ export default function Login() {
   const handleGoogle = useCallback(async () => {
     setGLoading(true); setError('');
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      login({ id: 'g_' + Date.now(), name: 'Google User', email: 'user@gmail.com', role: 'user', verified: true, avatar: null });
-      rateLimiter.reset();
-      redirectAfterLogin();
+      if (isSupabaseConfigured()) {
+        const res = await signInWithGoogle();
+        if (!res.success) { setError(res.error || 'Google login failed.'); setGLoading(false); return; }
+        // OAuth redirect will happen — onAuthStateChange handles session
+      } else {
+        await new Promise(r => setTimeout(r, 1500));
+        login({ id: 'g_' + Date.now(), name: 'Google User', email: 'user@gmail.com', role: 'user', verified: true, avatar: null });
+        rateLimiter.reset();
+        redirectAfterLogin();
+      }
     } catch {
       setError('Google login failed.');
     } finally {
@@ -144,7 +154,12 @@ export default function Login() {
     if (!form.email) { setError('Enter your email first.'); return; }
     setLoading(true); setError('');
     try {
-      await new Promise(r => setTimeout(r, 1000));
+      if (isSupabaseConfigured()) {
+        const res = await signInWithMagicLink(form.email);
+        if (!res.success) { setError(res.error || 'Failed to send magic link.'); setLoading(false); return; }
+      } else {
+        await new Promise(r => setTimeout(r, 1000));
+      }
       setMagicLinkSent(true);
       setSuccess('Magic link sent! Check your inbox.');
     } catch {

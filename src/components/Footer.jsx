@@ -23,8 +23,8 @@ const LINK_SECTIONS = [
     titleKey: 'footer.explore',
     links: [
       { labelKey: 'nav.rental',       to: '/properties' },
-      { labelKey: 'nav.services',     to: '/services' },
       { labelKey: 'nav.marketplace',  to: '/marketplace' },
+      { labelKey: 'nav.pro',          to: '/pro' },
     ],
   },
   {
@@ -57,7 +57,7 @@ export default function Footer() {
   /* ── Hide on auth pages, dashboards, provider pages ──────── */
   const hide = [
     '/login', '/signup', '/onboarding',
-    '/provider/login', '/provider/signup',
+    '/provider/login',
     '/dashboard', '/provider',
   ].some(p => pathname.startsWith(p));
   if (hide) return null;

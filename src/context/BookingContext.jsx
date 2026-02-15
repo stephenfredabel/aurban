@@ -1,11 +1,12 @@
 import {
   createContext, useContext, useReducer,
-  useCallback, useMemo,
+  useCallback, useMemo, useEffect,
 } from 'react';
 import { useAuth } from './AuthContext.jsx';
+import * as bookingService from '../services/booking.service.js';
 
 // ── Mock bookings ────────────────────────────────────────────
-// Replace with API calls in production
+// Used as dev fallback when API is unavailable
 const MOCK_BOOKINGS = [
   {
     id:          'bk_001',
@@ -71,18 +72,31 @@ const MOCK_BOOKINGS = [
 
 // ── State & Reducer ──────────────────────────────────────────
 const initialState = {
-  bookings:        MOCK_BOOKINGS,
+  bookings:        [],
   activeBookingId: null,
-  loading:         false,
+  loading:         true,
+  error:           null,
 };
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'SET_BOOKINGS':
-      return { ...state, bookings: action.bookings };
+    case 'FETCH_START':
+      return { ...state, loading: true, error: null };
+
+    case 'FETCH_SUCCESS':
+      return { ...state, loading: false, bookings: action.bookings };
+
+    case 'FETCH_ERROR':
+      return { ...state, loading: false, error: action.error };
+
+    case 'USE_FALLBACK':
+      return { ...state, loading: false, bookings: MOCK_BOOKINGS, error: null };
 
     case 'ADD_BOOKING':
       return { ...state, bookings: [action.booking, ...state.bookings] };
+
+    case 'REMOVE_BOOKING':
+      return { ...state, bookings: state.bookings.filter(b => b.id !== action.bookingId) };
 
     case 'UPDATE_STATUS': {
       const { bookingId, status } = action;
@@ -117,8 +131,27 @@ export function BookingProvider({ children }) {
   const { user }          = useAuth();
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // ── Actions ────────────────────────────────────────────────
-  const addBooking = useCallback((bookingData) => {
+  // ── Fetch bookings from API (fall back to mock) ────────────
+  const fetchBookings = useCallback(async () => {
+    dispatch({ type: 'FETCH_START' });
+    try {
+      const res = await bookingService.getBookings();
+      if (res.success && res.bookings) {
+        dispatch({ type: 'FETCH_SUCCESS', bookings: res.bookings });
+      } else {
+        dispatch({ type: 'USE_FALLBACK' });
+      }
+    } catch {
+      dispatch({ type: 'USE_FALLBACK' });
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  // ── Actions (optimistic + API) ─────────────────────────────
+  const addBooking = useCallback(async (bookingData) => {
     const booking = {
       id:        `bk_${Date.now()}`,
       userId:    user?.id || 'u_user_01',
@@ -127,17 +160,53 @@ export function BookingProvider({ children }) {
       status:    'pending',
       ...bookingData,
     };
+    // Optimistic add
     dispatch({ type: 'ADD_BOOKING', booking });
+
+    // Try API
+    try {
+      const res = await bookingService.createBooking(bookingData);
+      if (res.success && res.booking) {
+        // Replace optimistic entry with server version
+        dispatch({ type: 'REMOVE_BOOKING', bookingId: booking.id });
+        dispatch({ type: 'ADD_BOOKING', booking: res.booking });
+        return res.booking;
+      }
+    } catch { /* keep optimistic version */ }
+
     return booking;
   }, [user]);
 
-  const updateStatus = useCallback((bookingId, status) => {
+  const updateStatus = useCallback(async (bookingId, status) => {
+    const prev = state.bookings.find(b => b.id === bookingId)?.status;
+    // Optimistic update
     dispatch({ type: 'UPDATE_STATUS', bookingId, status });
-  }, []);
 
-  const cancelBooking = useCallback((bookingId) => {
+    try {
+      const res = await bookingService.updateBookingStatus(bookingId, status);
+      if (!res.success && prev) {
+        // Revert on failure
+        dispatch({ type: 'UPDATE_STATUS', bookingId, status: prev });
+      }
+    } catch {
+      if (prev) dispatch({ type: 'UPDATE_STATUS', bookingId, status: prev });
+    }
+  }, [state.bookings]);
+
+  const cancelBooking = useCallback(async (bookingId, reason) => {
+    const prev = state.bookings.find(b => b.id === bookingId)?.status;
+    // Optimistic cancel
     dispatch({ type: 'CANCEL_BOOKING', bookingId });
-  }, []);
+
+    try {
+      const res = await bookingService.cancelBooking(bookingId, reason);
+      if (!res.success && prev) {
+        dispatch({ type: 'UPDATE_STATUS', bookingId, status: prev });
+      }
+    } catch {
+      if (prev) dispatch({ type: 'UPDATE_STATUS', bookingId, status: prev });
+    }
+  }, [state.bookings]);
 
   const setActive = useCallback((id) => {
     dispatch({ type: 'SET_ACTIVE', id });
@@ -169,6 +238,7 @@ export function BookingProvider({ children }) {
       bookings:        state.bookings,
       activeBookingId: state.activeBookingId,
       loading:         state.loading,
+      error:           state.error,
       totalUpcoming,
       getUpcoming,
       getPast,
@@ -177,6 +247,7 @@ export function BookingProvider({ children }) {
       updateStatus,
       cancelBooking,
       setActive,
+      refreshBookings: fetchBookings,
     }}>
       {children}
     </BookingContext.Provider>

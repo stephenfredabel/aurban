@@ -4,44 +4,49 @@ import {
   Search, Filter, X, ArrowUpDown,
   ChevronDown, ShieldCheck, Truck,
   Package, Heart, ChevronLeft, ChevronRight,
+  ShoppingCart,
 } from 'lucide-react';
 import { useCurrency } from '../hooks/useCurrency.js';
 import ProductCard     from '../components/ProductCard.jsx';
-import { products as SHARED_PRODUCTS } from '../data/products.js';
+import { useProperty } from '../context/PropertyContext.jsx';
+import CartIcon        from '../components/marketplace/CartIcon.jsx';
+import CartDrawer      from '../components/marketplace/CartDrawer.jsx';
+import { getPreferenceGroupList } from '../data/productPreferences.js';
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────
 
 const MARKET_CATS = [
-  { id: 'all',                label: 'All Products',       emoji: '🛒' },
-  { id: 'building_materials', label: 'Building Materials', emoji: '🧱' },
-  { id: 'finishing',          label: 'Finishing',          emoji: '🎨' },
-  { id: 'plumbing_fittings',  label: 'Plumbing',           emoji: '🚰' },
-  { id: 'electrical_fittings',label: 'Electrical',         emoji: '💡' },
-  { id: 'doors_windows',      label: 'Doors & Windows',    emoji: '🚪' },
-  { id: 'furniture',          label: 'Furniture',          emoji: '🛋️' },
-  { id: 'solar_power',        label: 'Solar & Power',      emoji: '☀️' },
-  { id: 'security_systems',   label: 'Security',           emoji: '📹' },
-  { id: 'kitchen_bathroom',   label: 'Kitchen & Bath',     emoji: '🍳' },
-  { id: 'construction_tools', label: 'Tools',              emoji: '⚒️' },
-  { id: 'landscaping_outdoor',label: 'Landscaping',        emoji: '🌱' },
+  { id: 'all',                   label: 'All Products',     emoji: '🛒' },
+  { id: 'building_materials',    label: 'Building Materials',emoji: '🧱' },
+  { id: 'furniture_fittings',    label: 'Furniture',         emoji: '🪑' },
+  { id: 'home_appliances',       label: 'Appliances',        emoji: '📺' },
+  { id: 'interior_decor',        label: 'Décor & Finishing', emoji: '🎨' },
+  { id: 'plumbing_sanitary',     label: 'Plumbing',          emoji: '🚿' },
+  { id: 'electrical_lighting',   label: 'Electrical',        emoji: '💡' },
+  { id: 'garden_outdoor',        label: 'Garden & Outdoor',  emoji: '🌿' },
+  { id: 'security_safety',       label: 'Security',          emoji: '🔐' },
+  { id: 'cleaning_maintenance',  label: 'Cleaning',          emoji: '🧹' },
+  { id: 'professional_services', label: 'Services',          emoji: '👷' },
 ];
 
 const CONDITIONS     = ['Any', 'Brand New', 'Fairly Used', 'Open Box'];
 const DELIVERY_OPTS  = ['Any', 'Delivery Available', 'Pickup Only', 'Pickup or Delivery'];
 const SORT_OPTIONS   = [
-  { value: 'newest',     label: 'Newest First'      },
-  { value: 'price_asc',  label: 'Price: Low → High' },
-  { value: 'price_desc', label: 'Price: High → Low' },
-  { value: 'popular',    label: 'Most Viewed'       },
+  { value: 'newest',       label: 'Newest First'      },
+  { value: 'price_asc',    label: 'Price: Low → High' },
+  { value: 'price_desc',   label: 'Price: High → Low' },
+  { value: 'popular',      label: 'Most Viewed'       },
+  { value: 'best_selling', label: 'Best Selling'      },
+  { value: 'rating',       label: 'Highest Rated'     },
 ];
 const NIGERIA_STATES = [
   'All States','Lagos','Abuja','Rivers','Ogun','Oyo','Kano','Delta',
   'Anambra','Edo','Enugu','Kaduna','Imo','Akwa Ibom',
 ];
 
-const MOCK_PRODUCTS = SHARED_PRODUCTS;
+// Products loaded from context in Marketplace component below
 
 const PER_PAGE = 12;
 
@@ -229,6 +234,7 @@ function MarketplaceFilterDrawer({ filters, onChange, onClose }) {
 
 export default function Marketplace() {
   const { symbol }  = useCurrency();
+  const { products } = useProperty();
   const [params]    = useSearchParams();
 
   const [keyword,     setKeyword]     = useState(params.get('q') || '');
@@ -237,6 +243,7 @@ export default function Marketplace() {
   const [showSort,    setShowSort]    = useState(false);
   const [page,        setPage]        = useState(1);
   const [savedIds,    setSavedIds]    = useState(new Set());
+  const [cartOpen,   setCartOpen]    = useState(false);
 
   const [filters, setFilters] = useState({
     category:  params.get('category') || 'all',
@@ -249,7 +256,7 @@ export default function Marketplace() {
   });
 
   const filtered = useMemo(() => {
-    let list = [...MOCK_PRODUCTS];
+    let list = [...products];
 
     if (filters.category !== 'all')
       list = list.filter(p => p.category === filters.category);
@@ -287,7 +294,7 @@ export default function Marketplace() {
     if (sortBy === 'popular')    list.sort((a, b) => b.views - a.views);
 
     return list;
-  }, [filters, keyword, sortBy]);
+  }, [products, filters, keyword, sortBy]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -314,8 +321,12 @@ export default function Marketplace() {
             <Filter size={14} />Filters
             {activeCount > 0 && <span className="w-5 h-5 bg-brand-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center">{activeCount}</span>}
           </button>
+          <CartIcon onClick={() => setCartOpen(true)} />
         </div>
       </div>
+
+      {/* Cart drawer */}
+      {cartOpen && <CartDrawer onClose={() => setCartOpen(false)} />}
 
       <div className="max-w-6xl px-4 py-5 pb-24 mx-auto lg:pb-10">
 
@@ -332,6 +343,21 @@ export default function Marketplace() {
             </button>
           ))}
         </div>
+
+        {/* Building materials: preference group sub-filters */}
+        {filters.category === 'building_materials' && (
+          <div className="flex gap-2 pb-1 mb-4 overflow-x-auto scrollbar-none">
+            {getPreferenceGroupList().map(({ key, label, emoji, productCount }) => (
+              <button key={key} type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10
+                  text-[11px] font-bold whitespace-nowrap bg-white dark:bg-white/5 text-gray-600 dark:text-white/70
+                  hover:border-brand-gold/50 hover:bg-brand-gold/5 transition-all shrink-0">
+                {emoji} {label}
+                <span className="text-[9px] text-gray-400 font-normal">({productCount})</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Marketplace policy notice */}
         <div className="flex items-center gap-2 p-3 mb-5 border bg-amber-50 dark:bg-amber-500/10 rounded-2xl border-amber-100 dark:border-amber-500/20">

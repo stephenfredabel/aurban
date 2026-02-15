@@ -1,48 +1,48 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ListFilter, PlusCircle, MessageCircle, Calendar,
-  BarChart2, Wallet, FileText, Star, Settings, User,
-  ChevronLeft, Menu, X, LogOut, Home,
+  BarChart2, Wallet, FileText, Star, Settings, User, Package,
+  ChevronLeft, Menu, X, LogOut, Home, Store, ShoppingBag,
   PanelLeftClose, PanelLeftOpen,
+  Users, Shield, Flag, UserCog,
+  ShieldCheck, MessageSquare, FileCheck, ScrollText,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import {
+  isAdminRole, normalizeRole, hasPermission,
+  ROLE_DASHBOARD_LABELS, ROLE_COLORS, ROLE_LABELS, ADMIN_ENTRY_PATH,
+} from '../utils/rbac.js';
 
 /* ════════════════════════════════════════════════════════════
-   DASHBOARD LAYOUT — Provider sidebar shell
+   DASHBOARD LAYOUT — Provider + Admin sidebar shell
 
-   Used for: Hosts, Agents, Sellers, Service Providers
-
-   Sidebar navigation:
-   • Overview       → /provider
-   • Profile        → /provider/profile
-   • My Listings    → /provider/listings
-   • Add Listing    → /provider/listings/new
-   • Messages       → /provider/messages
-   • Analytics      → /provider/analytics
-   • Payouts        → /provider/payouts
-   • Agreements     → /provider/agreements
-   • Reviews        → /provider/reviews
-   • Settings       → /provider/settings
+   Provider sidebar: Overview, Profile, Listings, Messages, etc.
+   Admin sidebar: Dynamic per-role — only shows links the
+   admin has permission to view.
 
    Features:
    • Desktop: collapsible fixed sidebar (w-60 ↔ hidden)
    • Mobile: hamburger → slide-in drawer
-   • Role-based title
-   • User avatar + name + role badge
-   • "Back to Aurban" link on mobile
-   • Quick link to user dashboard
-   • Logout button
+   • Role-based title + badge
+   • Dynamic admin nav based on RBAC permissions
    • Dark mode support
 ════════════════════════════════════════════════════════════ */
 
-const sidebarLinks = [
+const BASE_PROVIDER_LINKS = [
   { to: '/provider',              icon: LayoutDashboard, label: 'Overview',     exact: true },
   { to: '/provider/profile',      icon: User,            label: 'My Profile'               },
   { to: '/provider/listings',     icon: ListFilter,      label: 'My Listings'              },
   { to: '/provider/listings/new', icon: PlusCircle,      label: 'Add Listing',  highlight: true },
   { to: '/provider/messages',     icon: MessageCircle,   label: 'Messages'                 },
   { to: '/provider/bookings',     icon: Calendar,        label: 'Bookings'                 },
+  { to: '/provider/orders',       icon: Package,         label: 'Orders'                   },
+  { to: '/marketplace',           icon: ShoppingBag,     label: 'Marketplace'              },
+  // ── Aurban Pro ──
+  { to: '/provider/pro-bookings', icon: Calendar,        label: 'Pro Bookings'             },
+  { to: '/provider/pro-listings', icon: ListFilter,      label: 'Pro Listings'             },
+  { to: '/provider/pro-listings/new', icon: PlusCircle,  label: 'New Pro Listing', highlight: true },
+  { to: '/provider/pro-earnings', icon: Wallet,          label: 'Pro Earnings'             },
   { to: '/provider/analytics',    icon: BarChart2,       label: 'Analytics'                },
   { to: '/provider/payouts',      icon: Wallet,          label: 'Payouts'                  },
   { to: '/provider/agreements',   icon: FileText,        label: 'Agreements'               },
@@ -50,23 +50,54 @@ const sidebarLinks = [
   { to: '/provider/settings',     icon: Settings,        label: 'Settings'                 },
 ];
 
-const roleLabels = {
-  host:     'Host Dashboard',
-  agent:    'Agent Dashboard',
-  seller:   'Seller Dashboard',
-  service:  'Service Provider',
-  provider: 'Provider Dashboard',
-  admin:    'Admin Dashboard',
-};
+// Company-only sidebar links (inserted after Orders for company accounts)
+const COMPANY_LINKS = [
+  { to: '/provider/company-store', icon: Store,  label: 'Company Store'               },
+  { to: '/provider/team',          icon: Users,  label: 'Team Management'             },
+];
 
-const roleBadgeColors = {
-  host:     'bg-blue-50 dark:bg-blue-500/10 text-blue-600',
-  agent:    'bg-purple-50 dark:bg-purple-500/10 text-purple-600',
-  seller:   'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600',
-  service:  'bg-orange-50 dark:bg-orange-500/10 text-orange-600',
-  provider: 'bg-brand-gold/10 text-brand-gold',
-  admin:    'bg-red-50 dark:bg-red-500/10 text-red-600',
-};
+function getProviderSidebarLinks(isCompany) {
+  if (!isCompany) return BASE_PROVIDER_LINKS;
+  // Insert company links after "Orders" entry
+  const ordersIdx = BASE_PROVIDER_LINKS.findIndex(l => l.label === 'Orders');
+  const links = [...BASE_PROVIDER_LINKS];
+  links.splice(ordersIdx + 1, 0, ...COMPANY_LINKS);
+  return links;
+}
+
+// All possible admin links — filtered per role based on permission
+const ALL_ADMIN_LINKS = [
+  { to: '/provider',                   icon: LayoutDashboard, label: 'Dashboard',           exact: true, permission: 'dashboard:view'     },
+  { to: '/provider/users',             icon: Users,           label: 'User Management',                  permission: 'users:view'          },
+  { to: '/provider/moderation',        icon: Shield,          label: 'Listing Moderation',               permission: 'listings:view'       },
+  { to: '/provider/bookings',          icon: Calendar,        label: 'Booking Oversight',                permission: 'bookings:view'       },
+  { to: '/provider/payments',          icon: Wallet,          label: 'Payments & Escrow',                permission: 'payments:view'       },
+  { to: '/provider/analytics',         icon: BarChart2,       label: 'Platform Analytics',               permission: 'analytics:view'      },
+  { to: '/provider/reports',           icon: Flag,            label: 'Reports',                          permission: 'reports:view'        },
+  { to: '/provider/verification',      icon: ShieldCheck,     label: 'Verification',                     permission: 'verification:view'   },
+  { to: '/provider/tickets',           icon: MessageSquare,   label: 'Support Tickets',                  permission: 'tickets:view'        },
+  { to: '/provider/kyc',               icon: FileCheck,       label: 'KYC / Compliance',                 permission: 'kyc:view'            },
+  { to: '/provider/audit',             icon: ScrollText,      label: 'Audit Logs',                       permission: 'audit:view'          },
+  { to: '/provider/platform-settings', icon: Settings,        label: 'Platform Settings',                permission: 'settings:view'       },
+  { to: '/provider/admin-management', icon: UserCog,         label: 'Admin Management',                 permission: 'admins:view'         },
+  { to: '/provider/marketplace-orders', icon: Package,      label: 'Marketplace Orders',               permission: 'bookings:view'       },
+  { to: '/provider/vendor-moderation',  icon: Shield,       label: 'Vendor Moderation',                permission: 'listings:view'       },
+  { to: '/provider/disputes',           icon: Flag,         label: 'Disputes',                         permission: 'bookings:view'       },
+  // ── Aurban Pro Admin ──
+  { to: '/provider/pro-escrow',        icon: Wallet,       label: 'Pro Escrow',                       permission: 'pro:escrow_view'     },
+  { to: '/provider/pro-safety',        icon: Shield,       label: 'Pro Safety',                       permission: 'pro:safety_view'     },
+  { to: '/provider/pro-rectification', icon: Flag,         label: 'Pro Rectification',                permission: 'pro:rectification_view' },
+  { to: '/provider/pro-verification',  icon: ShieldCheck,  label: 'Pro Verification',                 permission: 'pro:verification_view' },
+  { to: '/provider/pro-config',        icon: Settings,     label: 'Pro Config',                       permission: 'pro:config_view'     },
+];
+
+/**
+ * Build admin sidebar links filtered by the user's role permissions.
+ */
+function getAdminSidebarLinks(role) {
+  const r = normalizeRole(role);
+  return ALL_ADMIN_LINKS.filter(link => hasPermission(r, link.permission));
+}
 
 export default function DashboardLayout({ children }) {
   const { user, logout }         = useAuth();
@@ -74,13 +105,25 @@ export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen]           = useState(false);   // mobile drawer
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true); // desktop collapse
 
-  const dashTitle  = roleLabels[user?.role] || 'Provider Dashboard';
-  const badgeColor = roleBadgeColors[user?.role] || 'bg-brand-gold/10 text-brand-gold';
+  const role         = normalizeRole(user?.role);
+  const admin        = isAdminRole(role);
+  const isCompany    = user?.accountType === 'company';
+  const dashTitle    = ROLE_DASHBOARD_LABELS[role] || (isCompany ? 'Company Dashboard' : 'Provider Dashboard');
+  const badgeColor   = ROLE_COLORS[role] || 'bg-brand-gold/10 text-brand-gold';
+  const roleLabel    = ROLE_LABELS[role] || user?.role || 'provider';
+  const sidebarLinks = useMemo(
+    () => admin ? getAdminSidebarLinks(role) : getProviderSidebarLinks(isCompany),
+    [admin, role, isCompany],
+  );
 
   const handleLogout = async () => {
     setSidebarOpen(false);
+    // Capture admin state BEFORE logout clears user
+    const wasAdmin = admin;
     await logout();
-    window.location.href = '/';
+    // Admin → admin login portal (fully isolated)
+    // Provider → marketplace home
+    window.location.href = wasAdmin ? ADMIN_ENTRY_PATH : '/';
   };
 
   /* ── Check if a link is active ──────────────────────────── */
@@ -107,7 +150,7 @@ export default function DashboardLayout({ children }) {
               {user?.name || 'Provider'}
             </p>
             <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold capitalize ${badgeColor}`}>
-              {user?.role || 'provider'}
+              {roleLabel}
             </span>
           </div>
         </div>
@@ -143,10 +186,13 @@ export default function DashboardLayout({ children }) {
 
       {/* Bottom actions */}
       <div className="pt-4 mt-auto space-y-1 border-t border-gray-100 dark:border-white/10">
-        <Link to="/" onClick={onNavigate}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5">
-          <Home size={18} /> Back to Aurban
-        </Link>
+        {/* "Back to Aurban" — providers only, never shown to admins */}
+        {!admin && (
+          <Link to="/" onClick={onNavigate}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5">
+            <Home size={18} /> Back to Aurban
+          </Link>
+        )}
         <button onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10">
           <LogOut size={18} /> Log Out
@@ -160,10 +206,14 @@ export default function DashboardLayout({ children }) {
 
       {/* ── Mobile top bar ────────────────────────────────── */}
       <div className="lg:hidden sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-white/10 px-4 py-2.5 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-1.5 text-sm text-brand-charcoal dark:text-gray-300">
-          <ChevronLeft size={16} />
-          Back to Aurban
-        </Link>
+        {admin ? (
+          <span className="text-sm font-semibold text-brand-charcoal-dark dark:text-white">{dashTitle}</span>
+        ) : (
+          <Link to="/" className="flex items-center gap-1.5 text-sm text-brand-charcoal dark:text-gray-300">
+            <ChevronLeft size={16} />
+            Back to Aurban
+          </Link>
+        )}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 text-gray-500 rounded-xl dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"

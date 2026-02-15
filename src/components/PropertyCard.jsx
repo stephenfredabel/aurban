@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link }     from 'react-router-dom';
 import { Heart, MapPin, Bed, Bath, Maximize2, BadgeCheck } from 'lucide-react';
 import { useProperty } from '../context/PropertyContext.jsx';
-import { useCurrency } from '../hook/useCurrency.js';
+import { useCurrency } from '../hooks/useCurrency.js';
 
 export default function PropertyCard({ property, compact = false }) {
   const { toggleWishlist, isWishlisted } = useProperty();
@@ -17,6 +17,7 @@ export default function PropertyCard({ property, compact = false }) {
   const {
     id, title, price, priceUnit = 'year', location, images = [],
     bedrooms, bathrooms, area, type, verified, category,
+    companyName, cacVerified,
   } = property;
 
   const wished    = isWishlisted(id);
@@ -113,6 +114,14 @@ export default function PropertyCard({ property, compact = false }) {
             <BadgeCheck size={15} className="text-brand-gold shrink-0 mt-0.5" aria-label="Verified listing" />
           )}
         </div>
+
+        {/* Company badge */}
+        {companyName && (
+          <p className="flex items-center gap-1 mb-1 text-[11px] text-gray-500 dark:text-gray-400">
+            <span className="font-semibold truncate">{companyName}</span>
+            {cacVerified && <BadgeCheck size={11} className="text-emerald-500 shrink-0" aria-label="Verified company" />}
+          </p>
+        )}
 
         {/* Location */}
         <p className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mb-2.5">

@@ -3,13 +3,11 @@ import { Link }               from 'react-router-dom';
 import { ArrowRight, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth }            from '../context/AuthContext.jsx';
-import CarouselSection        from '../components/CarouselSection.jsx';
-import PropertyCard           from '../components/PropertyCard.jsx';
-import ServiceCard            from '../components/ServiceCard.jsx';
-import ProductCard            from '../components/ProductCard.jsx';
-import { properties }         from '../data/properties.js';
-import { services }           from '../data/services.js';
-import { products }           from '../data/products.js';
+import CarouselSection             from '../components/CarouselSection.jsx';
+import PropertyCard                from '../components/PropertyCard.jsx';
+import ProductCard                 from '../components/ProductCard.jsx';
+import RelocationProviderCard      from '../components/relocation/RelocationProviderCard.jsx';
+import { useProperty }             from '../context/PropertyContext.jsx';
 
 /* ── Promo slides (admin can add more) ──────────────────────── */
 const PROMO_SLIDES = [
@@ -33,9 +31,9 @@ const PROMO_SLIDES = [
   },
   {
     id: 3,
-    title: 'Trusted Home Services',
-    subtitle: 'Verified plumbers, electricians, cleaners & more',
-    cta: { label: 'Explore Services', to: '/services' },
+    title: 'Trusted Pro Services',
+    subtitle: 'Verified plumbers, electricians, cleaners & more — with escrow protection',
+    cta: { label: 'Explore Aurban Pro', to: '/pro' },
     bg: 'from-emerald-800 via-emerald-700 to-emerald-900',
     accent: 'bg-emerald-400',
     image: null,
@@ -47,6 +45,33 @@ const PROMO_SLIDES = [
     cta: { label: 'Visit Marketplace', to: '/marketplace' },
     bg: 'from-blue-900 via-blue-800 to-blue-900',
     accent: 'bg-blue-400',
+    image: null,
+  },
+  {
+    id: 5,
+    title: 'Stress-Free Moving',
+    subtitle: 'Compare verified movers, get instant quotes, move with confidence',
+    cta: { label: 'Find Movers', to: '/relocation' },
+    bg: 'from-purple-900 via-purple-800 to-purple-900',
+    accent: 'bg-purple-400',
+    image: null,
+  },
+  {
+    id: 6,
+    title: 'Book Shortlets Instantly',
+    subtitle: 'Verified furnished apartments for your next trip or staycation',
+    cta: { label: 'Browse Shortlets', to: '/shortlets' },
+    bg: 'from-rose-900 via-rose-800 to-rose-900',
+    accent: 'bg-rose-400',
+    image: null,
+  },
+  {
+    id: 7,
+    title: 'Find Your Community',
+    subtitle: 'Co-living spaces with verified housemates — safe, affordable, social',
+    cta: { label: 'Explore Shared', to: '/shared' },
+    bg: 'from-indigo-900 via-indigo-800 to-indigo-900',
+    accent: 'bg-indigo-400',
     image: null,
   },
 ];
@@ -61,13 +86,16 @@ const PROVIDER_TYPES = [
 export default function Home() {
   const { t }              = useTranslation();
   const { user }           = useAuth();
+  const { properties, products, relocationProviders } = useProperty();
 
-  const trendingProperties = properties.slice(0, 10);
-  const sortedServices     = [...services].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 8);
-  const rentalProperties   = properties.filter(p => ['rental', 'lease'].includes(p.category)).slice(0, 10);
-  const landProperties     = properties.filter(p => p.category === 'land').slice(0, 10);
-  const featuredProducts   = products.slice(0, 8);
-  const isProvider         = ['provider', 'admin', 'host', 'agent', 'seller', 'service'].includes(user?.role);
+  const trendingProperties  = properties.slice(0, 10);
+  const shortletProperties  = properties.filter(p => p.category === 'shortlet').slice(0, 10);
+  const sharedProperties    = properties.filter(p => p.category === 'shared').slice(0, 10);
+  const stayProperties      = properties.filter(p => p.category === 'stay').slice(0, 10);
+  const rentalProperties    = properties.filter(p => ['rental', 'lease'].includes(p.category)).slice(0, 10);
+  const landProperties      = properties.filter(p => p.category === 'land').slice(0, 10);
+  const featuredProducts    = products.slice(0, 8);
+  const isProvider          = ['provider', 'admin', 'host', 'agent', 'seller', 'service'].includes(user?.role);
 
   /* ── Promo slider state ─────────────────────────────────── */
   const [activeSlide, setActiveSlide] = useState(0);
@@ -187,14 +215,38 @@ export default function Home() {
         />
       </section>
 
-      {/* ── Top Services ─────────────────────────────────── */}
-      {sortedServices.length > 0 && (
+      {/* ── Shortlets ──────────────────────────────────────── */}
+      {shortletProperties.length > 0 && (
         <section className="px-0 py-8 mx-auto max-w-7xl lg:px-4">
           <CarouselSection
-            title={t('home.topServices', { defaultValue: 'Top Services' })}
-            seeAllTo="/services"
-            items={sortedServices}
-            renderItem={(s) => <ServiceCard service={s} />}
+            title={t('home.shortlets', { defaultValue: 'Shortlets' })}
+            seeAllTo="/shortlets"
+            items={shortletProperties}
+            renderItem={(p) => <PropertyCard property={p} />}
+          />
+        </section>
+      )}
+
+      {/* ── Shared Living ──────────────────────────────────── */}
+      {sharedProperties.length > 0 && (
+        <section className="px-0 py-8 mx-auto max-w-7xl lg:px-4">
+          <CarouselSection
+            title={t('home.shared', { defaultValue: 'Shared Living' })}
+            seeAllTo="/shared"
+            items={sharedProperties}
+            renderItem={(p) => <PropertyCard property={p} />}
+          />
+        </section>
+      )}
+
+      {/* ── Stay (Long-term Furnished) ─────────────────────── */}
+      {stayProperties.length > 0 && (
+        <section className="px-0 py-8 mx-auto max-w-7xl lg:px-4">
+          <CarouselSection
+            title={t('home.stay', { defaultValue: 'Furnished Stays' })}
+            seeAllTo="/properties?category=stay"
+            items={stayProperties}
+            renderItem={(p) => <PropertyCard property={p} />}
           />
         </section>
       )}
@@ -231,6 +283,18 @@ export default function Home() {
             seeAllTo="/marketplace"
             items={featuredProducts}
             renderItem={(p) => <ProductCard product={p} />}
+          />
+        </section>
+      )}
+
+      {/* ── Relocation Services ──────────────────────────── */}
+      {relocationProviders.length > 0 && (
+        <section className="px-0 py-8 mx-auto max-w-7xl lg:px-4">
+          <CarouselSection
+            title={t('home.relocation', { defaultValue: 'Relocation Services' })}
+            seeAllTo="/relocation"
+            items={relocationProviders.slice(0, 8)}
+            renderItem={(p) => <RelocationProviderCard provider={p} compact />}
           />
         </section>
       )}
