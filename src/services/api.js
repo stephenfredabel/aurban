@@ -5,9 +5,17 @@
  * - Retry with exponential back-off (network errors only)
  * - Structured error responses
  * - Abort-controller support
+ *
+ * NOTE: When Supabase is configured, this client is NOT used for data.
+ * All service files hit Supabase directly via the JS client.
+ * This file only serves as a fallback for local/mock development
+ * when VITE_API_URL is set to a custom backend.
  */
 
-const BASE_URL = import.meta.env.VITE_SUPABASE_URL
+import { isSupabaseConfigured } from '../lib/supabase.js';
+
+// Use a dedicated API URL if provided, otherwise null (no fallback API)
+const BASE_URL = import.meta.env.VITE_API_URL || null;
 const TIMEOUT_MS = 15_000;
 
 // In-flight request registry (for dedup / abort)
@@ -47,21 +55,18 @@ class ApiError extends Error {
 
 /**
  * Sanitise server error messages before exposing to UI.
- * Strips internal paths, admin URLs, server names, and stack traces
- * that backends may accidentally include in error responses.
  */
 function sanitizeErrorMessage(msg) {
   if (!msg || typeof msg !== 'string') return 'Request failed';
-  // Strip anything that looks like an internal path or admin URL
   let clean = msg
     .replace(/\/admin\/[^\s'"]*/gi, '[redacted]')
     .replace(/\/ax7-internal[^\s'"]*/gi, '[redacted]')
     .replace(/\/internal\/[^\s'"]*/gi, '[redacted]')
     .replace(/https?:\/\/[a-z0-9-]+\.aurban\.com[^\s'"]*/gi, '[redacted]')
-    .replace(/at\s+\S+\s+\(.*:\d+:\d+\)/g, '')  // stack frames
+    .replace(/https?:\/\/[a-z0-9-]+\.supabase\.co[^\s'"]*/gi, '[redacted]')
+    .replace(/at\s+\S+\s+\(.*:\d+:\d+\)/g, '')
     .replace(/\/usr\/|\/var\/|\/home\/|C:\\|D:\\/gi, '[redacted]')
     .replace(/node_modules\/[^\s'"]*/g, '[redacted]');
-  // If the whole message was redacted, return a generic one
   if (clean.replace(/\[redacted\]/g, '').trim().length < 3) {
     return 'Request failed';
   }
@@ -95,6 +100,14 @@ async function request(method, path, {
   signal,
   dedup    = false,
 } = {}) {
+  // When Supabase is configured and no separate API URL is set,
+  // don't make fallback requests — return empty data gracefully.
+  // All real data flows through the Supabase JS client in service files.
+  if (!BASE_URL) {
+    console.warn(`[api.js] No API backend configured. Skipping ${method} ${path}`);
+    return { data: [], conversations: [], messages: [], total: 0 };
+  }
+
   // Build URL
   const url = new URL(`${BASE_URL}${path}`);
   if (params) {
