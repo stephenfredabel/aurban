@@ -5,7 +5,7 @@ import {
   CheckCircle2, Loader, Shield, Smartphone,
   Send, LogIn, Building2, Briefcase,
 } from 'lucide-react';
-import { AuthContext } from "../../../context/AuthContext";
+import { AuthContext } from "../../context/AuthContext";
 import AurbanLogo from "../../components/AurbanLogo";
 import { isSupabaseConfigured } from '/Users/USER/Desktop/aurban-web/src/lib/supabase.js';
 import { signInWithEmail, signInWithGoogle } from '/Users/USER/Desktop/aurban-web/src/services/supabase-auth.service.js';
