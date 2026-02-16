@@ -50,12 +50,26 @@ export async function signInWithEmail(email, password) {
 
 // ── OAuth (Google) ──────────────────────────────────────────
 
-export async function signInWithGoogle() {
+/**
+ * Sign in with Google OAuth.
+ * @param {Object} options
+ * @param {string} options.redirectTo - Where to redirect after login (default: '/')
+ * @param {string} options.role - Role to assign if new user (default: 'user')
+ */
+export async function signInWithGoogle({ redirectTo, role } = {}) {
   const g = guard(); if (g) return g;
   try {
+    const targetPath = redirectTo || '/';
+    const targetRole = role || 'user';
+
+    // Store intended role and redirect path in sessionStorage
+    // AuthContext will read these after OAuth callback
+    sessionStorage.setItem('aurban_oauth_role', targetRole);
+    sessionStorage.setItem('aurban_oauth_redirect', targetPath);
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}${targetPath}` },
     });
     if (error) return { success: false, error: error.message };
     return { success: true, data };

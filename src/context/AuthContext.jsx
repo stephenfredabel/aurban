@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { isAdminRole, normalizeRole } from '../utils/rbac.js';
 import { isSupabaseConfigured } from '../lib/supabase.js';
-import { getProfile, signOut as sbSignOut, onAuthStateChange } from '../services/supabase-auth.service.js';
+import { getProfile, updateProfile, signOut as sbSignOut, onAuthStateChange } from '../services/supabase-auth.service.js';
 
 /* ════════════════════════════════════════════════════════════
    AUTH CONTEXT — Session management + Role-based routing
@@ -94,31 +95,86 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const sbListenerRef = useRef(null);
 
+  // Navigation for post-login redirect
+  let navigate = null;
+  let location = null;
+  try {
+    navigate = useNavigate();
+    location = useLocation();
+  } catch {
+    // If not inside Router (e.g. tests), navigation won't work — that's OK
+  }
+
   /* ── Helper: load profile from Supabase and set user ───── */
-  const loadSupabaseProfile = useCallback(async (sbUser) => {
+  const loadSupabaseProfile = useCallback(async (sbUser, isNewSignIn = false) => {
     if (!sbUser) return null;
+
+    // Check if there's a pending OAuth role (from provider login/signup via Google)
+    const pendingRole = sessionStorage.getItem('aurban_oauth_role');
+    const pendingRedirect = sessionStorage.getItem('aurban_oauth_redirect');
+
     const res = await getProfile(sbUser.id);
+
     if (res.success && res.data) {
-      const clean = sanitizeUser(res.data);
+      let profileData = res.data;
+
+      // If user signed up via provider page (Google OAuth) and their role is still 'user',
+      // upgrade them to 'provider'
+      if (pendingRole && pendingRole !== 'user' && profileData.role === 'user') {
+        try {
+          await updateProfile(sbUser.id, { role: pendingRole });
+          profileData = { ...profileData, role: pendingRole };
+        } catch {
+          // Non-critical — they can update role later
+        }
+      }
+
+      const clean = sanitizeUser(profileData);
       setUser(clean);
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(clean));
+
+      // Clear pending OAuth data
+      sessionStorage.removeItem('aurban_oauth_role');
+      sessionStorage.removeItem('aurban_oauth_redirect');
+
+      // Redirect after new sign-in (OAuth callback)
+      if (isNewSignIn && navigate) {
+        const redirectPath = pendingRedirect || getPostLoginRedirect(clean.role);
+        sessionStorage.removeItem('aurban_oauth_redirect');
+        // Small delay to ensure state is set before navigation
+        setTimeout(() => navigate(redirectPath, { replace: true }), 100);
+      }
+
       return clean;
     }
+
     // Profile not yet created (trigger may still be running) — build from auth metadata
     const meta = sbUser.user_metadata || {};
+    const fallbackRole = pendingRole || meta.role || 'user';
     const fallback = sanitizeUser({
       id:    sbUser.id,
-      name:  meta.name || '',
+      name:  meta.full_name || meta.name || '',
       email: sbUser.email || '',
       phone: sbUser.phone || '',
-      role:  meta.role || 'user',
+      role:  fallbackRole,
     });
     setUser(fallback);
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(fallback));
-    return fallback;
-  }, []);
 
-  /* ── Restore session ────────────────────────────────────── */
+    // Clear pending OAuth data
+    sessionStorage.removeItem('aurban_oauth_role');
+    sessionStorage.removeItem('aurban_oauth_redirect');
+
+    // Redirect after new sign-in
+    if (isNewSignIn && navigate) {
+      const redirectPath = pendingRedirect || getPostLoginRedirect(fallback.role);
+      setTimeout(() => navigate(redirectPath, { replace: true }), 100);
+    }
+
+    return fallback;
+  }, [navigate]);
+
+  /* ── Restore session ──────────────────────────────────────── */
   useEffect(() => {
     let cancelled = false;
 
@@ -129,7 +185,7 @@ export function AuthProvider({ children }) {
           const { supabase } = await import('../lib/supabase.js');
           const { data: { session } } = await supabase.auth.getSession();
           if (!cancelled && session?.user) {
-            await loadSupabaseProfile(session.user);
+            await loadSupabaseProfile(session.user, false);
             setLoading(false);
             return;
           }
@@ -153,7 +209,9 @@ export function AuthProvider({ children }) {
       const { data } = onAuthStateChange(async (event, session) => {
         if (cancelled) return;
         if (event === 'SIGNED_IN' && session?.user) {
-          await loadSupabaseProfile(session.user);
+          // isNewSignIn = true → triggers role check and redirect
+          await loadSupabaseProfile(session.user, true);
+          if (!loading) setLoading(false);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           sessionStorage.removeItem(SESSION_KEY);
@@ -184,6 +242,8 @@ export function AuthProvider({ children }) {
     }
     setUser(null);
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem('aurban_oauth_role');
+    sessionStorage.removeItem('aurban_oauth_redirect');
   }, []);
 
   /* ── Update profile ─────────────────────────────────────── */

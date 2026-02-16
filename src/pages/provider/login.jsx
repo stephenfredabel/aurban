@@ -70,7 +70,7 @@ export default function ProviderLogin() {
     navigate(redirect, { replace: true });
   };
 
-  /* ── Form submit ────────────────────────────────────────── */
+  /* ── Form submit ──────────────────────────────────────────── */
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError(''); setSuccess('');
@@ -117,9 +117,16 @@ export default function ProviderLogin() {
     setGLoading(true); setError('');
     try {
       if (isSupabaseConfigured()) {
-        const res = await signInWithGoogle();
+        // Pass role='provider' and redirect to /provider
+        // signInWithGoogle stores these in sessionStorage before OAuth redirect
+        // AuthContext reads them after callback and applies the role
+        const res = await signInWithGoogle({
+          redirectTo: '/provider',
+          role: 'provider',
+        });
         if (!res.success) { setError(res.error || 'Google login failed.'); setGLoading(false); return; }
-        // OAuth redirect — onAuthStateChange handles session
+        // OAuth redirect happens — page will reload at /provider
+        // onAuthStateChange in AuthContext handles session + role assignment
       } else {
         await new Promise(r => setTimeout(r, 1500));
         login({
@@ -197,7 +204,7 @@ export default function ProviderLogin() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label htmlFor="provider-login-email" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
                   {usePhone ? 'Phone number' : 'Email address'}
                 </label>
                 <div className="relative">
@@ -205,6 +212,7 @@ export default function ProviderLogin() {
                     ? <Smartphone size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
                     : <Mail size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />}
                   <input
+                    id="provider-login-email"
                     type={usePhone ? 'tel' : 'email'}
                     value={form.email}
                     onChange={(e) => update('email', e.target.value)}
@@ -216,10 +224,11 @@ export default function ProviderLogin() {
               </div>
 
               <div>
-                <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Password</label>
+                <label htmlFor="provider-login-password" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Password</label>
                 <div className="relative">
                   <Lock size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
                   <input
+                    id="provider-login-password"
                     type={showPassword ? 'text' : 'password'}
                     value={form.password}
                     onChange={(e) => update('password', e.target.value)}

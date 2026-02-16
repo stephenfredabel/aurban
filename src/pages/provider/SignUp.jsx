@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../../context/AuthContext.jsx';
 import AurbanLogo from '../../components/AurbanLogo.jsx';
 import { isSupabaseConfigured } from '../../lib/supabase.js';
-import { signUpWithEmail, signInWithGoogle } from '../../services/supabase-auth.service.js';
+const res = await signInWithGoogle({ redirectTo: '/provider', role: 'provider' });
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER SIGNUP — Simple provider registration
