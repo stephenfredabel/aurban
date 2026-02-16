@@ -2,28 +2,24 @@ import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Mail, Smartphone, Loader, CheckCircle2, AlertCircle,
-  ArrowRight, User as UserIcon,
+  ArrowRight, User as UserIcon, Lock,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import AurbanLogo  from '../../components/AurbanLogo.jsx';
 import { sanitize } from '../../utils/security.js';
 import { isSupabaseConfigured } from '../../lib/supabase.js';
 import { signUpWithEmail, signInWithGoogle } from '../../services/supabase-auth.service.js';
+import OTPVerification from '../../components/auth/OTPVerification.jsx';
 
 /* ════════════════════════════════════════════════════════════
    SIGNUP — End-user / Visitor registration
 
-   This is the USER signup page (reached from Header buttons).
    Flow:
-     1. Full name
-     2. Email OR phone (toggle)
-     3. Google instant signup
-     4. Done → returns to marketplace (/)
-
-   Providers have their own signup via /onboarding
+     Step 1: Full name + email + password
+     Step 2: OTP verification (email or phone)
+     Done → marketplace (/)
 ════════════════════════════════════════════════════════════ */
 
-/* ── Google icon ──────────────────────────────────────────── */
 function GoogleIcon({ size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -41,14 +37,15 @@ export default function SignUp() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [form, setForm]           = useState({ fullName: '', contact: '' });
-  const [usePhone, setUsePhone]   = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [gLoading, setGLoading]   = useState(false);
-  const [error, setError]         = useState('');
-  const [success, setSuccess]     = useState('');
-  const [honeypot, setHoneypot]   = useState('');
-  const [attempts, setAttempts]   = useState([]);
+  // Step 1 = registration form, Step 2 = OTP verification
+  const [step, setStep]         = useState(1);
+  const [form, setForm]         = useState({ fullName: '', email: '', password: '' });
+  const [loading, setLoading]   = useState(false);
+  const [gLoading, setGLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [attempts, setAttempts] = useState([]);
 
   const isBlocked = () => {
     const now = Date.now();
@@ -62,13 +59,12 @@ export default function SignUp() {
   const validate = () => {
     if (honeypot) return 'Something went wrong.';
     if (!form.fullName.trim() || form.fullName.trim().length < 2) return 'Please enter your full name.';
-    if (!form.contact.trim()) return usePhone ? 'Please enter your phone number.' : 'Please enter your email.';
-    if (!usePhone && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact)) return 'Please enter a valid email address.';
-    if (usePhone && !/^\+?\d{7,15}$/.test(form.contact.replace(/[\s-]/g, ''))) return 'Please enter a valid phone number.';
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Please enter a valid email address.';
+    if (!form.password || form.password.length < 8) return 'Password must be at least 8 characters.';
     return null;
   };
 
-  /* ── Submit ─────────────────────────────────────────────── */
+  /* ── Submit (Step 1) ──────────────────────────────────────── */
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError(''); setSuccess('');
@@ -86,37 +82,45 @@ export default function SignUp() {
 
     try {
       if (isSupabaseConfigured()) {
-        const email = usePhone ? `${form.contact.trim().replace(/[^0-9]/g, '')}@phone.aurban.com` : form.contact.trim();
         const res = await signUpWithEmail({
-          email,
-          password: crypto.randomUUID().slice(0, 16), // temp password — user can reset later
+          email: form.email.trim(),
+          password: form.password,
           name: form.fullName.trim(),
-          phone: usePhone ? form.contact.trim() : '',
           role: 'user',
         });
         if (!res.success) { setError(res.error || 'Registration failed.'); setLoading(false); return; }
-        // onAuthStateChange will pick up the session
-        setSuccess('Account created! Welcome to Aurban.');
-        setTimeout(() => navigate('/', { replace: true }), 800);
+        // Move to OTP verification step
+        setStep(2);
       } else {
-        await new Promise(r => setTimeout(r, 1200));
-        login({
-          id: 'u_' + Date.now(),
-          name: form.fullName.trim(),
-          email: usePhone ? '' : form.contact.trim(),
-          phone: usePhone ? form.contact.trim() : '',
-          role: 'user',
-          verified: false,
-        });
-        setSuccess('Account created! Welcome to Aurban.');
-        setTimeout(() => navigate('/', { replace: true }), 800);
+        // Mock mode — go to step 2 for demo
+        await new Promise(r => setTimeout(r, 800));
+        setStep(2);
       }
     } catch {
       setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [form, usePhone, honeypot, login, navigate, attempts]);
+  }, [form, honeypot, attempts]);
+
+  /* ── OTP verified (Step 2) ────────────────────────────────── */
+  const handleOTPVerified = useCallback(({ method }) => {
+    if (!isSupabaseConfigured()) {
+      // Mock mode — log in directly
+      login({
+        id: 'u_' + Date.now(),
+        name: form.fullName.trim(),
+        email: form.email.trim(),
+        role: 'user',
+        verified: false,
+        emailVerified: method === 'email',
+        whatsappVerified: method === 'phone',
+      });
+    }
+    // Supabase mode: verifyOtp auto-signs the user in → onAuthStateChange handles it
+    setSuccess('Account verified! Welcome to Aurban.');
+    setTimeout(() => navigate('/', { replace: true }), 800);
+  }, [form, login, navigate]);
 
   /* ── Google signup ──────────────────────────────────────── */
   const handleGoogle = useCallback(async () => {
@@ -125,7 +129,7 @@ export default function SignUp() {
       if (isSupabaseConfigured()) {
         const res = await signInWithGoogle();
         if (!res.success) { setError(res.error || 'Google signup failed.'); setGLoading(false); return; }
-        // OAuth redirect — onAuthStateChange handles session
+        // OAuth redirect — Google = pre-verified email
       } else {
         await new Promise(r => setTimeout(r, 1500));
         login({
@@ -134,6 +138,7 @@ export default function SignUp() {
           email: 'user@gmail.com',
           role: 'user',
           verified: true,
+          emailVerified: true,
           avatar: null,
         });
         navigate('/', { replace: true });
@@ -145,6 +150,37 @@ export default function SignUp() {
     }
   }, [login, navigate]);
 
+  /* ── Step 2: OTP Verification ─────────────────────────────── */
+  if (step === 2) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-white dark:bg-gray-950">
+        <div className="w-full max-w-md">
+          <div className="flex justify-center mb-8">
+            <Link to="/" className="flex items-center gap-2">
+              <AurbanLogo size="md" />
+            </Link>
+          </div>
+
+          <div className="p-6 bg-white border border-gray-100 shadow-sm dark:bg-gray-900 dark:border-white/10 rounded-2xl sm:p-8">
+            <OTPVerification
+              email={form.email.trim()}
+              onVerified={handleOTPVerified}
+              title="Verify your account"
+              subtitle={`We sent a code to ${form.email.trim()}`}
+            />
+          </div>
+
+          {success && (
+            <p className="flex items-center justify-center gap-2 mt-4 text-sm text-emerald-600">
+              <CheckCircle2 size={14} />{success}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Step 1: Registration Form ────────────────────────────── */
   return (
     <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-white dark:bg-gray-950">
       <div className="w-full max-w-md">
@@ -176,20 +212,8 @@ export default function SignUp() {
 
           <div className="flex items-center gap-4">
             <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
-            <span className="text-xs text-gray-400">or sign up with</span>
+            <span className="text-xs text-gray-400">or sign up with email</span>
             <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
-          </div>
-
-          {/* Email / Phone toggle */}
-          <div className="flex p-1 bg-gray-100 rounded-full dark:bg-white/5">
-            <button onClick={() => setUsePhone(false)}
-              className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all ${!usePhone ? 'bg-white dark:bg-gray-800 text-brand-charcoal-dark dark:text-white shadow-sm' : 'text-gray-400'}`}>
-              <Mail size={13} className="inline mr-1.5 -mt-0.5" />Email
-            </button>
-            <button onClick={() => setUsePhone(true)}
-              className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all ${usePhone ? 'bg-white dark:bg-gray-800 text-brand-charcoal-dark dark:text-white shadow-sm' : 'text-gray-400'}`}>
-              <Smartphone size={13} className="inline mr-1.5 -mt-0.5" />Phone
-            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -209,24 +233,25 @@ export default function SignUp() {
               </div>
             </div>
 
-            {/* Email or Phone */}
+            {/* Email */}
             <div>
-              <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
-                {usePhone ? 'Phone number' : 'Email address'}
-              </label>
+              <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Email address</label>
               <div className="relative">
-                {usePhone
-                  ? <Smartphone size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
-                  : <Mail size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />}
-                <input
-                  type={usePhone ? 'tel' : 'email'}
-                  value={form.contact}
-                  onChange={(e) => update('contact', e.target.value)}
-                  placeholder={usePhone ? '+234 xxx xxxx xxx' : 'you@example.com'}
-                  required maxLength={200}
-                  autoComplete={usePhone ? 'tel' : 'email'}
-                  className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300"
-                />
+                <Mail size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
+                <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)}
+                  placeholder="you@example.com" required maxLength={200} autoComplete="email"
+                  className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300" />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Password</label>
+              <div className="relative">
+                <Lock size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
+                <input type="password" value={form.password} onChange={(e) => update('password', e.target.value)}
+                  placeholder="Min. 8 characters" required minLength={8} autoComplete="new-password"
+                  className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300" />
               </div>
             </div>
 
@@ -255,7 +280,7 @@ export default function SignUp() {
           </p>
           <p className="text-xs text-gray-300 dark:text-gray-600">
             Want to list properties or offer services?{' '}
-            <Link to="/onboarding" className="font-medium text-gray-500 dark:text-gray-400 hover:text-brand-gold">Become a provider →</Link>
+            <Link to="/provider/signup" className="font-medium text-gray-500 dark:text-gray-400 hover:text-brand-gold">Become a provider →</Link>
           </p>
         </div>
       </div>

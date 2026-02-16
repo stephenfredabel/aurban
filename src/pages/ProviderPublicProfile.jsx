@@ -69,13 +69,12 @@ export default function ProviderPublicProfile() {
   // Navigate to messages with provider context
   const handleMessage = () => {
     const first = providerListings[0] || providerServices[0] || providerProducts[0];
-    if (!first) return;
     const params = new URLSearchParams({
-      listing:      first.id,
-      provider:     providerId,
-      providerName: providerName,
-      title:        first.title,
-      type:         first.category || first.type || 'rental',
+      listing:      first?.id || id,
+      provider:     providerId || id,
+      providerName: providerName || 'Provider',
+      title:        first?.title || `Inquiry to ${providerName || 'Provider'}`,
+      type:         first?.category || first?.type || 'general',
     });
     navigate(`/dashboard/messages?${params.toString()}`);
   };

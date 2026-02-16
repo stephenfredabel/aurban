@@ -8,15 +8,16 @@ import {
 import { useAuth } from '../../context/AuthContext.jsx';
 import AurbanLogo from '../../components/AurbanLogo.jsx';
 import { isSupabaseConfigured } from '../../lib/supabase.js';
+import { signUpWithEmail, signInWithGoogle } from '../../services/supabase-auth.service.js';
+import OTPVerification from '../../components/auth/OTPVerification.jsx';
 
 /* ════════════════════════════════════════════════════════════
-   PROVIDER SIGNUP — Simple provider registration
+   PROVIDER SIGNUP — Provider registration
 
-   Fields: Full Name, Email, Password, WhatsApp Number, Account Type
-   After signup → email verification → provider dashboard (restricted)
-
-   Separate from user signup (which is in the Header).
-   Providers register here, then complete their profile in Settings.
+   Flow:
+     Step 1: Full Name, Email, Password, WhatsApp, Account Type
+     Step 2: OTP verification (email or phone)
+     Done → provider dashboard (restricted until admin approval)
 ════════════════════════════════════════════════════════════ */
 
 function GoogleIcon({ size = 20 }) {
@@ -36,6 +37,7 @@ export default function ProviderSignUp() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -76,7 +78,7 @@ export default function ProviderSignUp() {
     return null;
   };
 
-  /* ── Submit ─────────────────────────────────────────────── */
+  /* ── Submit (Step 1) ─────────────────────────────────────── */
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError(''); setSuccess('');
@@ -108,41 +110,48 @@ export default function ProviderSignUp() {
           setLoading(false);
           return;
         }
-        setSuccess('Account created! Please check your email to verify your address.');
-        setTimeout(() => navigate('/provider/login?email=' + encodeURIComponent(form.email.trim()), { replace: true }), 3000);
       } else {
-        // Mock mode
-        await new Promise(r => setTimeout(r, 1200));
-        login({
-          id: 'p_' + Date.now(),
-          name: form.fullName.trim(),
-          email: form.email.trim(),
-          phone: form.whatsapp.trim(),
-          whatsapp: form.whatsapp.trim(),
-          role: 'provider',
-          verified: false,
-          verificationStatus: 'unverified',
-          emailVerified: false,
-          whatsappVerified: false,
-          accountType: form.accountType,
-          tier: { type: form.accountType, level: 1, label: form.accountType === 'company' ? 'Registered Business (Basic)' : 'Basic Provider' },
-        });
-        setSuccess('Account created! Redirecting to your dashboard...');
-        setTimeout(() => navigate('/provider', { replace: true }), 1000);
+        await new Promise(r => setTimeout(r, 800));
       }
+      // Move to OTP verification step
+      setStep(2);
     } catch {
       setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [form, honeypot, login, navigate, attempts]);
+  }, [form, honeypot, attempts]);
+
+  /* ── OTP verified (Step 2) ────────────────────────────────── */
+  const handleOTPVerified = useCallback(({ method }) => {
+    if (!isSupabaseConfigured()) {
+      login({
+        id: 'p_' + Date.now(),
+        name: form.fullName.trim(),
+        email: form.email.trim(),
+        phone: form.whatsapp.trim(),
+        whatsapp: form.whatsapp.trim(),
+        role: 'provider',
+        verified: false,
+        verificationStatus: 'unverified',
+        emailVerified: method === 'email',
+        whatsappVerified: method === 'phone',
+        accountType: form.accountType,
+        tier: { type: form.accountType, level: 1, label: form.accountType === 'company' ? 'Registered Business (Basic)' : 'Basic Provider' },
+      });
+    }
+    setSuccess('Account verified! Redirecting to your dashboard...');
+    setTimeout(() => navigate('/provider', { replace: true }), 1000);
+  }, [form, login, navigate]);
 
   /* ── Google signup ──────────────────────────────────────── */
   const handleGoogle = useCallback(async () => {
     setGLoading(true); setError('');
     try {
       if (isSupabaseConfigured()) {
-        const res = await signInWithGoogle({ redirectTo: '/provider', role: 'provider' });
+        sessionStorage.setItem('aurban_oauth_role', 'provider');
+        sessionStorage.setItem('aurban_oauth_redirect', '/provider');
+        const res = await signInWithGoogle();
         if (!res.success) { setError(res.error || 'Google signup failed.'); setGLoading(false); return; }
       } else {
         await new Promise(r => setTimeout(r, 1500));
@@ -153,6 +162,7 @@ export default function ProviderSignUp() {
           role: 'provider',
           verified: false,
           verificationStatus: 'unverified',
+          emailVerified: true,
           accountType: 'individual',
           tier: { type: 'individual', level: 1, label: 'Basic Provider' },
         });
@@ -165,6 +175,42 @@ export default function ProviderSignUp() {
     }
   }, [login, navigate]);
 
+  /* ── Step 2: OTP Verification ─────────────────────────────── */
+  if (step === 2) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50 dark:bg-gray-950">
+        <div className="w-full max-w-md">
+          <div className="flex flex-col items-center mb-8">
+            <Link to="/" className="flex items-center gap-2 mb-3">
+              <AurbanLogo size="md" />
+            </Link>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-charcoal-dark text-white text-xs font-semibold rounded-full">
+              <Building2 size={13} />
+              Provider Registration
+            </div>
+          </div>
+
+          <div className="p-6 bg-white shadow-sm dark:bg-gray-900 rounded-2xl sm:p-8">
+            <OTPVerification
+              email={form.email.trim()}
+              phone={form.whatsapp.trim()}
+              onVerified={handleOTPVerified}
+              title="Verify your identity"
+              subtitle={`We sent a code to ${form.email.trim()}`}
+            />
+          </div>
+
+          {success && (
+            <div className="flex items-center justify-center gap-2 mt-4 text-sm text-emerald-600">
+              <CheckCircle2 size={14} />{success}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Step 1: Registration Form ────────────────────────────── */
   return (
     <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50 dark:bg-gray-950">
       <div className="w-full max-w-md">
@@ -223,16 +269,9 @@ export default function ProviderSignUp() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
 
-              {/* Honeypot — hidden from real users, catches bots */}
+              {/* Honeypot */}
               <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
-                <input
-                  type="text"
-                  name="aurban_hp_field"
-                  value={honeypot}
-                  onChange={(e) => setHoneypot(e.target.value)}
-                  tabIndex={-1}
-                  autoComplete="new-password"
-                />
+                <input type="text" name="aurban_hp_field" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="new-password" />
               </div>
 
               {/* Full name */}
@@ -269,7 +308,7 @@ export default function ProviderSignUp() {
                     placeholder="+234 xxx xxxx xxx" required maxLength={20} autoComplete="tel"
                     className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300" />
                 </div>
-                <p className="mt-1 text-[10px] text-gray-400">We&apos;ll verify this number for identity confirmation</p>
+                <p className="mt-1 text-[10px] text-gray-400">We&apos;ll verify this number via OTP</p>
               </div>
 
               {/* Password */}
@@ -277,10 +316,7 @@ export default function ProviderSignUp() {
                 <label htmlFor="provider-password" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Password</label>
                 <div className="relative">
                   <Lock size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
-                  <input
-                    id="provider-password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={form.password} onChange={(e) => update('password', e.target.value)}
+                  <input id="provider-password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={(e) => update('password', e.target.value)}
                     placeholder="Min. 8 characters" required minLength={8} autoComplete="new-password"
                     className="w-full h-12 pr-12 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -295,10 +331,7 @@ export default function ProviderSignUp() {
                 <label htmlFor="provider-confirm-password" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Confirm password</label>
                 <div className="relative">
                   <Lock size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
-                  <input
-                    id="provider-confirm-password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)}
+                  <input id="provider-confirm-password" type={showPassword ? 'text' : 'password'} value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)}
                     placeholder="Re-enter password" required minLength={8} autoComplete="new-password"
                     className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300" />
                 </div>
@@ -308,12 +341,7 @@ export default function ProviderSignUp() {
               {success && (
                 <div className="flex items-start gap-2 p-3 text-sm rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
                   <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-medium">{success}</p>
-                    {isSupabaseConfigured() && (
-                      <p className="mt-1 text-xs opacity-80">You&apos;ll be redirected to login shortly.</p>
-                    )}
-                  </div>
+                  <p className="font-medium">{success}</p>
                 </div>
               )}
 

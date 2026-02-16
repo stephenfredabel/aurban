@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import AurbanLogo  from '../components/AurbanLogo.jsx';
 import { isSupabaseConfigured } from '../lib/supabase.js';
 import { signInWithEmail, signInWithGoogle, signInWithMagicLink } from '../services/supabase-auth.service.js';
+import OTPVerification from '../components/auth/OTPVerification.jsx';
 
 /* ════════════════════════════════════════════════════════════
    LOGIN — End-user / Visitor login
@@ -60,6 +61,7 @@ export default function Login() {
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [twoFactorData, setTwoFactorData] = useState(null);
   const [usePhone, setUsePhone]       = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(!!params.get('verify'));
   const [rateLimiter]                 = useState(() => new RateLimiter());
 
   /* ── Helper: redirect BACK TO MARKETPLACE ───────────────── */
@@ -87,7 +89,18 @@ export default function Login() {
       if (isSupabaseConfigured()) {
         // Real Supabase auth
         const res = await signInWithEmail(form.email, form.password);
-        if (!res.success) { setError(res.error || 'Invalid credentials.'); setLoading(false); return; }
+        if (!res.success) {
+          // Detect unverified email — Supabase returns this when email not confirmed
+          const errMsg = (res.error || '').toLowerCase();
+          if (errMsg.includes('email not confirmed') || errMsg.includes('not confirmed')) {
+            setNeedsVerification(true);
+            setLoading(false);
+            return;
+          }
+          setError(res.error || 'Invalid credentials.');
+          setLoading(false);
+          return;
+        }
         // AuthContext onAuthStateChange will pick up the session
         rateLimiter.reset();
         setSuccess('Welcome back!');
@@ -195,8 +208,28 @@ export default function Login() {
           </p>
         </div>
 
-        {/* ── 2FA Screen ──────────────────────────────────── */}
-        {twoFactorData ? (
+        {/* ── Email verification needed ───────────────────── */}
+        {needsVerification ? (
+          <div className="space-y-5">
+            <div className="p-6 bg-white border border-gray-100 shadow-sm dark:bg-gray-900 dark:border-white/10 rounded-2xl">
+              <OTPVerification
+                email={form.email}
+                onVerified={() => {
+                  setNeedsVerification(false);
+                  setSuccess('Email verified! Logging in...');
+                  // After verification, Supabase auto-signs in via verifyOtp
+                  setTimeout(() => redirectAfterLogin(), 800);
+                }}
+                title="Verify your email"
+                subtitle={`Your email ${form.email} needs verification before you can log in.`}
+              />
+            </div>
+            <button onClick={() => setNeedsVerification(false)}
+              className="w-full text-sm text-gray-400 hover:text-gray-600">
+              ← Back to login
+            </button>
+          </div>
+        ) : twoFactorData ? (
           <div className="space-y-5">
             <div className="p-4 text-center bg-blue-50 dark:bg-blue-500/10 rounded-2xl">
               <Shield size={32} className="mx-auto mb-2 text-blue-500" />

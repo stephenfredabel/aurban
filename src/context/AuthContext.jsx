@@ -129,6 +129,12 @@ export function AuthProvider({ children }) {
         }
       }
 
+      // Set emailVerified from Supabase's email_confirmed_at
+      if (sbUser.email_confirmed_at) {
+        profileData.emailVerified = true;
+        profileData.verified = true;
+      }
+
       const clean = sanitizeUser(profileData);
       setUser(clean);
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(clean));
@@ -157,6 +163,8 @@ export function AuthProvider({ children }) {
       email: sbUser.email || '',
       phone: sbUser.phone || '',
       role:  fallbackRole,
+      emailVerified: !!sbUser.email_confirmed_at,
+      verified: !!sbUser.email_confirmed_at,
     });
     setUser(fallback);
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(fallback));
@@ -257,6 +265,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const normalizedRole = user ? normalizeRole(user.role) : null;
+  const isVerified = user ? (user.emailVerified || user.whatsappVerified || user.verified) : false;
 
   return (
     <AuthContext.Provider value={{
@@ -266,6 +275,7 @@ export function AuthProvider({ children }) {
       updateUser,
       loading,
       isAuthenticated: !!user,
+      isVerified,
       isProvider: user ? isProviderRole(user.role) : false,
       isAdmin:    user ? isAdminRole(user.role) : false,
       isCompany:  user?.accountType === 'company',

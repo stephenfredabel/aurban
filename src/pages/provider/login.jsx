@@ -14,6 +14,7 @@ import {
   signInWithEmail,
   signInWithGoogle
 } from "@/services/supabase-auth.service";
+import OTPVerification from "@/components/auth/OTPVerification";
 
 
 /* ════════════════════════════════════════════════════════════
@@ -62,6 +63,7 @@ export default function ProviderLogin() {
   const [success, setSuccess]         = useState('');
   const [form, setForm]               = useState({ email: params.get('email') || '', password: '' });
   const [usePhone, setUsePhone]       = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(!!params.get('verify'));
   const [rateLimiter]                 = useState(() => new RateLimiter('provider_login_attempts'));
 
   /* ── Redirect to PROVIDER DASHBOARD ─────────────────────── */
@@ -86,7 +88,17 @@ export default function ProviderLogin() {
     try {
       if (isSupabaseConfigured()) {
         const res = await signInWithEmail(form.email, form.password);
-        if (!res.success) { setError(res.error || 'Invalid credentials.'); setLoading(false); return; }
+        if (!res.success) {
+          const errMsg = (res.error || '').toLowerCase();
+          if (errMsg.includes('email not confirmed') || errMsg.includes('not confirmed')) {
+            setNeedsVerification(true);
+            setLoading(false);
+            return;
+          }
+          setError(res.error || 'Invalid credentials.');
+          setLoading(false);
+          return;
+        }
         // onAuthStateChange will pick up the session and load profile
         rateLimiter.reset();
         setSuccess('Welcome back!');
@@ -167,91 +179,112 @@ export default function ProviderLogin() {
         {/* Card */}
         <div className="p-6 bg-white shadow-sm dark:bg-gray-900 rounded-2xl sm:p-8">
 
-          <div className="mb-6 text-center">
-            <h1 className="text-xl font-bold font-display text-brand-charcoal-dark dark:text-white">
-              Provider Login
-            </h1>
-            <p className="mt-1.5 text-sm text-gray-400">
-              Access your listings, analytics & provider dashboard
-            </p>
-          </div>
-
-          <div className="space-y-5">
-
-            {/* Google */}
-            <button onClick={handleGoogle} disabled={gLoading}
-              className="flex items-center justify-center w-full gap-3 py-3 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-200 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 rounded-full hover:bg-gray-50 dark:hover:bg-white/10 active:scale-[0.98]">
-              {gLoading ? <Loader size={18} className="animate-spin" /> : <><GoogleIcon size={18} /> Continue with Google</>}
-            </button>
-
-            <div className="flex items-center gap-4">
-              <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
-              <span className="text-xs text-gray-400">or</span>
-              <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
-            </div>
-
-            {/* Email / Phone toggle */}
-            <div className="flex p-1 bg-gray-100 rounded-full dark:bg-white/5">
-              <button onClick={() => setUsePhone(false)}
-                className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all ${!usePhone ? 'bg-white dark:bg-gray-800 text-brand-charcoal-dark dark:text-white shadow-sm' : 'text-gray-400'}`}>
-                <Mail size={13} className="inline mr-1.5 -mt-0.5" />Email
-              </button>
-              <button onClick={() => setUsePhone(true)}
-                className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all ${usePhone ? 'bg-white dark:bg-gray-800 text-brand-charcoal-dark dark:text-white shadow-sm' : 'text-gray-400'}`}>
-                <Smartphone size={13} className="inline mr-1.5 -mt-0.5" />Phone
+          {needsVerification ? (
+            <div className="space-y-5">
+              <OTPVerification
+                email={form.email}
+                onVerified={() => {
+                  setNeedsVerification(false);
+                  setSuccess('Email verified! Logging in...');
+                  setTimeout(() => redirectAfterLogin(), 800);
+                }}
+                title="Verify your email"
+                subtitle={`Your email ${form.email} needs verification before you can access the Provider Portal.`}
+              />
+              <button onClick={() => setNeedsVerification(false)}
+                className="w-full text-sm text-gray-400 hover:text-gray-600">
+                ← Back to login
               </button>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="provider-login-email" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {usePhone ? 'Phone number' : 'Email address'}
-                </label>
-                <div className="relative">
-                  {usePhone
-                    ? <Smartphone size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
-                    : <Mail size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />}
-                  <input
-                    id="provider-login-email"
-                    type={usePhone ? 'tel' : 'email'}
-                    value={form.email}
-                    onChange={(e) => update('email', e.target.value)}
-                    placeholder={usePhone ? '+234 xxx xxxx xxx' : 'provider@example.com'}
-                    required autoComplete={usePhone ? 'tel' : 'email'}
-                    className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300"
-                  />
-                </div>
+          ) : (
+            <>
+              <div className="mb-6 text-center">
+                <h1 className="text-xl font-bold font-display text-brand-charcoal-dark dark:text-white">
+                  Provider Login
+                </h1>
+                <p className="mt-1.5 text-sm text-gray-400">
+                  Access your listings, analytics & provider dashboard
+                </p>
               </div>
 
-              <div>
-                <label htmlFor="provider-login-password" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Password</label>
-                <div className="relative">
-                  <Lock size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
-                  <input
-                    id="provider-login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={form.password}
-                    onChange={(e) => update('password', e.target.value)}
-                    placeholder="••••••••"
-                    required autoComplete="current-password"
-                    className="w-full h-12 pr-12 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300"
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute p-1 text-gray-400 -translate-y-1/2 right-3 top-1/2 hover:text-gray-600">
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              <div className="space-y-5">
+
+                {/* Google */}
+                <button onClick={handleGoogle} disabled={gLoading}
+                  className="flex items-center justify-center w-full gap-3 py-3 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-200 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 rounded-full hover:bg-gray-50 dark:hover:bg-white/10 active:scale-[0.98]">
+                  {gLoading ? <Loader size={18} className="animate-spin" /> : <><GoogleIcon size={18} /> Continue with Google</>}
+                </button>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
+                  <span className="text-xs text-gray-400">or</span>
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
+                </div>
+
+                {/* Email / Phone toggle */}
+                <div className="flex p-1 bg-gray-100 rounded-full dark:bg-white/5">
+                  <button onClick={() => setUsePhone(false)}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all ${!usePhone ? 'bg-white dark:bg-gray-800 text-brand-charcoal-dark dark:text-white shadow-sm' : 'text-gray-400'}`}>
+                    <Mail size={13} className="inline mr-1.5 -mt-0.5" />Email
+                  </button>
+                  <button onClick={() => setUsePhone(true)}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all ${usePhone ? 'bg-white dark:bg-gray-800 text-brand-charcoal-dark dark:text-white shadow-sm' : 'text-gray-400'}`}>
+                    <Smartphone size={13} className="inline mr-1.5 -mt-0.5" />Phone
                   </button>
                 </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="provider-login-email" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                      {usePhone ? 'Phone number' : 'Email address'}
+                    </label>
+                    <div className="relative">
+                      {usePhone
+                        ? <Smartphone size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
+                        : <Mail size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />}
+                      <input
+                        id="provider-login-email"
+                        type={usePhone ? 'tel' : 'email'}
+                        value={form.email}
+                        onChange={(e) => update('email', e.target.value)}
+                        placeholder={usePhone ? '+234 xxx xxxx xxx' : 'provider@example.com'}
+                        required autoComplete={usePhone ? 'tel' : 'email'}
+                        className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="provider-login-password" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Password</label>
+                    <div className="relative">
+                      <Lock size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
+                      <input
+                        id="provider-login-password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={form.password}
+                        onChange={(e) => update('password', e.target.value)}
+                        placeholder="••••••••"
+                        required autoComplete="current-password"
+                        className="w-full h-12 pr-12 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300"
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="absolute p-1 text-gray-400 -translate-y-1/2 right-3 top-1/2 hover:text-gray-600">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {error && <p className="flex items-center gap-2 text-sm text-red-500"><AlertCircle size={14} />{error}</p>}
+                  {success && <p className="flex items-center gap-2 text-sm text-emerald-600"><CheckCircle2 size={14} />{success}</p>}
+
+                  <button type="submit" disabled={loading}
+                    className="w-full h-12 font-semibold text-white transition-all rounded-full bg-brand-charcoal-dark hover:bg-brand-charcoal disabled:opacity-40 active:scale-[0.98] flex items-center justify-center gap-2">
+                    {loading ? <Loader size={18} className="animate-spin" /> : <><LogIn size={16} /> Log in to Provider Portal</>}
+                  </button>
+                </form>
               </div>
-
-              {error && <p className="flex items-center gap-2 text-sm text-red-500"><AlertCircle size={14} />{error}</p>}
-              {success && <p className="flex items-center gap-2 text-sm text-emerald-600"><CheckCircle2 size={14} />{success}</p>}
-
-              <button type="submit" disabled={loading}
-                className="w-full h-12 font-semibold text-white transition-all rounded-full bg-brand-charcoal-dark hover:bg-brand-charcoal disabled:opacity-40 active:scale-[0.98] flex items-center justify-center gap-2">
-                {loading ? <Loader size={18} className="animate-spin" /> : <><LogIn size={16} /> Log in to Provider Portal</>}
-              </button>
-            </form>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Bottom links */}

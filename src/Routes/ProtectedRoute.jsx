@@ -25,7 +25,7 @@ export default function ProtectedRoute({
   requiredPermission,
   adminOnly = false,
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isVerified } = useAuth();
   const location          = useLocation();
 
   // While auth state is loading, show nothing (prevents flash)
@@ -45,6 +45,15 @@ export default function ProtectedRoute({
   }
 
   const role = normalizeRole(user.role);
+
+  // Verified check — unverified users must complete OTP before accessing protected routes
+  if (!isVerified) {
+    const providerRoles = ['provider', 'host', 'agent', 'seller', 'service'];
+    const loginPath = (providerRoles.includes(user.role) || isAdminRole(role))
+      ? `/provider/login?email=${encodeURIComponent(user.email)}&verify=1`
+      : `/login?email=${encodeURIComponent(user.email)}&verify=1`;
+    return <Navigate to={loginPath} replace />;
+  }
 
   // Admin-only check
   if (adminOnly && !isAdminRole(role)) {
