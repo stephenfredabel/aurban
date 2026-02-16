@@ -8,7 +8,6 @@ import {
 import { useAuth } from '../../context/AuthContext.jsx';
 import AurbanLogo from '../../components/AurbanLogo.jsx';
 import { isSupabaseConfigured } from '../../lib/supabase.js';
-const res = await signInWithGoogle({ redirectTo: '/provider', role: 'provider' });
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER SIGNUP — Simple provider registration
@@ -143,9 +142,8 @@ export default function ProviderSignUp() {
     setGLoading(true); setError('');
     try {
       if (isSupabaseConfigured()) {
-        const res = await signInWithGoogle();
+        const res = await signInWithGoogle({ redirectTo: '/provider', role: 'provider' });
         if (!res.success) { setError(res.error || 'Google signup failed.'); setGLoading(false); return; }
-        // OAuth redirect — onAuthStateChange handles session
       } else {
         await new Promise(r => setTimeout(r, 1500));
         login({
