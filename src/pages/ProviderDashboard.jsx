@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth }           from '../context/AuthContext.jsx';
 import { isAdminRole }       from '../utils/rbac.js';
+import useVerificationGate   from '../hooks/useVerificationGate.js';
 import DashboardLayout       from '../Layout/DashboardLayout.jsx';
 import * as propertyService  from '../services/property.service.js';
 
@@ -135,6 +136,7 @@ export default function ProviderDashboard() {
   const location              = useLocation();
   const navigate              = useNavigate();
   const isAdmin               = isAdminRole(user?.role);
+  const { isVerified, canPerform, gateMessage } = useVerificationGate();
 
   /* ── Derive tab directly from URL (no state sync needed) ── */
   const segment = location.pathname.replace('/provider', '').replace(/^\//, '') || '';
@@ -343,10 +345,12 @@ export default function ProviderDashboard() {
                   <h3 className="mb-3 text-sm font-semibold text-brand-charcoal-dark dark:text-white">Verification Status</h3>
                   <div className="space-y-2">
                     {[
-                      { label: 'Email verified',    done: true  },
-                      { label: 'Phone verified',    done: true  },
-                      { label: 'ID uploaded',       done: false },
-                      { label: 'Business docs',     done: false },
+                      { label: 'Email verified',    done: Boolean(user?.emailVerified) },
+                      { label: 'WhatsApp verified', done: Boolean(user?.whatsappVerified) },
+                      { label: 'Profile completed', done: isVerified },
+                      ...(user?.accountType === 'company'
+                        ? [{ label: 'Business docs',  done: isVerified }]
+                        : [{ label: 'ID uploaded',     done: isVerified }]),
                     ].map(({ label, done }) => (
                       <div key={label} className="flex items-center gap-3 py-2">
                         {done ? (
@@ -356,19 +360,28 @@ export default function ProviderDashboard() {
                         )}
                         <span className={`text-sm ${done ? 'text-gray-500 dark:text-gray-400' : 'text-brand-charcoal-dark dark:text-white font-medium'}`}>{label}</span>
                         {!done && (
-                          <button className="ml-auto text-xs font-medium text-brand-gold hover:underline">
+                          <Link to="/provider/settings" className="ml-auto text-xs font-medium text-brand-gold hover:underline">
                             Complete →
-                          </button>
+                          </Link>
                         )}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <Link to="/provider/new"
-                  className="flex items-center justify-center gap-2 py-4 font-semibold transition-colors bg-brand-gold text-brand-charcoal-dark rounded-2xl shadow-card hover:bg-brand-gold-dark">
-                  <PlusCircle size={20} /> Add New Listing
-                </Link>
+                {canPerform('create_listing') ? (
+                  <Link to="/provider/listings/new"
+                    className="flex items-center justify-center gap-2 py-4 font-semibold transition-colors bg-brand-gold text-brand-charcoal-dark rounded-2xl shadow-card hover:bg-brand-gold-dark">
+                    <PlusCircle size={20} /> Add New Listing
+                  </Link>
+                ) : (
+                  <div className="relative py-4 text-center bg-gray-100 dark:bg-white/5 rounded-2xl shadow-card">
+                    <div className="flex items-center justify-center gap-2 font-semibold text-gray-400">
+                      <AlertCircle size={18} /> Add New Listing
+                    </div>
+                    <p className="mt-1 text-xs text-gray-400 px-4">{gateMessage}</p>
+                  </div>
+                )}
               </div>
 
               {/* Right column: Recent activity */}
@@ -427,10 +440,17 @@ export default function ProviderDashboard() {
               ))}
 
               {/* Add listing shortcut */}
-              <Link to="/provider/new"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium shrink-0 bg-brand-gold text-brand-charcoal-dark hover:bg-brand-gold-dark transition-colors ml-auto">
-                <PlusCircle size={14} /> Add New
-              </Link>
+              {canPerform('create_listing') ? (
+                <Link to="/provider/listings/new"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium shrink-0 bg-brand-gold text-brand-charcoal-dark hover:bg-brand-gold-dark transition-colors ml-auto">
+                  <PlusCircle size={14} /> Add New
+                </Link>
+              ) : (
+                <span title={gateMessage}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium shrink-0 bg-gray-200 dark:bg-white/10 text-gray-400 cursor-not-allowed ml-auto">
+                  <PlusCircle size={14} /> Add New
+                </span>
+              )}
             </div>
 
             {/* Listing cards */}
@@ -599,9 +619,18 @@ export default function ProviderDashboard() {
               <div className="p-5 text-white bg-brand-charcoal-dark rounded-2xl">
                 <p className="text-xs tracking-wider text-gray-400 uppercase">Available Balance</p>
                 <p className="mt-2 text-3xl font-bold font-display">₦85,000</p>
-                <button className="mt-4 bg-brand-gold text-brand-charcoal-dark font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-brand-gold-dark transition-colors">
-                  Withdraw Funds
-                </button>
+                {canPerform('withdraw_funds') ? (
+                  <button className="mt-4 bg-brand-gold text-brand-charcoal-dark font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-brand-gold-dark transition-colors">
+                    Withdraw Funds
+                  </button>
+                ) : (
+                  <div className="mt-4">
+                    <button disabled className="bg-gray-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm opacity-50 cursor-not-allowed">
+                      Withdraw Funds
+                    </button>
+                    <p className="mt-1.5 text-xs text-gray-400">{gateMessage}</p>
+                  </div>
+                )}
               </div>
               <div className="p-5 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
                 <p className="text-xs tracking-wider text-gray-400 uppercase">Pending / Escrow</p>

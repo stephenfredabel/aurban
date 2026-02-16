@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Building2, LogIn, UserPlus, Mail, Phone,
-  MapPin, Globe, Shield, ChevronRight,
+  MapPin, Shield, ChevronRight,
 } from 'lucide-react';
 import { useAuth, isProviderRole } from '../context/AuthContext.jsx';
 import AurbanLogo from './AurbanLogo.jsx';
@@ -57,7 +57,7 @@ export default function Footer() {
   /* ── Hide on auth pages, dashboards, provider pages ──────── */
   const hide = [
     '/login', '/signup', '/onboarding',
-    '/provider/login',
+    '/provider/login', '/provider/signup',
     '/dashboard', '/provider',
   ].some(p => pathname.startsWith(p));
   if (hide) return null;
@@ -93,7 +93,7 @@ export default function Footer() {
               <div className="flex items-center gap-3">
                 {user ? (
                   /* Logged-in user who is NOT a provider */
-                  <Link to="/onboarding"
+                  <Link to="/provider/signup"
                     className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white transition-all rounded-full bg-brand-charcoal-dark hover:bg-brand-charcoal active:scale-[0.98]">
                     <UserPlus size={16} />
                     {t('provider.becomeProvider', 'Become a Provider')}
@@ -107,7 +107,7 @@ export default function Footer() {
                       <LogIn size={15} />
                       {t('provider.providerLogin', 'Provider Login')}
                     </Link>
-                    <Link to="/onboarding"
+                    <Link to="/provider/signup"
                       className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white transition-all rounded-full bg-brand-charcoal-dark hover:bg-brand-charcoal active:scale-[0.98]">
                       <UserPlus size={15} />
                       {t('provider.registerProvider', 'Register as Provider')}

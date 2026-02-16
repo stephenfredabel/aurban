@@ -88,7 +88,8 @@ import useAdminSecurity    from './hooks/useAdminSecurity.js';
 
    PROVIDER AUTH (Footer → goes to /provider)
    • /provider/login   → Provider login (→ /provider)
-   • /onboarding       → Provider registration (→ /provider)
+   • /provider/signup  → Provider registration (→ /provider)
+   • /onboarding       → Provider profile completion wizard
 
    LEGAL
    • /terms                → Terms of service
@@ -146,6 +147,7 @@ const SignUp            = lazy(() => import('./pages/user/SignUp.jsx'));
 
 // Provider auth pages (Footer flow → /provider)
 const ProviderLogin     = lazy(() => import('./pages/provider/login.jsx'));
+const ProviderSignUp    = lazy(() => import('./pages/provider/SignUp.jsx'));
 const RegisterHost      = lazy(() => import('./pages/RegisterHost.jsx'));
 const OnboardingPage    = lazy(() => import('./components/onboarding/index.jsx'));
 
@@ -447,8 +449,9 @@ export default function App() {
                            Login/Register buttons live in the Footer.
                            After login → /provider dashboard
                       ═════════════════════════════════════════════ */}
-                      <Route path="/provider/login" element={<ProviderLogin />} />
-                      <Route path="/onboarding"     element={<OnboardingPage />} />
+                      <Route path="/provider/login"   element={<ProviderLogin />} />
+                      <Route path="/provider/signup" element={<ProviderSignUp />} />
+                      <Route path="/onboarding"      element={<OnboardingPage />} />
 
                       {/* ══ ADMIN AUTH (isolated — no layout, no marketplace links) ══
                            Admins ONLY. Completely separate from user/provider flows.

@@ -13,14 +13,21 @@ const guard = () => {
 
 // ── Email/Password ──────────────────────────────────────────
 
-export async function signUpWithEmail({ email, password, name, phone, role, countryCode }) {
+export async function signUpWithEmail({ email, password, name, phone, whatsapp, role, countryCode, accountType }) {
   const g = guard(); if (g) return g;
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, phone, role: role || 'user', countryCode: countryCode || 'NG' },
+        data: {
+          name,
+          phone: phone || whatsapp || '',
+          whatsapp: whatsapp || phone || '',
+          role: role || 'user',
+          countryCode: countryCode || 'NG',
+          accountType: accountType || 'individual',
+        },
       },
     });
     if (error) return { success: false, error: error.message };
@@ -137,16 +144,20 @@ export async function getProfile(userId) {
     return {
       success: true,
       data: {
-        id:          data.id,
-        name:        data.name,
-        email:       data.email,
-        phone:       data.phone,
-        role:        data.role,
-        avatar:      data.avatar,
-        verified:    data.verified,
-        tier:        data.tier,
-        accountType: data.account_type,
-        countryCode: data.country_code,
+        id:                  data.id,
+        name:                data.name,
+        email:               data.email,
+        phone:               data.phone,
+        whatsapp:            data.whatsapp || data.phone,
+        role:                data.role,
+        avatar:              data.avatar,
+        verified:            data.verified,
+        verificationStatus:  data.verification_status || (data.verified ? 'approved' : 'unverified'),
+        emailVerified:       data.email_verified ?? false,
+        whatsappVerified:    data.whatsapp_verified ?? false,
+        tier:                data.tier,
+        accountType:         data.account_type,
+        countryCode:         data.country_code,
       },
     };
   } catch (err) {
@@ -158,13 +169,16 @@ export async function updateProfile(userId, updates) {
   const g = guard(); if (g) return g;
   try {
     const dbUpdates = {};
-    if (updates.name !== undefined)        dbUpdates.name = updates.name;
-    if (updates.phone !== undefined)       dbUpdates.phone = updates.phone;
-    if (updates.avatar !== undefined)      dbUpdates.avatar = updates.avatar;
-    if (updates.bio !== undefined)         dbUpdates.bio = updates.bio;
-    if (updates.countryCode !== undefined) dbUpdates.country_code = updates.countryCode;
-    if (updates.tier !== undefined)        dbUpdates.tier = updates.tier;
-    if (updates.accountType !== undefined) dbUpdates.account_type = updates.accountType;
+    if (updates.name !== undefined)               dbUpdates.name = updates.name;
+    if (updates.phone !== undefined)              dbUpdates.phone = updates.phone;
+    if (updates.whatsapp !== undefined)            dbUpdates.whatsapp = updates.whatsapp;
+    if (updates.avatar !== undefined)             dbUpdates.avatar = updates.avatar;
+    if (updates.bio !== undefined)                dbUpdates.bio = updates.bio;
+    if (updates.countryCode !== undefined)        dbUpdates.country_code = updates.countryCode;
+    if (updates.tier !== undefined)               dbUpdates.tier = updates.tier;
+    if (updates.accountType !== undefined)        dbUpdates.account_type = updates.accountType;
+    if (updates.verificationStatus !== undefined) dbUpdates.verification_status = updates.verificationStatus;
+    if (updates.whatsappVerified !== undefined)   dbUpdates.whatsapp_verified = updates.whatsappVerified;
 
     const { data, error } = await supabase
       .from('profiles')

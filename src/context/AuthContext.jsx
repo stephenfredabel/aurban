@@ -72,16 +72,20 @@ export function isProviderRole(role) {
 const sanitizeUser = (user) => {
   const rawRole = ALL_VALID_ROLES.includes(user.role) ? user.role : 'user';
   return {
-    id:          String(user.id  || ''),
-    name:        String(user.name || '').slice(0, 100),
-    email:       String(user.email || '').slice(0, 200),
-    phone:       String(user.phone || '').slice(0, 30),
-    role:        rawRole,
-    avatar:      user.avatar ? String(user.avatar).slice(0, 500) : null,
-    verified:    Boolean(user.verified),
-    tier:        user.tier || { type: 'individual', level: 1, label: 'Basic Provider' },
-    accountType: user.accountType || user.tier?.type || 'individual',
-    countryCode: user.countryCode || 'NG',
+    id:                  String(user.id  || ''),
+    name:                String(user.name || '').slice(0, 100),
+    email:               String(user.email || '').slice(0, 200),
+    phone:               String(user.phone || '').slice(0, 30),
+    whatsapp:            String(user.whatsapp || user.phone || '').slice(0, 30),
+    role:                rawRole,
+    avatar:              user.avatar ? String(user.avatar).slice(0, 500) : null,
+    verified:            Boolean(user.verified),
+    verificationStatus:  user.verificationStatus || (user.verified ? 'approved' : 'unverified'),
+    emailVerified:       Boolean(user.emailVerified),
+    whatsappVerified:    Boolean(user.whatsappVerified),
+    tier:                user.tier || { type: 'individual', level: 1, label: 'Basic Provider' },
+    accountType:         user.accountType || user.tier?.type || 'individual',
+    countryCode:         user.countryCode || 'NG',
   };
 };
 
@@ -122,7 +126,7 @@ export function AuthProvider({ children }) {
       // 1. Try Supabase session first
       if (isSupabaseConfigured()) {
         try {
-          const { default: { supabase } } = await import('../lib/supabase.js');
+          const { supabase } = await import('../lib/supabase.js');
           const { data: { session } } = await supabase.auth.getSession();
           if (!cancelled && session?.user) {
             await loadSupabaseProfile(session.user);

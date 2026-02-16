@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import {
   Search, Shield, ShieldCheck, ShieldX, FileText,
   AlertCircle, ChevronLeft, ChevronRight,
-  Clock, User, Eye, Upload,
+  Clock, User, Eye, Upload, Building2,
 } from 'lucide-react';
 import RequirePermission from '../../components/admin/RequirePermission.jsx';
 import ConfirmAction from '../../components/admin/ConfirmAction.jsx';
 import useAdminAction from '../../hooks/useAdminAction.js';
 import { AUDIT_ACTIONS } from '../../services/audit.service.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase.js';
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER VERIFICATION — Queue of providers pending review
@@ -45,9 +46,10 @@ const MOCK_REQUESTS = [
   },
 ];
 
-const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected', 'docs_requested'];
+const STATUS_FILTERS = ['all', 'unverified', 'pending', 'approved', 'rejected', 'docs_requested'];
 
 const STATUS_STYLES = {
+  unverified:     { label: 'Unverified',       bg: 'bg-gray-50 dark:bg-gray-500/10',     text: 'text-gray-600' },
   pending:        { label: 'Pending',          bg: 'bg-amber-50 dark:bg-amber-500/10',   text: 'text-amber-600' },
   approved:       { label: 'Approved',         bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-600' },
   rejected:       { label: 'Rejected',         bg: 'bg-red-50 dark:bg-red-500/10',       text: 'text-red-600' },
@@ -55,9 +57,11 @@ const STATUS_STYLES = {
 };
 
 const TYPE_STYLES = {
-  host:   'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600',
-  agent:  'bg-purple-50 dark:bg-purple-500/10 text-purple-600',
-  seller: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600',
+  host:       'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600',
+  agent:      'bg-purple-50 dark:bg-purple-500/10 text-purple-600',
+  seller:     'bg-amber-50 dark:bg-amber-500/10 text-amber-600',
+  individual: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600',
+  company:    'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600',
 };
 
 const PAGE_SIZE = 4;
@@ -86,14 +90,42 @@ export default function ProviderVerification() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    // Simulated API load with fallback to mock data
-    const timer = setTimeout(() => {
+
+    async function loadProviders() {
+      if (isSupabaseConfigured()) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, name, email, phone, whatsapp, role, account_type, verification_status, verified, tier, created_at')
+            .in('role', ['provider', 'host', 'agent', 'seller', 'service'])
+            .order('created_at', { ascending: false });
+          if (!error && data && !cancelled) {
+            setRequests(data.map(p => ({
+              id: p.id,
+              providerName: p.name || 'Unnamed Provider',
+              providerType: p.role === 'provider' ? (p.account_type === 'company' ? 'company' : 'individual') : p.role,
+              email: p.email || '',
+              whatsapp: p.whatsapp || p.phone || '',
+              accountType: p.account_type || 'individual',
+              submittedDocs: p.tier?.docs || [],
+              status: p.verification_status || 'unverified',
+              submittedAt: p.created_at,
+              notes: '',
+            })));
+            setLoading(false);
+            return;
+          }
+        } catch { /* fall through to mock */ }
+      }
+      // Fallback to mock
       if (!cancelled) {
         setUsingFallback(true);
         setLoading(false);
       }
-    }, 600);
-    return () => { cancelled = true; clearTimeout(timer); };
+    }
+
+    loadProviders();
+    return () => { cancelled = true; };
   }, []);
 
   /* ── Admin actions ─────────────────────────────────────── */
@@ -107,6 +139,15 @@ export default function ProviderVerification() {
     targetId: activeRequest?.id,
     targetType: 'verification',
     onExecute: async ({ reason }) => {
+      // Update Supabase profile if configured
+      if (isSupabaseConfigured() && activeRequest?.id) {
+        try {
+          await supabase.from('profiles').update({
+            verification_status: 'approved',
+            verified: true,
+          }).eq('id', activeRequest.id);
+        } catch { /* local update still applies */ }
+      }
       setRequests((prev) => prev.map((r) => r.id === activeRequest?.id ? { ...r, status: 'approved', notes: reason } : r));
     },
     onSuccess: () => setActiveRequest(null),
@@ -122,6 +163,14 @@ export default function ProviderVerification() {
     targetId: activeRequest?.id,
     targetType: 'verification',
     onExecute: async ({ reason }) => {
+      if (isSupabaseConfigured() && activeRequest?.id) {
+        try {
+          await supabase.from('profiles').update({
+            verification_status: 'rejected',
+            verified: false,
+          }).eq('id', activeRequest.id);
+        } catch { /* local update still applies */ }
+      }
       setRequests((prev) => prev.map((r) => r.id === activeRequest?.id ? { ...r, status: 'rejected', notes: reason } : r));
     },
     onSuccess: () => setActiveRequest(null),
@@ -137,6 +186,13 @@ export default function ProviderVerification() {
     targetId: activeRequest?.id,
     targetType: 'verification',
     onExecute: async ({ reason }) => {
+      if (isSupabaseConfigured() && activeRequest?.id) {
+        try {
+          await supabase.from('profiles').update({
+            verification_status: 'docs_requested',
+          }).eq('id', activeRequest.id);
+        } catch { /* local update still applies */ }
+      }
       setRequests((prev) => prev.map((r) => r.id === activeRequest?.id ? { ...r, status: 'docs_requested', notes: reason } : r));
     },
     onSuccess: () => setActiveRequest(null),
@@ -306,7 +362,7 @@ export default function ProviderVerification() {
                       <Eye size={12} /> {expandedDocs === req.id ? t('verification.hideDocs', 'Hide Docs') : t('verification.viewDocs', 'View Docs')}
                     </button>
 
-                    {req.status === 'pending' && (
+                    {(req.status === 'pending' || req.status === 'unverified') && (
                       <>
                         <RequirePermission permission="verification:approve">
                           <button

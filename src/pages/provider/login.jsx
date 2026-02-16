@@ -8,7 +8,7 @@ import {
 
 import { useAuth } from "@/context/AuthContext";
 import AurbanLogo from "@/components/AurbanLogo";
-import supabase from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 import {
   signInWithEmail,
@@ -249,7 +249,7 @@ export default function ProviderLogin() {
         <div className="mt-6 space-y-3 text-center">
           <p className="text-sm text-gray-400">
             New provider?{' '}
-            <Link to="/onboarding" className="font-semibold text-brand-gold hover:text-brand-gold-dark">
+            <Link to="/provider/signup" className="font-semibold text-brand-gold hover:text-brand-gold-dark">
               Register as a provider →
             </Link>
           </p>

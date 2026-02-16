@@ -13,6 +13,7 @@ import {
   isAdminRole, normalizeRole, hasPermission,
   ROLE_DASHBOARD_LABELS, ROLE_COLORS, ROLE_LABELS, ADMIN_ENTRY_PATH,
 } from '../utils/rbac.js';
+import VerificationBanner from '../components/provider/VerificationBanner.jsx';
 
 /* ════════════════════════════════════════════════════════════
    DASHBOARD LAYOUT — Provider + Admin sidebar shell
@@ -274,6 +275,7 @@ export default function DashboardLayout({ children }) {
         {/* ── Main content ─────────────────────────────────── */}
         <main className="flex-1 min-w-0 p-4 lg:py-6 lg:pr-6 lg:pl-2">
           <div className="lg:p-6 lg:rounded-2xl lg:border lg:border-gray-200/60 dark:lg:border-white/5 lg:bg-gray-50/50 dark:lg:bg-white/[0.01] lg:min-h-[calc(100vh-3rem)]">
+            {!admin && <VerificationBanner />}
             {children}
           </div>
         </main>
