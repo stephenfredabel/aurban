@@ -31,7 +31,7 @@ function GoogleIcon({ size = 20 }) {
   );
 }
 
-const RATE_LIMIT = { maxAttempts: 3, windowMs: 10 * 60 * 1000 };
+const RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
 
 export default function ProviderSignUp() {
   const navigate = useNavigate();
@@ -63,7 +63,7 @@ export default function ProviderSignUp() {
 
   /* ── Validate ───────────────────────────────────────────── */
   const validate = () => {
-    if (honeypot) return 'Something went wrong.';
+    if (honeypot) return 'Please try again.';
     if (!form.fullName.trim() || form.fullName.trim().length < 2)
       return 'Please enter your full name.';
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
@@ -210,8 +210,8 @@ export default function ProviderSignUp() {
 
             {/* Account Type Toggle */}
             <div>
-              <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Account type</label>
-              <div className="flex p-1 bg-gray-100 rounded-full dark:bg-white/5">
+              <label htmlFor="account-type-toggle" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Account type</label>
+              <div id="account-type-toggle" className="flex p-1 bg-gray-100 rounded-full dark:bg-white/5">
                 <button type="button" onClick={() => update('accountType', 'individual')}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-full transition-all ${form.accountType === 'individual' ? 'bg-white dark:bg-gray-800 text-brand-charcoal-dark dark:text-white shadow-sm' : 'text-gray-400'}`}>
                   <UserIcon size={13} /> Individual
@@ -225,18 +225,26 @@ export default function ProviderSignUp() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
 
-              {/* Honeypot (hidden) */}
-              <input type="text" name="website" value={honeypot} onChange={(e) => setHoneypot(e.target.value)}
-                className="absolute opacity-0 pointer-events-none" tabIndex={-1} autoComplete="off" aria-hidden />
+              {/* Honeypot — hidden from real users, catches bots */}
+              <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+                <input
+                  type="text"
+                  name="aurban_hp_field"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="new-password"
+                />
+              </div>
 
               {/* Full name */}
               <div>
-                <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label htmlFor="provider-fullname" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
                   {form.accountType === 'company' ? 'Contact person full name' : 'Full name'}
                 </label>
                 <div className="relative">
                   <UserIcon size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
-                  <input type="text" value={form.fullName} onChange={(e) => update('fullName', e.target.value)}
+                  <input id="provider-fullname" type="text" value={form.fullName} onChange={(e) => update('fullName', e.target.value)}
                     placeholder="Your full name" required maxLength={100} autoComplete="name"
                     className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300" />
                 </div>
@@ -244,10 +252,10 @@ export default function ProviderSignUp() {
 
               {/* Email */}
               <div>
-                <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Email address</label>
+                <label htmlFor="provider-email" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Email address</label>
                 <div className="relative">
                   <Mail size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
-                  <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)}
+                  <input id="provider-email" type="email" value={form.email} onChange={(e) => update('email', e.target.value)}
                     placeholder={form.accountType === 'company' ? 'company@example.com' : 'provider@example.com'}
                     required maxLength={200} autoComplete="email"
                     className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300" />
@@ -256,10 +264,10 @@ export default function ProviderSignUp() {
 
               {/* WhatsApp Number */}
               <div>
-                <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">WhatsApp number</label>
+                <label htmlFor="provider-whatsapp" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">WhatsApp number</label>
                 <div className="relative">
                   <Phone size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
-                  <input type="tel" value={form.whatsapp} onChange={(e) => update('whatsapp', e.target.value)}
+                  <input id="provider-whatsapp" type="tel" value={form.whatsapp} onChange={(e) => update('whatsapp', e.target.value)}
                     placeholder="+234 xxx xxxx xxx" required maxLength={20} autoComplete="tel"
                     className="w-full h-12 pr-4 text-sm text-gray-800 border border-gray-200 pl-11 bg-gray-50 dark:bg-white/5 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/30 dark:text-white placeholder:text-gray-300" />
                 </div>
@@ -268,10 +276,11 @@ export default function ProviderSignUp() {
 
               {/* Password */}
               <div>
-                <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Password</label>
+                <label htmlFor="provider-password" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Password</label>
                 <div className="relative">
                   <Lock size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
                   <input
+                    id="provider-password"
                     type={showPassword ? 'text' : 'password'}
                     value={form.password} onChange={(e) => update('password', e.target.value)}
                     placeholder="Min. 8 characters" required minLength={8} autoComplete="new-password"
@@ -285,10 +294,11 @@ export default function ProviderSignUp() {
 
               {/* Confirm Password */}
               <div>
-                <label className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Confirm password</label>
+                <label htmlFor="provider-confirm-password" className="block mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">Confirm password</label>
                 <div className="relative">
                   <Lock size={16} className="absolute text-gray-300 -translate-y-1/2 left-4 top-1/2" />
                   <input
+                    id="provider-confirm-password"
                     type={showPassword ? 'text' : 'password'}
                     value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)}
                     placeholder="Re-enter password" required minLength={8} autoComplete="new-password"
@@ -325,7 +335,7 @@ export default function ProviderSignUp() {
         </div>
 
         {/* Account type info */}
-        <div className="p-4 mt-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+        <div className="p-4 mt-4 bg-white shadow-sm dark:bg-gray-900 rounded-2xl">
           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
             {form.accountType === 'company' ? 'Company accounts' : 'Individual accounts'}
           </p>
