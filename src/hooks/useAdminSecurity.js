@@ -243,11 +243,20 @@ export default function useAdminSecurity({ enabled = false } = {}) {
         if (!devToolsWarningRef.current) {
           const warning = document.createElement('div');
           warning.className = 'admin-devtools-warning';
-          warning.innerHTML = `
-            <h2>DEVELOPER TOOLS DETECTED</h2>
-            <p>Developer tools are disabled on admin panels. Close DevTools to continue.</p>
-            <p style="font-size:10px;color:#4b5563;margin-top:8px;">This event has been logged.</p>
-          `;
+
+          const h2 = document.createElement('h2');
+          h2.textContent = 'DEVELOPER TOOLS DETECTED';
+
+          const p1 = document.createElement('p');
+          p1.textContent = 'Developer tools are disabled on admin panels. Close DevTools to continue.';
+
+          const p2 = document.createElement('p');
+          p2.style.cssText = 'font-size:10px;color:#4b5563;margin-top:8px;';
+          p2.textContent = 'This event has been logged.';
+
+          warning.appendChild(h2);
+          warning.appendChild(p1);
+          warning.appendChild(p2);
           document.body.appendChild(warning);
           devToolsWarningRef.current = warning;
         }

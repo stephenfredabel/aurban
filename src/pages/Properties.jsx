@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, Link, useNavigate }         from 'react-router-dom';
+import PageSEO from '../components/seo/PageSEO.jsx';
 import {
   SlidersHorizontal, Map, Grid3X3, Bell, BellOff,
   Search, X, ChevronDown, ShieldCheck, MapPin,
@@ -382,6 +383,11 @@ export default function Properties() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900/30">
+      <PageSEO
+        title="Property Listings in Nigeria — Rent, Buy & Lease"
+        description="Browse thousands of verified properties across Lagos, Abuja, Port Harcourt and Nigeria. Filter by rent, sale, shortlet, shared housing, land and more."
+        url="/properties"
+      />
 
       {/* ── Search bar row ─────────────────────────── */}
       <div className="sticky top-0 z-30 px-4 py-3 bg-white border-b border-gray-100 shadow-sm dark:bg-brand-charcoal-dark dark:border-white/10">

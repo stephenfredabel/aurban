@@ -1,5 +1,6 @@
 import { useState, useMemo }   from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import PageSEO from '../components/seo/PageSEO.jsx';
 import {
   Search, Filter, X, ArrowUpDown,
   ChevronDown, ShieldCheck, Truck,
@@ -303,6 +304,11 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900/30">
+      <PageSEO
+        title="Building Materials & Real Estate Products Marketplace"
+        description="Shop cement, tiles, furniture, pipes and building materials at wholesale prices. Trusted sellers across Nigeria with delivery options."
+        url="/marketplace"
+      />
 
       {/* Search bar */}
       <div className="sticky top-0 z-30 px-4 py-3 bg-white border-b border-gray-100 shadow-sm dark:bg-brand-charcoal-dark dark:border-white/10">

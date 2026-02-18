@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import AurbanLogo from "@/components/AurbanLogo";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { safeRedirect, loginLimiter } from "@/utils/security";
 
 import {
   signInWithEmail,
@@ -37,19 +38,6 @@ function GoogleIcon({ size = 20 }) {
   );
 }
 
-const RATE_LIMIT = { maxAttempts: 5, windowMs: 15 * 60 * 1000 };
-
-class RateLimiter {
-  constructor(key) {
-    this.key = key;
-    this.attempts = JSON.parse(localStorage.getItem(this.key) || '[]');
-  }
-  isBlocked() { this.cleanup(); return this.attempts.length >= RATE_LIMIT.maxAttempts; }
-  record() { this.attempts.push(Date.now()); localStorage.setItem(this.key, JSON.stringify(this.attempts)); }
-  cleanup() { const c = Date.now() - RATE_LIMIT.windowMs; this.attempts = this.attempts.filter(t => t > c); localStorage.setItem(this.key, JSON.stringify(this.attempts)); }
-  reset() { this.attempts = []; localStorage.removeItem(this.key); }
-  getRemainingTime() { if (!this.attempts.length) return 0; return Math.max(0, Math.ceil((RATE_LIMIT.windowMs - (Date.now() - Math.min(...this.attempts))) / 60000)); }
-}
 
 export default function ProviderLogin() {
   const navigate = useNavigate();
@@ -64,11 +52,11 @@ export default function ProviderLogin() {
   const [form, setForm]               = useState({ email: params.get('email') || '', password: '' });
   const [usePhone, setUsePhone]       = useState(false);
   const [needsVerification, setNeedsVerification] = useState(!!params.get('verify'));
-  const [rateLimiter]                 = useState(() => new RateLimiter('provider_login_attempts'));
 
   /* ── Redirect to PROVIDER DASHBOARD ─────────────────────── */
   const redirectAfterLogin = () => {
-    const redirect = params.get('redirect') || '/provider';
+    // safeRedirect ensures only same-origin paths — no open redirect
+    const redirect = safeRedirect(params.get('redirect') || '/provider');
     navigate(redirect, { replace: true });
   };
 
@@ -77,13 +65,14 @@ export default function ProviderLogin() {
     e.preventDefault();
     setError(''); setSuccess('');
 
-    if (rateLimiter.isBlocked()) {
-      setError(`Too many attempts. Try again in ${rateLimiter.getRemainingTime()} minutes.`);
+    const rl = loginLimiter.check();
+    if (!rl.allowed) {
+      setError(loginLimiter.retryMessage(rl.retryAfterMs));
       return;
     }
 
     setLoading(true);
-    rateLimiter.record();
+    loginLimiter.increment();
 
     try {
       if (isSupabaseConfigured()) {
@@ -100,7 +89,7 @@ export default function ProviderLogin() {
           return;
         }
         // onAuthStateChange will pick up the session and load profile
-        rateLimiter.reset();
+        loginLimiter.reset();
         setSuccess('Welcome back!');
         setTimeout(() => redirectAfterLogin(), 600);
       } else {
@@ -112,7 +101,7 @@ export default function ProviderLogin() {
     } finally {
       setLoading(false);
     }
-  }, [form, rateLimiter, navigate, params]);
+  }, [form, navigate, params]);
 
   /* ── Google login ───────────────────────────────────────── */
   const handleGoogle = useCallback(async () => {

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import PageSEO from '../components/seo/PageSEO.jsx';
 import {
   Search, Filter, X, ArrowUpDown, ChevronDown,
   ChevronLeft, ChevronRight, Shield, Wrench,
@@ -194,6 +195,11 @@ export default function ProServices() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900/30">
+      <PageSEO
+        title="Aurban Pro — Hire Verified Plumbers, Electricians & More"
+        description="Book trusted, escrow-protected professionals for plumbing, electrical, cleaning, painting and home services across Nigeria."
+        url="/pro"
+      />
 
       {/* Search bar */}
       <div className="sticky top-0 z-30 px-4 py-3 bg-white border-b border-gray-100 shadow-sm dark:bg-brand-charcoal-dark dark:border-white/10">

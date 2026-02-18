@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import PageSEO from '../components/seo/PageSEO.jsx';
 import {
   ArrowLeft, Heart, Share2, ShoppingCart, Minus, Plus,
   Star, BadgeCheck, MessageSquare, Truck, Shield,
@@ -171,8 +172,34 @@ export default function ProductDetail() {
     : null;
   const effectivePrice = activeBulk ? Math.round(price * (1 - activeBulk.discount / 100)) : price;
 
+  const seoTitle = `${title}${catDef?.label ? ` — ${catDef.label}` : ''} on Aurban`;
+  const seoDesc  = description
+    ? description.slice(0, 155)
+    : `Buy ${title} on Aurban Marketplace. ${condition ? `Condition: ${condBadge?.label}.` : ''} Trusted sellers across Nigeria.`;
+
   return (
     <div className="pb-28 lg:pb-8 dark:bg-gray-950">
+      <PageSEO
+        title={seoTitle}
+        description={seoDesc}
+        image={images?.[0] || undefined}
+        url={`/product/${id}`}
+        type="article"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: title,
+          description: seoDesc,
+          image: images?.[0] || undefined,
+          offers: {
+            '@type': 'Offer',
+            price: effectivePrice,
+            priceCurrency: 'NGN',
+            availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            seller: { '@type': 'Organization', name: providerName || 'Aurban Seller' },
+          },
+        }}
+      />
 
       {/* ═══ 1. BACK NAV ═══════════════════════════════════════ */}
       <div className="px-4 pt-4 pb-2 mx-auto max-w-6xl">

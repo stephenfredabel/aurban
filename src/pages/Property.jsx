@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import PageSEO from '../components/seo/PageSEO.jsx';
 import { useTranslation }    from 'react-i18next';
 import {
   ArrowLeft, Heart, Share2, MapPin, Bed, Bath,
@@ -115,8 +116,35 @@ export default function PropertyDetail() {
                     : 'Properties';
   const AMENITY_LIMIT = 8;
 
+  const categoryLabel = CATEGORY_LABELS[category] || 'Property';
+  const seoTitle = `${title} — ${categoryLabel} in ${location?.city || location?.state || 'Nigeria'}`;
+  const seoDesc  = description
+    ? description.slice(0, 155)
+    : `${categoryLabel} listing on Aurban${location?.city ? ` in ${location.city}` : ''}. ${bedrooms ? `${bedrooms} bed` : ''} ${bathrooms ? `${bathrooms} bath` : ''}.`.trim();
+
   return (
     <div className="pb-28 lg:pb-8 dark:bg-gray-950">
+      <PageSEO
+        title={seoTitle}
+        description={seoDesc}
+        image={images[0] || undefined}
+        url={`/property/${id}`}
+        type="article"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'RealEstateListing',
+          name: title,
+          description: seoDesc,
+          url: `https://aurban.com/property/${id}`,
+          image: images[0] || undefined,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: location?.city,
+            addressRegion: location?.state,
+            addressCountry: 'NG',
+          },
+        }}
+      />
 
       {/* ═══ 1. BACK NAV ═══════════════════════════════════════ */}
       <div className="px-4 pt-4 pb-2 mx-auto max-w-6xl">

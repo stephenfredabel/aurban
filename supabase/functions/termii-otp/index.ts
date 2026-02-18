@@ -11,13 +11,28 @@
 
 const TERMII_BASE = 'https://v3.api.termii.com/api';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+// Restrict CORS to known Aurban origins only — never wildcard in production
+const ALLOWED_ORIGINS = [
+  'https://aurban.com',
+  'https://www.aurban.com',
+  // Add Render preview URL here if needed, e.g.:
+  // 'https://aurban-web.onrender.com',
+];
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') ?? '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  };
+}
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -27,7 +42,7 @@ Deno.serve(async (req) => {
     const TERMII_API_KEY = Deno.env.get('TERMII_API_KEY');
     if (!TERMII_API_KEY) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Termii API key not configured' }),
+        JSON.stringify({ success: false, error: 'OTP service is not available' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -78,7 +93,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: false, error: data.message || 'Failed to send OTP' }),
+        JSON.stringify({ success: false, error: 'Failed to send verification code' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -89,7 +104,7 @@ Deno.serve(async (req) => {
 
       if (!pinId || !pin) {
         return new Response(
-          JSON.stringify({ success: false, error: 'Missing pinId or pin' }),
+          JSON.stringify({ success: false, error: 'Missing verification data' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
       }
@@ -116,19 +131,19 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: false, error: data.verified || 'Invalid or expired code' }),
+        JSON.stringify({ success: false, error: 'Invalid or expired code' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
     return new Response(
-      JSON.stringify({ success: false, error: 'Invalid action. Use "send" or "verify".' }),
+      JSON.stringify({ success: false, error: 'Invalid action' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
 
-  } catch (err) {
+  } catch {
     return new Response(
-      JSON.stringify({ success: false, error: err.message }),
+      JSON.stringify({ success: false, error: 'Service error. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }

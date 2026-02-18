@@ -1,5 +1,6 @@
 import { useState, useMemo }     from 'react';
 import { useSearchParams }       from 'react-router-dom';
+import PageSEO from '../components/seo/PageSEO.jsx';
 import {
   Search, Filter, X, ArrowUpDown, ChevronDown,
   Truck, Home, MapPin, Globe, Building2, Package,
@@ -262,6 +263,11 @@ export default function Relocation() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900/30">
+      <PageSEO
+        title="Relocation Services Nigeria — Moving & Logistics"
+        description="Find trusted relocation companies for local and international moves across Nigeria. Compare quotes, read reviews and book verified movers."
+        url="/relocation"
+      />
 
       {/* Sticky search bar */}
       <div className="sticky top-0 z-30 px-4 py-3 bg-white border-b border-gray-100 shadow-sm dark:bg-brand-charcoal-dark dark:border-white/10">

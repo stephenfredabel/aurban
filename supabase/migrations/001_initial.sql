@@ -1190,8 +1190,11 @@ alter table notifications enable row level security;
 
 create policy "Users can read own notifications"
   on notifications for select using (user_id = auth.uid());
-create policy "System can create notifications"
-  on notifications for insert with check (true);
+-- Client-side: users can only self-notify (e.g., test notifications).
+-- Cross-user notifications (booking confirmations, etc.) are created server-side
+-- via edge functions using the service role key, which bypasses RLS entirely.
+create policy "Users can create own notifications"
+  on notifications for insert with check (user_id = auth.uid());
 create policy "Users can update own notifications"
   on notifications for update using (user_id = auth.uid());
 

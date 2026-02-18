@@ -75,6 +75,19 @@ export default function ProtectedRoute({
     if (!hasAccess) {
       return <Navigate to="/dashboard" replace />;
     }
+
+    // Onboarding gate — providers must complete profile setup (tier.level >= 2)
+    // before accessing any provider dashboard route.
+    // Admins bypass this. The /onboarding route itself is excluded to avoid a loop.
+    if (
+      requiredRole === 'provider' &&
+      !isAdminRole(role) &&
+      providerRoles.includes(user.role) &&
+      (user.tier?.level ?? 1) < 2 &&
+      location.pathname !== '/onboarding'
+    ) {
+      return <Navigate to="/onboarding" replace />;
+    }
   }
 
   return children;

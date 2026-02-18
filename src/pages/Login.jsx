@@ -10,6 +10,7 @@ import AurbanLogo  from '../components/AurbanLogo.jsx';
 import { isSupabaseConfigured } from '../lib/supabase.js';
 import { signInWithEmail, signInWithGoogle, signInWithMagicLink } from '../services/supabase-auth.service.js';
 import OTPVerification from '../components/auth/OTPVerification.jsx';
+import { safeRedirect, loginLimiter } from '../utils/security.js';
 
 /* ════════════════════════════════════════════════════════════
    LOGIN — End-user / Visitor login
@@ -32,18 +33,6 @@ function GoogleIcon({ size = 20 }) {
   );
 }
 
-const RATE_LIMIT = { maxAttempts: 5, windowMs: 15 * 60 * 1000 };
-
-class RateLimiter {
-  constructor() {
-    this.attempts = JSON.parse(localStorage.getItem('login_attempts') || '[]');
-  }
-  isBlocked() { this.cleanup(); return this.attempts.length >= RATE_LIMIT.maxAttempts; }
-  record() { this.attempts.push(Date.now()); localStorage.setItem('login_attempts', JSON.stringify(this.attempts)); }
-  cleanup() { const c = Date.now() - RATE_LIMIT.windowMs; this.attempts = this.attempts.filter(t => t > c); localStorage.setItem('login_attempts', JSON.stringify(this.attempts)); }
-  reset() { this.attempts = []; localStorage.removeItem('login_attempts'); }
-  getRemainingTime() { if (!this.attempts.length) return 0; return Math.max(0, Math.ceil((RATE_LIMIT.windowMs - (Date.now() - Math.min(...this.attempts))) / 60000)); }
-}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -62,13 +51,11 @@ export default function Login() {
   const [twoFactorData, setTwoFactorData] = useState(null);
   const [usePhone, setUsePhone]       = useState(false);
   const [needsVerification, setNeedsVerification] = useState(!!params.get('verify'));
-  const [rateLimiter]                 = useState(() => new RateLimiter());
 
   /* ── Helper: redirect BACK TO MARKETPLACE ───────────────── */
   const redirectAfterLogin = () => {
-    // Users always go back to marketplace after login
-    // If there's a ?redirect param, honor it (for protected routes)
-    const redirect = params.get('redirect') || '/';
+    // safeRedirect ensures only same-origin paths are honored — no open redirect
+    const redirect = safeRedirect(params.get('redirect') || '/');
     navigate(redirect, { replace: true });
   };
 
@@ -77,13 +64,14 @@ export default function Login() {
     e.preventDefault();
     setError(''); setSuccess('');
 
-    if (rateLimiter.isBlocked()) {
-      setError(`Too many attempts. Try again in ${rateLimiter.getRemainingTime()} minutes.`);
+    const rl = loginLimiter.check();
+    if (!rl.allowed) {
+      setError(loginLimiter.retryMessage(rl.retryAfterMs));
       return;
     }
 
     setLoading(true);
-    rateLimiter.record();
+    loginLimiter.increment();
 
     try {
       if (isSupabaseConfigured()) {
@@ -102,7 +90,7 @@ export default function Login() {
           return;
         }
         // AuthContext onAuthStateChange will pick up the session
-        rateLimiter.reset();
+        loginLimiter.reset();
         setSuccess('Welcome back!');
         setTimeout(() => redirectAfterLogin(), 600);
       } else {
@@ -114,7 +102,7 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  }, [form, rateLimiter, navigate, params]);
+  }, [form, navigate, params]);
 
   /* ── 2FA verify (placeholder — wire to real 2FA when ready) ─ */
   const handle2FA = useCallback(async () => {

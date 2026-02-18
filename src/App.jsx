@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
 } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { LocaleProvider }    from './context/LocaleContext.jsx';
@@ -382,6 +383,7 @@ function NotFound() {
 ═══════════════════════════════════════════════════════════ */
 export default function App() {
   return (
+    <HelmetProvider>
     <Router>
       <ThemeInitializer>
         <AuthProvider>
@@ -451,7 +453,11 @@ export default function App() {
                       ═════════════════════════════════════════════ */}
                       <Route path="/provider/login"   element={<ProviderLogin />} />
                       <Route path="/provider/signup" element={<ProviderSignUp />} />
-                      <Route path="/onboarding"      element={<OnboardingPage />} />
+                      <Route path="/onboarding" element={
+                        <ProtectedRoute requiredRole="provider">
+                          <OnboardingPage />
+                        </ProtectedRoute>
+                      } />
 
                       {/* ══ ADMIN AUTH (isolated — no layout, no marketplace links) ══
                            Admins ONLY. Completely separate from user/provider flows.
@@ -650,5 +656,6 @@ export default function App() {
         </AuthProvider>
       </ThemeInitializer>
     </Router>
+    </HelmetProvider>
   );
 }

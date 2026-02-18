@@ -1,5 +1,6 @@
 import { useTranslation }     from 'react-i18next';
 import { Link }               from 'react-router-dom';
+import PageSEO                from '../components/seo/PageSEO.jsx';
 import { ArrowRight, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth }            from '../context/AuthContext.jsx';
@@ -123,6 +124,22 @@ export default function Home() {
 
   return (
     <div className="pb-36 md:pb-8 dark:bg-gray-950">
+      <PageSEO
+        title="Rent, Buy & Sell Property in Nigeria"
+        description="Africa's #1 real estate platform. Find apartments, houses, shortlets, land and building materials across Lagos, Abuja, Port Harcourt and all of Nigeria."
+        url="/"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Aurban',
+          url: 'https://aurban.com',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: { '@type': 'EntryPoint', urlTemplate: 'https://aurban.com/properties?q={search_term_string}' },
+            'query-input': 'required name=search_term_string',
+          },
+        }}
+      />
 
       {/* ── Promotional Slider ───────────────────────────────── */}
       <section className="relative overflow-hidden" aria-label="Promotions">
