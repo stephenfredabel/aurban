@@ -9,7 +9,8 @@
       "Bash(while read:*)",
       "Bash(do grep -H \"navigate\\\\|to=\" \"$f\")",
       "Bash(done)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(ls:*)"
     ]
   }
 }

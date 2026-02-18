@@ -86,7 +86,8 @@ export default function UserHeader() {
   const handleLogout = async () => {
     setProfileOpen(false);
     await logout();
-    navigate('/');
+    // Full page reload to cleanly clear all React state
+    window.location.href = '/';
   };
 
   /* ── User initials for avatar ───────────────────────────── */

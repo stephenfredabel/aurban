@@ -136,9 +136,9 @@ export default function ProviderSignUp() {
     setGLoading(true); setError('');
     try {
       if (isSupabaseConfigured()) {
-        sessionStorage.setItem('aurban_oauth_role', 'provider');
-        sessionStorage.setItem('aurban_oauth_redirect', '/provider');
-        const res = await signInWithGoogle();
+        // Pass role + redirect so signInWithGoogle sets the correct sessionStorage values
+        // (previously these were set here then overwritten by signInWithGoogle defaults)
+        const res = await signInWithGoogle({ redirectTo: '/provider', role: 'provider' });
         if (!res.success) { setError(res.error || 'Google signup failed.'); setGLoading(false); return; }
       } else {
         setError('Authentication service is not configured. Contact support.');

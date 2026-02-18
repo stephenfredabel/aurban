@@ -1,22 +1,22 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, lazy, Suspense } from 'react';
 import { useNavigate }       from 'react-router-dom';
 import { useTranslation }    from 'react-i18next';
-import { ArrowLeft, X }      from 'lucide-react';
+import { ArrowLeft, X, Loader } from 'lucide-react';
 import { useOnboarding }     from '../../hooks/useOnboarding.js';
 import ProgressBar           from '../ui/ProgressBar.jsx';
 
-// Step components
-import Step00_CountryLanguage  from './steps/Step00_CountryLanguage.jsx';
-import Step01_ProviderType     from './steps/Step01_ProviderType.jsx';
-import Step02_AccountType      from './steps/Step02_AccountType.jsx';
-import Step03_AccountBasics    from './steps/Step03_AccountBasics.jsx';
-import Step04_Identity         from './steps/Step04_Identity.jsx';
-import Step05_Address          from './steps/Step05_Address.jsx';
-import Step06_BusinessDocs     from './steps/Step06_BusinessDocs.jsx';
-import Step07_IndividualDocs   from './steps/Step07_IndividualDocs.jsx';
-import Step08_Offerings        from './steps/Step08_Offerings.jsx';
-import Step09_Payment          from './steps/Step09_Payment.jsx';
-import Step10_Agreements       from './steps/Step10_Agreements.jsx';
+// Lazy-load step components so only the current step is loaded
+const Step00_CountryLanguage  = lazy(() => import('./steps/Step00_CountryLanguage.jsx'));
+const Step01_ProviderType     = lazy(() => import('./steps/Step01_ProviderType.jsx'));
+const Step02_AccountType      = lazy(() => import('./steps/Step02_AccountType.jsx'));
+const Step03_AccountBasics    = lazy(() => import('./steps/Step03_AccountBasics.jsx'));
+const Step04_Identity         = lazy(() => import('./steps/Step04_Identity.jsx'));
+const Step05_Address          = lazy(() => import('./steps/Step05_Address.jsx'));
+const Step06_BusinessDocs     = lazy(() => import('./steps/Step06_BusinessDocs.jsx'));
+const Step07_IndividualDocs   = lazy(() => import('./steps/Step07_IndividualDocs.jsx'));
+const Step08_Offerings        = lazy(() => import('./steps/Step08_Offerings.jsx'));
+const Step09_Payment          = lazy(() => import('./steps/Step09_Payment.jsx'));
+const Step10_Agreements       = lazy(() => import('./steps/Step10_Agreements.jsx'));
 
 const STEPS = [
   Step00_CountryLanguage,
@@ -31,6 +31,14 @@ const STEPS = [
   Step09_Payment,
   Step10_Agreements,
 ];
+
+function StepFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-[40vh]">
+      <Loader size={24} className="animate-spin text-brand-gold" />
+    </div>
+  );
+}
 
 // Step labels for the progress bar
 const STEP_LABELS = [
@@ -138,9 +146,11 @@ export default function OnboardingShell() {
       {/* ── Step content ───────────────────────────────────── */}
       <main className="flex flex-col flex-1">
         <div className="flex-1 w-full max-w-2xl px-4 py-8 mx-auto">
-          <div key={currentStep} className="step-enter">
-            <StepComponent />
-          </div>
+          <Suspense fallback={<StepFallback />}>
+            <div key={currentStep} className="step-enter">
+              <StepComponent />
+            </div>
+          </Suspense>
         </div>
       </main>
 

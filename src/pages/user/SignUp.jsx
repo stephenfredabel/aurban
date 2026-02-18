@@ -115,7 +115,8 @@ export default function SignUp() {
     setGLoading(true); setError('');
     try {
       if (isSupabaseConfigured()) {
-        const res = await signInWithGoogle();
+        // Redirect to user dashboard after signup so they can complete their profile
+        const res = await signInWithGoogle({ redirectTo: '/dashboard', role: 'user' });
         if (!res.success) { setError(res.error || 'Google signup failed.'); setGLoading(false); return; }
         // OAuth redirect — Google = pre-verified email
       } else {

@@ -97,7 +97,9 @@ export default function Header() {
     setProfileOpen(false);
     setMenuOpen(false);
     await logout();
-    navigate('/');
+    // Full page reload to cleanly clear all React state and avoid
+    // race conditions with ProtectedRoute redirects
+    window.location.href = '/';
   };
 
   const isProvider = ['provider', 'admin', 'host', 'agent', 'seller', 'service'].includes(user?.role);
