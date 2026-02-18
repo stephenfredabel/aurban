@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Mail, Lock, Eye, EyeOff, AlertCircle,
@@ -42,7 +42,7 @@ function GoogleIcon({ size = 20 }) {
 export default function ProviderLogin() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  useAuth(); // session handled by Supabase onAuthStateChange
+  const { user } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]         = useState(false);
@@ -52,6 +52,7 @@ export default function ProviderLogin() {
   const [form, setForm]               = useState({ email: params.get('email') || '', password: '' });
   const [usePhone, setUsePhone]       = useState(false);
   const [needsVerification, setNeedsVerification] = useState(!!params.get('verify'));
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   /* ── Redirect to PROVIDER DASHBOARD ─────────────────────── */
   const redirectAfterLogin = () => {
@@ -59,6 +60,15 @@ export default function ProviderLogin() {
     const redirect = safeRedirect(params.get('redirect') || '/provider');
     navigate(redirect, { replace: true });
   };
+
+  /* ── Wait for AuthContext to load profile, then redirect ─── */
+  // AuthContext loads the profile (and upgrades role if needed) on SIGNED_IN.
+  // Only redirect once user state is actually set — avoids the 600 ms blind timeout.
+  useEffect(() => {
+    if (loginSuccess && user) {
+      redirectAfterLogin();
+    }
+  }, [user, loginSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Form submit ──────────────────────────────────────────── */
   const handleSubmit = useCallback(async (e) => {
@@ -76,8 +86,13 @@ export default function ProviderLogin() {
 
     try {
       if (isSupabaseConfigured()) {
+        // Signal AuthContext to upgrade role 'user' → 'provider' if the account
+        // was originally registered as a regular user (mirrors the OAuth flow pattern).
+        sessionStorage.setItem('aurban_oauth_role', 'provider');
+
         const res = await signInWithEmail(form.email, form.password);
         if (!res.success) {
+          sessionStorage.removeItem('aurban_oauth_role');
           const errMsg = (res.error || '').toLowerCase();
           if (errMsg.includes('email not confirmed') || errMsg.includes('not confirmed')) {
             setNeedsVerification(true);
@@ -88,15 +103,17 @@ export default function ProviderLogin() {
           setLoading(false);
           return;
         }
-        // onAuthStateChange will pick up the session and load profile
+        // AuthContext's onAuthStateChange loads the profile (and upgrades role if needed).
+        // useEffect above redirects as soon as user state is set — no blind timeout.
         loginLimiter.reset();
         setSuccess('Welcome back!');
-        setTimeout(() => redirectAfterLogin(), 600);
+        setLoginSuccess(true);
       } else {
         setError('Authentication service is not configured. Contact support.');
         setLoading(false);
       }
     } catch {
+      sessionStorage.removeItem('aurban_oauth_role');
       setError('Invalid credentials. Please try again.');
     } finally {
       setLoading(false);

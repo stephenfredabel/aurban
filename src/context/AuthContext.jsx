@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { isAdminRole, normalizeRole } from '../utils/rbac.js';
 import { isSupabaseConfigured } from '../lib/supabase.js';
 import { getProfile, updateProfile, signOut as sbSignOut, onAuthStateChange } from '../services/supabase-auth.service.js';
@@ -87,6 +87,8 @@ const sanitizeUser = (user) => {
     tier:                user.tier || { type: 'individual', level: 1, label: 'Basic Provider' },
     accountType:         user.accountType || user.tier?.type || 'individual',
     countryCode:         user.countryCode || 'NG',
+    location:            user.location || '',
+    settings:            user.settings && typeof user.settings === 'object' ? user.settings : {},
   };
 };
 
@@ -97,10 +99,8 @@ export function AuthProvider({ children }) {
 
   // Navigation for post-login redirect
   let navigate = null;
-  let location = null;
   try {
     navigate = useNavigate();
-    location = useLocation();
   } catch {
     // If not inside Router (e.g. tests), navigation won't work — that's OK
   }
@@ -217,8 +217,10 @@ export function AuthProvider({ children }) {
       const { data } = onAuthStateChange(async (event, session) => {
         if (cancelled) return;
         if (event === 'SIGNED_IN' && session?.user) {
-          // isNewSignIn = true → triggers role check and redirect
-          await loadSupabaseProfile(session.user, true);
+          // Only auto-redirect for OAuth (Google) — page reloads so login UI is gone.
+          // Email/password login pages handle their own redirects.
+          const isOAuth = (session.user.app_metadata?.provider ?? 'email') !== 'email';
+          await loadSupabaseProfile(session.user, isOAuth);
           if (!loading) setLoading(false);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -245,13 +247,15 @@ export function AuthProvider({ children }) {
 
   /* ── Logout ─────────────────────────────────────────────── */
   const logout = useCallback(async () => {
-    if (isSupabaseConfigured()) {
-      await sbSignOut();
-    }
+    // Clear local state FIRST so UI updates immediately,
+    // then do server signout in background (don't block on network).
     setUser(null);
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem('aurban_oauth_role');
     sessionStorage.removeItem('aurban_oauth_redirect');
+    if (isSupabaseConfigured()) {
+      try { await sbSignOut(); } catch { /* server signout failed — local state already cleared */ }
+    }
   }, []);
 
   /* ── Update profile ─────────────────────────────────────── */

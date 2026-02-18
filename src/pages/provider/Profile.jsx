@@ -8,6 +8,8 @@ import {
   Building2, BadgeCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { updateProfile as sbUpdateProfile } from '../../services/supabase-auth.service.js';
+import { isSupabaseConfigured } from '../../lib/supabase.js';
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER PROFILE EDIT — Public profile management
@@ -37,8 +39,10 @@ const NIGERIAN_STATES = [
 ];
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [previewMode, setPreviewMode] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
 
@@ -101,9 +105,37 @@ export default function Profile() {
   const updateProfile = (key, value) => setProfile((p) => ({ ...p, [key]: value }));
   const updateSocial = (key, value) => setSocialLinks((s) => ({ ...s, [key]: value }));
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError('');
+    try {
+      const profileSettings = {
+        ...(user?.settings || {}),
+        providerProfile: {
+          ...profile,
+          serviceAreas,
+          availability,
+          portfolio,
+          certifications,
+          socialLinks,
+        },
+      };
+      if (isSupabaseConfigured() && user?.id) {
+        const res = await sbUpdateProfile(user.id, {
+          name: profile.displayName,
+          bio:  profile.bio,
+          settings: profileSettings,
+        });
+        if (!res.success) { setSaveError(res.error || 'Failed to save'); return; }
+      }
+      updateUser({ name: profile.displayName, settings: profileSettings });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setSaveError('Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addServiceArea = () => {

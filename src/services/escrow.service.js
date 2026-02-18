@@ -1,6 +1,7 @@
 import api from './api.js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
 import { PRODUCT_CATEGORY_MAP } from '../data/categoryFields.js';
+import { logAction, AUDIT_ACTIONS } from './audit.service.js';
 
 /**
  * Escrow service -- Manages buyer protection for marketplace orders
@@ -21,7 +22,10 @@ export async function createEscrow({ orderId, amount, sellerId, buyerId, items }
         .insert({ order_id: orderId, amount, seller_id: sellerId, buyer_id: buyerId, items, status: 'held' })
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: 'escrow_created', targetId: orderId, targetType: 'order', details: `Escrow created for order ${orderId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
@@ -29,6 +33,7 @@ export async function createEscrow({ orderId, amount, sellerId, buyerId, items }
     const data = await api.post('/escrow/create', {
       orderId, amount, sellerId, buyerId, items,
     });
+    try { await logAction({ action: 'escrow_created', targetId: orderId, targetType: 'order', details: `Escrow created for order ${orderId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.data?.message || err.message };
@@ -64,12 +69,16 @@ export async function releaseEscrow(orderId) {
         .eq('order_id', orderId)
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: AUDIT_ACTIONS.ESCROW_RELEASE, targetId: orderId, targetType: 'order', details: `Escrow released for order ${orderId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
   try {
     const data = await api.post(`/escrow/${orderId}/release`);
+    try { await logAction({ action: AUDIT_ACTIONS.ESCROW_RELEASE, targetId: orderId, targetType: 'order', details: `Escrow released for order ${orderId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.data?.message || err.message };
@@ -87,12 +96,16 @@ export async function freezeEscrow(orderId, reason) {
         .eq('order_id', orderId)
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: AUDIT_ACTIONS.ESCROW_FREEZE, targetId: orderId, targetType: 'order', details: `Escrow frozen for order ${orderId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
   try {
     const data = await api.post(`/escrow/${orderId}/freeze`, { reason });
+    try { await logAction({ action: AUDIT_ACTIONS.ESCROW_FREEZE, targetId: orderId, targetType: 'order', details: `Escrow frozen for order ${orderId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.data?.message || err.message };

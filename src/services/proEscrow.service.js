@@ -2,6 +2,7 @@ import api from './api.js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
 import { PRO_SERVICE_CATEGORY_MAP } from '../data/proServiceCategoryFields.js';
 import { TIER_CONFIG } from '../data/proConstants.js';
+import { logAction, AUDIT_ACTIONS } from './audit.service.js';
 
 /**
  * Pro Escrow service -- Tier-aware escrow for service bookings
@@ -23,7 +24,10 @@ export async function createProEscrow({ bookingId, amount, clientId, providerId,
         .insert({ booking_id: bookingId, amount, client_id: clientId, provider_id: providerId, category, tier, status: 'held' })
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: 'pro_escrow_created', targetId: bookingId, targetType: 'booking', details: `Pro escrow created for booking ${bookingId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
@@ -31,6 +35,7 @@ export async function createProEscrow({ bookingId, amount, clientId, providerId,
     const data = await api.post('/pro/escrow/create', {
       bookingId, amount, clientId, providerId, category, tier,
     });
+    try { await logAction({ action: 'pro_escrow_created', targetId: bookingId, targetType: 'booking', details: `Pro escrow created for booking ${bookingId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.data?.message || err.message };
@@ -66,12 +71,16 @@ export async function releaseCommitmentFee(bookingId) {
         .eq('booking_id', bookingId)
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: AUDIT_ACTIONS.ESCROW_RELEASE, targetId: bookingId, targetType: 'booking', details: `Commitment fee released for booking ${bookingId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
   try {
     const data = await api.post(`/pro/escrow/${bookingId}/release-commitment`);
+    try { await logAction({ action: AUDIT_ACTIONS.ESCROW_RELEASE, targetId: bookingId, targetType: 'booking', details: `Commitment fee released for booking ${bookingId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.data?.message || err.message };
@@ -89,12 +98,16 @@ export async function startObservationWindow(bookingId) {
         .eq('booking_id', bookingId)
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: 'pro_escrow_observation_started', targetId: bookingId, targetType: 'booking', details: `Observation window started for booking ${bookingId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
   try {
     const data = await api.post(`/pro/escrow/${bookingId}/start-observation`);
+    try { await logAction({ action: 'pro_escrow_observation_started', targetId: bookingId, targetType: 'booking', details: `Observation window started for booking ${bookingId}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.data?.message || err.message };

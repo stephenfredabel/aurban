@@ -9,7 +9,9 @@ import {
   MonitorSmartphone, Scale, Landmark, Award, Star, Info,
   CreditCard, BadgeCheck, Upload, MapPin, Phone,
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { useAuth }      from '../../context/AuthContext.jsx';
+import { updateProfile, updatePassword as sbUpdatePassword } from '../../services/supabase-auth.service.js';
+import { isSupabaseConfigured } from '../../lib/supabase.js';
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER SETTINGS — Comprehensive, role-aware
@@ -210,72 +212,97 @@ const SECTIONS = [
 ];
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [activeSection, setActiveSection] = useState('account');
   const [saved, setSaved] = useState(false);
 
+  const stored = user?.settings || {};
+
   /* ── Account state ──────────────────────────────────────── */
-  const [accountType, setAccountType] = useState('individual'); // 'individual' | 'company'
+  const [accountType, setAccountType] = useState(stored.accountType || user?.accountType || 'individual');
 
   /* ── Personal info (individual) ─────────────────────────── */
-  const [personalInfo, setPersonalInfo] = useState({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
-    email: user?.email || '',
-    phone: '+234 812 345 6789',
-    whatsapp: '+234 812 345 6789',
-    bio: 'Experienced property manager and real estate professional based in Lagos. Specializing in residential rentals and property sales in Lekki, Ikoyi, and Victoria Island.',
-    address: '15 Admiralty Way, Lekki Phase 1',
-    city: 'Lagos',
-    state: 'Lagos',
-    lga: 'Eti-Osa',
-    languages: ['English', 'Yoruba'],
-    responseTime: '< 1 hour',
+  const [personalInfo, setPersonalInfo] = useState(() => {
+    const s = stored.personalInfo;
+    return {
+      firstName: s?.firstName || user?.name?.split(' ')[0] || '',
+      lastName: s?.lastName || user?.name?.split(' ').slice(1).join(' ') || '',
+      email: s?.email || user?.email || '',
+      phone: s?.phone || user?.phone || '',
+      whatsapp: s?.whatsapp || user?.whatsapp || '',
+      bio: s?.bio || '',
+      address: s?.address || '',
+      city: s?.city || '',
+      state: s?.state || '',
+      lga: s?.lga || '',
+      languages: s?.languages || ['English'],
+      responseTime: s?.responseTime || '< 1 hour',
+      name: s?.name || user?.name || '',
+    };
   });
 
   /* ── Company info ───────────────────────────────────────── */
-  const [companyInfo, setCompanyInfo] = useState({
-    companyName: '',
-    rcNumber: '',
-    cacCertificate: null,
-    tinNumber: '',
-    companyEmail: '',
-    companyPhone: '',
-    website: '',
-    companyAddress: '',
-    companyCity: 'Lagos',
-    companyState: 'Lagos',
-    companyLga: '',
-    yearEstablished: '',
-    teamSize: '1-5',
-    description: '',
-    ceo: '',
-    contactPerson: '',
-    contactPersonRole: '',
-    contactPersonPhone: '',
-    contactPersonEmail: '',
+  const [companyInfo, setCompanyInfo] = useState(() => {
+    const s = stored.companyInfo;
+    return {
+      companyName: s?.companyName || '',
+      rcNumber: s?.rcNumber || '',
+      cacCertificate: s?.cacCertificate || null,
+      tinNumber: s?.tinNumber || '',
+      companyEmail: s?.companyEmail || '',
+      companyPhone: s?.companyPhone || '',
+      website: s?.website || '',
+      companyAddress: s?.companyAddress || '',
+      companyCity: s?.companyCity || 'Lagos',
+      companyState: s?.companyState || 'Lagos',
+      companyLga: s?.companyLga || '',
+      yearEstablished: s?.yearEstablished || '',
+      teamSize: s?.teamSize || '1-5',
+      description: s?.description || '',
+      ceo: s?.ceo || '',
+      contactPerson: s?.contactPerson || '',
+      contactPersonRole: s?.contactPersonRole || '',
+      contactPersonPhone: s?.contactPersonPhone || '',
+      contactPersonEmail: s?.contactPersonEmail || '',
+    };
   });
 
   /* ── Services ───────────────────────────────────────────── */
-  const [activeServices, setActiveServices] = useState([
-    { type: 'property-rental', enabled: true, compliance: { ownership_proof: true, property_insurance: 'Yes — comprehensive', fire_safety: true, lga_permit: true, maintenance_plan: true } },
-    { type: 'plumbing', enabled: true, compliance: { plumbing_cert: true, experience_years: '5-10 years', insurance_coverage: true, emergency_available: true, warranty: '90 days' } },
-  ]);
+  const [activeServices, setActiveServices] = useState(() => stored.services || []);
   const [showAddService, setShowAddService] = useState(false);
   const [newServiceType, setNewServiceType] = useState(null);
   const [newServiceCompliance, setNewServiceCompliance] = useState({});
   const [expandedService, setExpandedService] = useState(null);
 
   /* ── Security ───────────────────────────────────────────── */
-  const [twoFactor, setTwoFactor] = useState(false);
+  const [twoFactor, setTwoFactor] = useState(stored.security?.twoFactor ?? false);
   const [showPassword, setShowPassword] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg, setPwMsg] = useState({ type: '', text: '' });
   const [loginSessions, setLoginSessions] = useState([
     { device: 'Chrome on MacBook Pro', location: 'Lagos, Nigeria', lastActive: 'Now', current: true },
     { device: 'Aurban App on iPhone 15', location: 'Lagos, Nigeria', lastActive: '2 hours ago', current: false },
   ]);
 
+  const handleProviderPasswordChange = async () => {
+    setPwMsg({ type: '', text: '' });
+    if (!pwForm.newPw || pwForm.newPw.length < 6) { setPwMsg({ type: 'error', text: 'New password must be at least 6 characters' }); return; }
+    if (pwForm.newPw !== pwForm.confirm) { setPwMsg({ type: 'error', text: 'Passwords do not match' }); return; }
+    setPwSaving(true);
+    try {
+      if (isSupabaseConfigured()) {
+        const res = await sbUpdatePassword(pwForm.newPw);
+        if (!res.success) { setPwMsg({ type: 'error', text: res.error || 'Failed to update password' }); return; }
+      }
+      setPwMsg({ type: 'success', text: 'Password updated successfully' });
+      setPwForm({ current: '', newPw: '', confirm: '' });
+    } catch { setPwMsg({ type: 'error', text: 'Failed to update password' }); }
+    finally { setPwSaving(false); }
+  };
+
   /* ── Notifications ──────────────────────────────────────── */
-  const [notifications, setNotifications] = useState({
+  const [notifications, setNotifications] = useState(() => stored.notifications || {
     newInquiry: { email: true, push: true, sms: true },
     newBooking: { email: true, push: true, sms: true },
     newReview: { email: true, push: true, sms: false },
@@ -287,17 +314,17 @@ export default function Settings() {
   });
 
   /* ── Payout ─────────────────────────────────────────────── */
-  const [payoutInfo, setPayoutInfo] = useState({
-    bankName: 'GTBank',
+  const [payoutInfo, setPayoutInfo] = useState(() => stored.payout || {
+    bankName: '',
     accountName: user?.name || '',
-    accountNumber: '0123456789',
+    accountNumber: '',
     payoutSchedule: 'weekly',
     minimumPayout: '10000',
     currency: 'NGN',
   });
 
   /* ── Privacy / Visibility ──────────────────────────────── */
-  const [privacy, setPrivacy] = useState({
+  const [privacy, setPrivacy] = useState(() => stored.privacy || {
     showPhone:          true,
     showEmail:          false,
     showExactAddress:   false,
@@ -313,9 +340,50 @@ export default function Settings() {
   const updatePrivacy = (key, value) => setPrivacy((p) => ({ ...p, [key]: value }));
 
   /* ── Save handler ───────────────────────────────────────── */
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError('');
+    try {
+      const nameToSave = accountType === 'company'
+        ? (companyInfo.companyName || `${personalInfo.firstName} ${personalInfo.lastName}`.trim())
+        : `${personalInfo.firstName} ${personalInfo.lastName}`.trim();
+
+      // Build complete provider settings blob
+      const providerSettings = {
+        ...(user?.settings || {}),
+        accountType,
+        personalInfo: { ...personalInfo },
+        companyInfo:  accountType === 'company' ? { ...companyInfo } : undefined,
+        services:     activeServices,
+        notifications,
+        privacy,
+        payout:       payoutInfo,
+        security:     { twoFactor },
+      };
+
+      if (isSupabaseConfigured() && user?.id) {
+        const res = await updateProfile(user.id, {
+          name:     nameToSave,
+          phone:    personalInfo.phone.trim(),
+          bio:      personalInfo.bio?.trim() || '',
+          settings: providerSettings,
+        });
+        if (!res.success) {
+          setSaveError(res.error || 'Failed to save. Please try again.');
+          return;
+        }
+      }
+      // Reflect changes in AuthContext immediately
+      updateUser({ name: nameToSave, phone: personalInfo.phone.trim(), settings: providerSettings });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setSaveError('Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   /* ── Add service flow ───────────────────────────────────── */
@@ -383,7 +451,12 @@ export default function Settings() {
           <h2 className="text-lg font-bold font-display text-brand-charcoal-dark dark:text-white">Settings</h2>
           <p className="text-xs text-gray-400 mt-0.5">Manage your provider account</p>
         </div>
-        {saved && (
+        {saveError && (
+          <span className="text-xs text-red-500 flex items-center gap-1 bg-red-50 dark:bg-red-500/10 px-3 py-1.5 rounded-full">
+            <AlertCircle size={12} /> {saveError}
+          </span>
+        )}
+        {saved && !saveError && (
           <span className="text-xs text-emerald-600 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full">
             <CheckCircle size={12} /> Saved
           </span>
@@ -892,17 +965,19 @@ export default function Settings() {
         <div className="space-y-4">
           <div className="p-5 space-y-4 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
             <h3 className="text-sm font-semibold text-brand-charcoal-dark dark:text-white">Password</h3>
-            <Field label="Current Password" value="" onChange={() => {}} type="password" placeholder="Enter current password" />
-            <Field label="New Password" value="" onChange={() => {}} type="password" placeholder="Enter new password" />
-            <Field label="Confirm New Password" value="" onChange={() => {}} type="password" placeholder="Confirm new password" />
-            <button className="w-full py-3 text-sm font-semibold text-white transition-colors bg-brand-charcoal-dark hover:bg-gray-800 rounded-xl">
-              Update Password
+            <Field label="Current Password" value={pwForm.current} onChange={(v) => setPwForm(f => ({ ...f, current: v }))} type="password" placeholder="Enter current password" />
+            <Field label="New Password" value={pwForm.newPw} onChange={(v) => setPwForm(f => ({ ...f, newPw: v }))} type="password" placeholder="Enter new password" />
+            <Field label="Confirm New Password" value={pwForm.confirm} onChange={(v) => setPwForm(f => ({ ...f, confirm: v }))} type="password" placeholder="Confirm new password" />
+            {pwMsg.text && <p className={`text-xs ${pwMsg.type === 'error' ? 'text-red-500' : 'text-emerald-500'}`}>{pwMsg.text}</p>}
+            <button onClick={handleProviderPasswordChange} disabled={pwSaving}
+              className="w-full py-3 text-sm font-semibold text-white transition-colors bg-brand-charcoal-dark hover:bg-gray-800 disabled:opacity-50 rounded-xl">
+              {pwSaving ? 'Updating…' : 'Update Password'}
             </button>
           </div>
 
           <div className="p-5 space-y-4 bg-white dark:bg-gray-900 rounded-2xl shadow-card">
             <h3 className="text-sm font-semibold text-brand-charcoal-dark dark:text-white">Two-Factor Authentication</h3>
-            <Toggle enabled={twoFactor} onChange={setTwoFactor} label="Enable 2FA" description="Add an extra layer of security to your account" />
+            <Toggle enabled={twoFactor} onChange={(v) => { setTwoFactor(v); /* persisted via handleSave */ }} label="Enable 2FA" description="Add an extra layer of security to your account" />
             {twoFactor && (
               <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl">
                 <p className="text-xs text-emerald-600">2FA is active. Authentication codes are sent to your phone via SMS.</p>

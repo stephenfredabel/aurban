@@ -1,4 +1,5 @@
 import api from './api.js';
+import { logAction, AUDIT_ACTIONS } from './audit.service.js';
 
 /**
  * Payment service
@@ -89,6 +90,7 @@ export async function getPayoutBalance() {
 export async function requestPayout({ amount, bankDetails } = {}) {
   try {
     const data = await api.post('/payments/payout/request', { amount, bankDetails });
+    try { await logAction({ action: AUDIT_ACTIONS.PAYOUT_PROCESS, targetId: null, targetType: 'payment', details: `Payout of ${amount} requested`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.data?.message || err.message };

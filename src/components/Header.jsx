@@ -328,10 +328,14 @@ export default function Header() {
             </form>
           </div>
           <div className="px-4 py-6 space-y-3">
-            {['Properties', 'Services', 'Marketplace'].map(cat => (
-              <button key={cat} onClick={() => { setSearchOpen(false); navigate(`/${cat.toLowerCase()}`); }}
+            {[
+              { label: 'Properties', path: '/properties' },
+              { label: 'Services',   path: '/pro' },
+              { label: 'Marketplace', path: '/marketplace' },
+            ].map(({ label, path }) => (
+              <button key={label} onClick={() => { setSearchOpen(false); navigate(path); }}
                 className="w-full px-4 py-3 text-sm text-left text-gray-600 transition-colors bg-gray-50 dark:bg-white/5 dark:text-gray-300 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10">
-                {cat}
+                {label}
               </button>
             ))}
           </div>

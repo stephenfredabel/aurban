@@ -30,21 +30,43 @@ export async function signUpWithEmail({ email, password, name, phone, whatsapp, 
         },
       },
     });
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: friendlyAuthError(error.message) };
+    // Supabase silently returns null user when email already exists (prevents enumeration).
+    // Surface this as a friendly error so the user knows to log in instead.
+    if (!data?.user) {
+      return { success: false, error: 'An account with this email already exists. Please log in instead.' };
+    }
     return { success: true, data: { user: data.user, session: data.session } };
   } catch (err) {
-    return { success: false, error: err.message };
+    return { success: false, error: friendlyAuthError(err.message) };
   }
+}
+
+/** Map raw Supabase / network error messages to something readable. */
+function friendlyAuthError(msg = '') {
+  const m = msg.toLowerCase();
+  if (m.includes('already registered') || m.includes('already exists'))
+    return 'An account with this email already exists. Please log in instead.';
+  if (m.includes('rate limit') || m.includes('429') || m.includes('too many'))
+    return 'Too many attempts. Please wait a moment and try again.';
+  if (m.includes('invalid email'))
+    return 'Please enter a valid email address.';
+  if (m.includes('password') && m.includes('short'))
+    return 'Password must be at least 6 characters.';
+  if (/5\d\d/.test(m) || m.includes('service unavailable') || m.includes('server error')
+      || m.includes('http version') || m.includes('failed to fetch'))
+    return 'Service temporarily unavailable. Please check your connection and try again.';
+  return msg || 'Something went wrong. Please try again.';
 }
 
 export async function signInWithEmail(email, password) {
   const g = guard(); if (g) return g;
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: friendlyAuthError(error.message) };
     return { success: true, data: { user: data.user, session: data.session } };
   } catch (err) {
-    return { success: false, error: err.message };
+    return { success: false, error: friendlyAuthError(err.message) };
   }
 }
 
@@ -172,6 +194,8 @@ export async function getProfile(userId) {
         tier:                data.tier,
         accountType:         data.account_type,
         countryCode:         data.country_code,
+        location:            data.location || '',
+        settings:            data.settings || {},
       },
     };
   } catch (err) {
@@ -193,6 +217,8 @@ export async function updateProfile(userId, updates) {
     if (updates.accountType !== undefined)        dbUpdates.account_type = updates.accountType;
     if (updates.verificationStatus !== undefined) dbUpdates.verification_status = updates.verificationStatus;
     if (updates.whatsappVerified !== undefined)   dbUpdates.whatsapp_verified = updates.whatsappVerified;
+    if (updates.settings !== undefined)          dbUpdates.settings = updates.settings;
+    if (updates.location !== undefined)          dbUpdates.location = updates.location;
 
     const { data, error } = await supabase
       .from('profiles')

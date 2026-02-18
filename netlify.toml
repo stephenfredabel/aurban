@@ -1,0 +1,11 @@
+# Aurban — Netlify configuration
+# SPA fallback: serve index.html for all routes (backup for _redirects)
+
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

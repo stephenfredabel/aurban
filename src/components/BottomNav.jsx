@@ -40,7 +40,7 @@ export default function BottomNav() {
       {/* ── Become a Provider banner (non-providers, mobile) ── */}
       {!isProvider && !user && (
         <div className="fixed left-0 right-0 z-40 px-4 pb-2 pointer-events-none bottom-16 md:hidden">
-          <Link to="/onboarding"
+          <Link to="/provider/signup"
             className="pointer-events-auto flex items-center justify-between px-5 py-3 rounded-2xl
               bg-brand-charcoal-dark text-white shadow-lg border border-white/10
               active:scale-[0.98] transition-transform">

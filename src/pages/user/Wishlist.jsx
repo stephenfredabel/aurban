@@ -90,15 +90,21 @@ function timeAgo(dateStr) {
 
 function loadWishlist() {
   try {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    // Prefer localStorage for cross-session persistence, fall back to sessionStorage
+    const stored = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Migrate: if it was in sessionStorage only, copy to localStorage
+      if (!localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, stored);
+      return parsed;
+    }
   } catch {}
   return MOCK_WISHLIST;
 }
 
 function saveWishlist(items) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   } catch {}
 }
 

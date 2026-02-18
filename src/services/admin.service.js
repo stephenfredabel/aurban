@@ -1,5 +1,6 @@
 import api from './api.js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
+import { logAction, AUDIT_ACTIONS } from './audit.service.js';
 
 /**
  * Admin service
@@ -109,12 +110,16 @@ export async function moderateListing(id, { action, reason }) {
         .eq('id', id)
         .select()
         .single();
-      if (!error) return { success: true, listing: data };
+      if (!error) {
+        try { await logAction({ action: action === 'approved' ? AUDIT_ACTIONS.LISTING_APPROVE : AUDIT_ACTIONS.LISTING_REJECT, targetId: id, targetType: 'listing', details: `Listing ${id} moderated: ${action}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, listing: data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
   try {
     const data = await api.post(`/admin/listings/${id}/moderate`, { action, reason });
+    try { await logAction({ action: action === 'approved' ? AUDIT_ACTIONS.LISTING_APPROVE : AUDIT_ACTIONS.LISTING_REJECT, targetId: id, targetType: 'listing', details: `Listing ${id} moderated: ${action}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, listing: data };
   } catch (err) {
     return { success: false, error: err.message };
@@ -1100,12 +1105,16 @@ export async function updateAdminRole(adminId, { role, reason }) {
         .eq('id', adminId)
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: AUDIT_ACTIONS.ADMIN_EDIT_ROLE, targetId: adminId, targetType: 'admin', details: `Admin ${adminId} role updated to ${role}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
   try {
     const data = await api.patch(`/admin/admins/${adminId}/role`, { role, reason });
+    try { await logAction({ action: AUDIT_ACTIONS.ADMIN_EDIT_ROLE, targetId: adminId, targetType: 'admin', details: `Admin ${adminId} role updated to ${role}`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.message };
@@ -1121,12 +1130,16 @@ export async function deleteAdmin(adminId, { reason }) {
         .eq('id', adminId)
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: AUDIT_ACTIONS.ADMIN_DELETE, targetId: adminId, targetType: 'admin', details: `Admin ${adminId} deleted`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
   try {
     const data = await api.post(`/admin/admins/${adminId}/delete`, { reason });
+    try { await logAction({ action: AUDIT_ACTIONS.ADMIN_DELETE, targetId: adminId, targetType: 'admin', details: `Admin ${adminId} deleted`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.message };
@@ -1163,12 +1176,16 @@ export async function restrictPermissions(adminId, { permissions, reason }) {
         .eq('id', adminId)
         .select()
         .single();
-      if (!error) return { success: true, ...data };
+      if (!error) {
+        try { await logAction({ action: AUDIT_ACTIONS.ADMIN_RESTRICT, targetId: adminId, targetType: 'admin', details: `Admin ${adminId} permissions restricted`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
+        return { success: true, ...data };
+      }
     } catch { /* fall through to api.js */ }
   }
 
   try {
     const data = await api.post(`/admin/admins/${adminId}/restrict`, { permissions, reason });
+    try { await logAction({ action: AUDIT_ACTIONS.ADMIN_RESTRICT, targetId: adminId, targetType: 'admin', details: `Admin ${adminId} permissions restricted`, adminId: null, adminRole: 'system' }); } catch { /* audit failure must not break the flow */ }
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.message };

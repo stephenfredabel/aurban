@@ -11,14 +11,21 @@ const STORAGE_KEY = 'aurban_cart';
 
 function loadCart() {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw).items || [] : [];
+    // Prefer localStorage for cross-session persistence, fall back to sessionStorage
+    const raw = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Migrate: if it was in sessionStorage only, copy to localStorage
+      if (!localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, raw);
+      return parsed.items || [];
+    }
+    return [];
   } catch { return []; }
 }
 
 function persist(items) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ items, updatedAt: new Date().toISOString() }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, updatedAt: new Date().toISOString() }));
   } catch {}
 }
 

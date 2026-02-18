@@ -8,9 +8,21 @@ import {
   Calendar, MessageSquare, Heart, Search,
   ExternalLink, Lock,
 } from 'lucide-react';
-import { useAuth }     from '../../context/AuthContext.jsx';
-import { useCurrency } from '../../hooks/useCurrency.js';
+import { useAuth }      from '../../context/AuthContext.jsx';
+import { useCurrency }  from '../../hooks/useCurrency.js';
+import { updateProfile, updatePassword as sbUpdatePassword } from '../../services/supabase-auth.service.js';
+import { isSupabaseConfigured } from '../../lib/supabase.js';
 import { format }      from 'date-fns';
+
+/* ── Shared save-settings helper ─────────────────────────── */
+async function saveSettings(user, updateUser, key, value) {
+  const merged = { ...(user?.settings || {}), [key]: value };
+  if (isSupabaseConfigured() && user?.id) {
+    const res = await updateProfile(user.id, { settings: merged });
+    if (!res.success) throw new Error(res.error || 'Failed to save');
+  }
+  updateUser({ settings: merged });
+}
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -64,7 +76,8 @@ const ACTIVE_SESSIONS = [
 // TAB COMPONENTS
 // ─────────────────────────────────────────────────────────────
 
-function ProfileTab({ user, onSave }) {
+function ProfileTab({ user }) {
+  const { updateUser } = useAuth();
   const [form, setForm]       = useState({
     name:     user?.name  || '',
     email:    user?.email || '',
@@ -87,12 +100,26 @@ function ProfileTab({ user, onSave }) {
     if (Object.keys(e).length > 0) return;
 
     setSaving(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-    onSave?.(form);
-  }, [form, onSave]);
+    try {
+      if (isSupabaseConfigured() && user?.id) {
+        const res = await updateProfile(user.id, {
+          name:     form.name.trim(),
+          phone:    form.phone.trim(),
+          location: form.location.trim(),
+        });
+        if (!res.success) {
+          setErrors({ name: res.error || 'Failed to save. Please try again.' });
+          return;
+        }
+      }
+      // Update local auth state so the rest of the app reflects changes immediately
+      updateUser({ name: form.name.trim(), phone: form.phone.trim(), location: form.location.trim() });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } finally {
+      setSaving(false);
+    }
+  }, [form, user, updateUser]);
 
   return (
     <div className="space-y-5">
@@ -187,7 +214,10 @@ function ProfileTab({ user, onSave }) {
 }
 
 function NotificationsTab() {
+  const { user, updateUser } = useAuth();
   const [prefs, setPrefs] = useState(() => {
+    const stored = user?.settings?.notifications;
+    if (stored) return stored;
     const initial = {};
     NOTIFICATION_TYPES.forEach(t => {
       initial[t.id] = {
@@ -207,11 +237,21 @@ function NotificationsTab() {
   };
 
   const [saving, setSaving] = useState(false);
+  const [saved,  setSaved]  = useState(false);
+  const [error,  setError]  = useState('');
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 800));
-    setSaving(false);
+    setError('');
+    try {
+      await saveSettings(user, updateUser, 'notifications', prefs);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -255,9 +295,11 @@ function NotificationsTab() {
         </div>
       ))}
 
-      <button type="button" onClick={handleSave} disabled={saving}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      <button type="button" onClick={handleSave} disabled={saving || saved}
         className="w-full flex items-center justify-center gap-2 py-3.5 bg-brand-gold hover:bg-brand-gold-dark disabled:opacity-50 text-white font-bold text-sm rounded-2xl transition-colors">
         {saving ? <><span className="w-4 h-4 border-2 rounded-full border-white/40 border-t-white animate-spin" /> Saving…</>
+        : saved  ? <><CheckCircle2 size={15} /> Saved!</>
         : <><Save size={15} /> Save Preferences</>}
       </button>
     </div>
@@ -265,22 +307,27 @@ function NotificationsTab() {
 }
 
 function PrivacyTab() {
+  const { user, updateUser } = useAuth();
+  const storedPrivacy = user?.settings?.privacy;
   const [prefs, setPrefs] = useState({
-    showSaved:       'only_me',  // 'everyone' | 'only_me'
-    showActivity:    false,
-    allowMessages:   true,
-    profileIndexing: true,
+    showSaved:       storedPrivacy?.showSaved ?? 'only_me',
+    showActivity:    storedPrivacy?.showActivity ?? false,
+    allowMessages:   storedPrivacy?.allowMessages ?? true,
+    profileIndexing: storedPrivacy?.profileIndexing ?? true,
   });
 
-  /* ── Messaging visibility — what providers see about you ── */
   const [msgVisibility, setMsgVisibility] = useState({
-    showPhone:       false,
-    showEmail:       false,
-    showLocation:    true,
-    showJoinDate:    true,
-    showVerified:    true,
-    showOnlineStatus: true,
+    showPhone:       storedPrivacy?.msgVisibility?.showPhone ?? false,
+    showEmail:       storedPrivacy?.msgVisibility?.showEmail ?? false,
+    showLocation:    storedPrivacy?.msgVisibility?.showLocation ?? true,
+    showJoinDate:    storedPrivacy?.msgVisibility?.showJoinDate ?? true,
+    showVerified:    storedPrivacy?.msgVisibility?.showVerified ?? true,
+    showOnlineStatus: storedPrivacy?.msgVisibility?.showOnlineStatus ?? true,
   });
+
+  const [saving, setSaving] = useState(false);
+  const [saved,  setSaved]  = useState(false);
+  const [error,  setError]  = useState('');
 
   const ToggleRow = ({ enabled, onChange, label, desc }) => (
     <div className="flex items-start gap-4 p-4 bg-brand-gray-soft dark:bg-white/5 rounded-2xl">
@@ -372,21 +419,65 @@ function PrivacyTab() {
         </div>
       </div>
 
-      <button type="button"
-        className="w-full flex items-center justify-center gap-2 py-3.5 bg-brand-gold hover:bg-brand-gold-dark text-white font-bold text-sm rounded-2xl transition-colors">
-        <Save size={15} /> Save Privacy Settings
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      <button type="button" disabled={saving || saved}
+        onClick={async () => {
+          setSaving(true); setError('');
+          try {
+            await saveSettings(user, updateUser, 'privacy', { ...prefs, msgVisibility });
+            setSaved(true); setTimeout(() => setSaved(false), 3000);
+          } catch (err) { setError(err.message || 'Failed to save'); }
+          finally { setSaving(false); }
+        }}
+        className="w-full flex items-center justify-center gap-2 py-3.5 bg-brand-gold hover:bg-brand-gold-dark disabled:opacity-50 text-white font-bold text-sm rounded-2xl transition-colors">
+        {saving ? <><span className="w-4 h-4 border-2 rounded-full border-white/40 border-t-white animate-spin" /> Saving…</>
+        : saved  ? <><CheckCircle2 size={15} /> Saved!</>
+        : <><Save size={15} /> Save Privacy Settings</>}
       </button>
     </div>
   );
 }
 
 function SecurityTab() {
+  const { user, updateUser } = useAuth();
   const [showOld,    setShowOld]    = useState(false);
   const [showNew,    setShowNew]    = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(user?.settings?.security?.twoFactor ?? false);
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg,    setPwMsg]    = useState({ type: '', text: '' });
 
   const [form, setForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
+
+  const handlePasswordChange = async () => {
+    setPwMsg({ type: '', text: '' });
+    if (!form.newPassword || form.newPassword.length < 6) {
+      setPwMsg({ type: 'error', text: 'New password must be at least 6 characters' });
+      return;
+    }
+    if (form.newPassword !== form.confirmPassword) {
+      setPwMsg({ type: 'error', text: 'Passwords do not match' });
+      return;
+    }
+    setPwSaving(true);
+    try {
+      if (isSupabaseConfigured()) {
+        const res = await sbUpdatePassword(form.newPassword);
+        if (!res.success) { setPwMsg({ type: 'error', text: res.error || 'Failed to update password' }); return; }
+      }
+      setPwMsg({ type: 'success', text: 'Password updated successfully' });
+      setForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+    } catch {
+      setPwMsg({ type: 'error', text: 'Failed to update password' });
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  const handle2FAToggle = async (val) => {
+    setTwoFactorEnabled(val);
+    try { await saveSettings(user, updateUser, 'security', { twoFactor: val }); } catch { /* non-critical */ }
+  };
 
   return (
     <div className="space-y-6">
@@ -442,9 +533,12 @@ function SecurityTab() {
             </div>
           </div>
 
-          <button type="button"
-            className="w-full py-3 text-sm font-bold text-white transition-colors bg-brand-gold hover:bg-brand-gold-dark rounded-2xl">
-            Update Password
+          {pwMsg.text && (
+            <p className={`text-xs ${pwMsg.type === 'error' ? 'text-red-500' : 'text-emerald-500'}`}>{pwMsg.text}</p>
+          )}
+          <button type="button" onClick={handlePasswordChange} disabled={pwSaving}
+            className="w-full py-3 text-sm font-bold text-white transition-colors bg-brand-gold hover:bg-brand-gold-dark disabled:opacity-50 rounded-2xl">
+            {pwSaving ? 'Updating…' : 'Update Password'}
           </button>
         </div>
       </div>
@@ -459,7 +553,7 @@ function SecurityTab() {
             </p>
           </div>
           <button type="button"
-            onClick={() => setTwoFactorEnabled(v => !v)}
+            onClick={() => handle2FAToggle(!twoFactorEnabled)}
             className={[
               'w-11 h-6 rounded-full transition-all relative shrink-0',
               twoFactorEnabled ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-white/20',
@@ -521,8 +615,22 @@ function SecurityTab() {
 }
 
 function PreferencesTab() {
-  const [lang, setLang]         = useState('English');
-  const [currency, setCurrency] = useState('NGN (₦)');
+  const { user, updateUser } = useAuth();
+  const storedPrefs = user?.settings?.preferences;
+  const [lang, setLang]         = useState(storedPrefs?.language ?? 'English');
+  const [currency, setCurrency] = useState(storedPrefs?.currency ?? 'NGN (₦)');
+  const [saving, setSaving]     = useState(false);
+  const [saved,  setSaved]      = useState(false);
+  const [error,  setError]      = useState('');
+
+  const handleSave = async () => {
+    setSaving(true); setError('');
+    try {
+      await saveSettings(user, updateUser, 'preferences', { language: lang, currency });
+      setSaved(true); setTimeout(() => setSaved(false), 3000);
+    } catch (err) { setError(err.message || 'Failed to save'); }
+    finally { setSaving(false); }
+  };
 
   return (
     <div className="space-y-5">
@@ -548,9 +656,12 @@ function PreferencesTab() {
         </select>
       </div>
 
-      <button type="button"
-        className="w-full flex items-center justify-center gap-2 py-3.5 bg-brand-gold hover:bg-brand-gold-dark text-white font-bold text-sm rounded-2xl transition-colors">
-        <Save size={15} /> Save Preferences
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      <button type="button" onClick={handleSave} disabled={saving || saved}
+        className="w-full flex items-center justify-center gap-2 py-3.5 bg-brand-gold hover:bg-brand-gold-dark disabled:opacity-50 text-white font-bold text-sm rounded-2xl transition-colors">
+        {saving ? <><span className="w-4 h-4 border-2 rounded-full border-white/40 border-t-white animate-spin" /> Saving…</>
+        : saved  ? <><CheckCircle2 size={15} /> Saved!</>
+        : <><Save size={15} /> Save Preferences</>}
       </button>
     </div>
   );
