@@ -1,4 +1,5 @@
 import api from './api.js';
+import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
 
 /**
  * Quality, SLA, and CSAT Service
@@ -56,6 +57,34 @@ const MOCK_ADMIN_PERFORMANCE = {
  * Get SLA tracked items (tickets, escalations, etc.)
  */
 export async function getSLAItems({ status, priority, role } = {}) {
+  if (isSupabaseConfigured()) {
+    try {
+      // Aggregate SLA data from support_tickets + escalations
+      let query = supabase.from('support_tickets').select('*');
+      if (status && status !== 'all') query = query.eq('status', status);
+      if (priority) query = query.eq('priority', priority);
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(50);
+      if (!error) {
+        const items = (data || []).map(t => ({
+          id: t.id,
+          entityType: 'ticket',
+          entityId: t.id,
+          priority: t.priority || 'P3',
+          label: t.subject || t.title || '',
+          createdAt: t.created_at,
+          firstResponseAt: t.first_response_at || null,
+          resolvedAt: t.resolved_at || null,
+          status: t.status,
+          assignedTo: t.assigned_to,
+          assignedName: t.assigned_name || '',
+          role: t.assigned_role || '',
+        }));
+        if (role) return { success: true, items: items.filter(i => i.role === role), total: items.length };
+        return { success: true, items, total: items.length };
+      }
+    } catch { /* fall through */ }
+  }
+
   try {
     const data = await api.get('/admin/quality/sla', { params: { status, priority, role } });
     return { success: true, ...data };
@@ -72,6 +101,15 @@ export async function getSLAItems({ status, priority, role } = {}) {
  * Get quality audit records.
  */
 export async function getQualityAudits({ outcome, limit = 20 } = {}) {
+  if (isSupabaseConfigured()) {
+    try {
+      let query = supabase.from('quality_audits').select('*', { count: 'exact' });
+      if (outcome && outcome !== 'all') query = query.eq('outcome', outcome);
+      const { data, error, count } = await query.order('created_at', { ascending: false }).limit(limit);
+      if (!error) return { success: true, audits: data, total: count };
+    } catch { /* fall through */ }
+  }
+
   try {
     const data = await api.get('/admin/quality/audits', { params: { outcome, limit } });
     return { success: true, ...data };
@@ -86,6 +124,24 @@ export async function getQualityAudits({ outcome, limit = 20 } = {}) {
  * Create a quality audit for a past decision.
  */
 export async function createQualityAudit({ reviewedAction, reviewedBy, outcome, notes }) {
+  if (isSupabaseConfigured()) {
+    try {
+      const user = (await supabase.auth.getUser()).data?.user;
+      const { data, error } = await supabase
+        .from('quality_audits')
+        .insert({
+          reviewed_action: reviewedAction,
+          reviewed_by: reviewedBy,
+          outcome,
+          notes,
+          audited_by: user?.id,
+        })
+        .select()
+        .single();
+      if (!error) return { success: true, audit: data };
+    } catch { /* fall through */ }
+  }
+
   try {
     const data = await api.post('/admin/quality/audits', { reviewedAction, reviewedBy, outcome, notes });
     return { success: true, ...data };
@@ -98,6 +154,25 @@ export async function createQualityAudit({ reviewedAction, reviewedBy, outcome, 
  * Get CSAT scores (optionally filtered by admin or period).
  */
 export async function getCSATScores({ adminId, period } = {}) {
+  if (isSupabaseConfigured()) {
+    try {
+      // Aggregate from pro_listing_reviews + property_reviews as a proxy for CSAT
+      let query = supabase.from('pro_listing_reviews').select('rating, reviewer_name, comment, created_at', { count: 'exact' });
+      if (adminId) query = query.eq('provider_id', adminId);
+      const { data, error, count } = await query.order('created_at', { ascending: false }).limit(50);
+      if (!error) {
+        const scores = (data || []).map(r => ({
+          score: r.rating,
+          comment: r.comment || '',
+          userName: r.reviewer_name || '',
+          timestamp: r.created_at,
+        }));
+        const avg = scores.length > 0 ? +(scores.reduce((sum, s) => sum + s.score, 0) / scores.length).toFixed(1) : 0;
+        return { success: true, scores, total: count, average: avg };
+      }
+    } catch { /* fall through */ }
+  }
+
   try {
     const data = await api.get('/admin/quality/csat', { params: { adminId, period } });
     return { success: true, ...data };
@@ -125,6 +200,24 @@ export async function submitCSAT({ adminId, score, comment, ticketId }) {
  * Get performance metrics for a specific admin.
  */
 export async function getAdminPerformance(adminId) {
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('action, created_at')
+        .eq('admin_id', adminId)
+        .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString());
+      if (!error) {
+        const today = new Date().toISOString().split('T')[0];
+        const actionsToday = (data || []).filter(a => a.created_at?.startsWith(today)).length;
+        return {
+          success: true,
+          performance: { actionsToday, actionsWeek: (data || []).length },
+        };
+      }
+    } catch { /* fall through */ }
+  }
+
   try {
     const data = await api.get(`/admin/quality/performance/${adminId}`);
     return { success: true, ...data };
@@ -158,6 +251,16 @@ export async function getTeamPerformance() {
  * Acknowledge an SLA breach.
  */
 export async function acknowledgeSLABreach(slaId, { reason }) {
+  if (isSupabaseConfigured()) {
+    try {
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({ sla_acknowledged: true, sla_acknowledge_reason: reason })
+        .eq('id', slaId);
+      if (!error) return { success: true };
+    } catch { /* fall through */ }
+  }
+
   try {
     const data = await api.post(`/admin/quality/sla/${slaId}/acknowledge`, { reason });
     return { success: true, ...data };

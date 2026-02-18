@@ -172,7 +172,7 @@ export default function PropertyDetail() {
           <button
             type="button"
             onClick={() => navigator.share?.({ title, url: window.location.href })}
-            className="flex items-center justify-center text-gray-600 transition-colors rounded-full shadow w-9 h-9 bg-white/90 backdrop-blur-sm hover:text-brand-charcoal"
+            className="flex items-center justify-center text-gray-600 transition-all rounded-full shadow w-10 h-10 bg-white/90 backdrop-blur-sm hover:text-brand-charcoal active:scale-90"
             aria-label="Share"
           >
             <Share2 size={15} />
@@ -180,7 +180,7 @@ export default function PropertyDetail() {
           <button
             type="button"
             onClick={() => toggleWishlist(property)}
-            className={`w-9 h-9 rounded-full flex items-center justify-center shadow backdrop-blur-sm transition-all ${
+            className={`w-10 h-10 rounded-full flex items-center justify-center shadow backdrop-blur-sm transition-all active:scale-90 ${
               wished ? 'bg-red-500 text-white' : 'bg-white/90 text-gray-600'
             }`}
             aria-label={wished ? 'Unsave' : 'Save'}
@@ -226,7 +226,7 @@ export default function PropertyDetail() {
 
             {/* ═══ 4. STATS GRID ═══════════════════════════════ */}
             {(bedrooms != null || bathrooms != null || sqm || parking != null) && (
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
                   { icon: Bed,       label: 'Beds',    value: bedrooms },
                   { icon: Bath,      label: 'Baths',   value: bathrooms },
@@ -355,14 +355,14 @@ export default function PropertyDetail() {
         <button
           type="button"
           onClick={() => handleMessage()}
-          className="flex items-center gap-1.5 px-4 py-3 text-sm font-bold transition-colors border border-gray-200 dark:border-white/10 rounded-xl text-brand-charcoal-dark dark:text-white hover:border-brand-gold"
+          className="flex items-center gap-1.5 px-4 py-3 text-sm font-bold transition-all border border-gray-200 dark:border-white/10 rounded-xl text-brand-charcoal-dark dark:text-white hover:border-brand-gold active:scale-[0.97]"
         >
           <MessageSquare size={14} />
         </button>
         <button
           type="button"
           onClick={() => setBookingOpen(true)}
-          className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-white transition-colors rounded-xl bg-brand-gold hover:bg-brand-gold-dark"
+          className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-white transition-all rounded-xl bg-brand-gold hover:bg-brand-gold-dark active:scale-[0.97]"
         >
           <Calendar size={14} />
           {accommodationType === 'shortlet' ? 'Reserve' :

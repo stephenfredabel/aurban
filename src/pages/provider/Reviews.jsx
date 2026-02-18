@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Star, Search, MessageCircle, ThumbsUp,
   ChevronDown, ChevronUp, Send,
   AlertCircle,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { getProProviderReviews } from '../../services/proProvider.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER REVIEWS — Client reviews & ratings management
@@ -86,7 +88,34 @@ function StarRating({ rating, size = 14 }) {
 }
 
 export default function Reviews() {
-  const [reviews] = useState(MOCK_REVIEWS);
+  const { user } = useAuth();
+  const [reviews, setReviews] = useState(MOCK_REVIEWS);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const res = await getProProviderReviews(user.id, { page: 1, limit: 50 });
+        if (res.success && res.reviews?.length) {
+          setReviews(res.reviews.map(r => ({
+            id: r.id,
+            clientName: r.client_name || r.reviewer_name || 'Client',
+            clientInitials: (r.client_name || r.reviewer_name || 'C').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+            rating: r.rating || 0,
+            title: r.title || '',
+            text: r.comment || r.text || '',
+            date: new Date(r.created_at).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' }),
+            listing: r.listing_title || r.listing || '',
+            type: r.type || 'service',
+            helpful: r.helpful_count || 0,
+            replied: !!r.reply,
+            reply: r.reply || null,
+            replyDate: r.reply_date ? new Date(r.reply_date).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' }) : null,
+          })));
+        }
+      } catch { /* keep mock fallback */ }
+    })();
+  }, [user?.id]);
   const [ratingFilter, setRatingFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');

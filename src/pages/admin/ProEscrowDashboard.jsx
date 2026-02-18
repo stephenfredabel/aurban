@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, Eye, Clock, Shield, Search, ChevronDown,
   ArrowUpRight, RotateCcw, Snowflake, FileText,
   AlertCircle,
 } from 'lucide-react';
 import { PRO_ESCROW_STATUSES, TIER_CONFIG } from '../../data/proConstants.js';
+import * as proAdminService from '../../services/proAdmin.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PRO ESCROW DASHBOARD — Admin oversight for Pro escrow flow
@@ -156,6 +157,27 @@ export default function ProEscrowDashboard() {
   const [escrows, setEscrows]     = useState(MOCK_ESCROWS);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch]       = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await proAdminService.getProEscrows({ page: 1, limit: 50 });
+        if (res.success && res.escrows?.length) {
+          setEscrows(res.escrows.map(e => ({
+            id: e.id,
+            ref: e.ref || e.pro_bookings?.ref || `ESC-${e.id.slice(0, 8)}`,
+            service: e.pro_bookings?.title || e.service || '',
+            provider: e.pro_bookings?.provider_name || e.provider || '',
+            client: e.pro_bookings?.client_name || e.client || '',
+            amount: e.amount || 0,
+            status: e.status || 'held',
+            tier: e.pro_bookings?.tier || e.tier || 1,
+            escrowState: e.status || 'held',
+          })));
+        }
+      } catch { /* keep mock fallback */ }
+    })();
+  }, []);
 
   /* ── Filter logic ──────────────────────────────────────────── */
   const filtered = useMemo(() => {

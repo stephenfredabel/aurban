@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import DashboardLayout from '../Layout/DashboardLayout.jsx';
+import { getProperties } from '../../services/property.service.js';
 
 /* ── Sub-page imports ─────────────────────────────────────── */
 import Messages    from './Messages.jsx';
@@ -69,6 +70,22 @@ export default function ProviderDashboard() {
   const [analyticsPeriod, setAnalyticsPeriod] = useState('30d');
   const [actionMenu, setActionMenu]       = useState(null);
 
+  /* ── Fetch real listings when available ───────────────────── */
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const res = await getProperties({ providerId: user.id, limit: 50 });
+        if (res.success && res.properties?.length) setListings(res.properties.map(p => ({
+          id: p.id, title: p.title, category: p.type || p.category || 'rental',
+          price: p.price || 0, priceUnit: p.price_unit || '', location: p.location || '',
+          views: p.views || 0, inquiries: p.inquiries || 0, active: p.active !== false,
+          image: p.image || p.images?.[0] || null,
+        })));
+      } catch { /* keep mock fallback */ }
+    })();
+  }, [user?.id]);
+
   /* ── Listing actions ────────────────────────────────────── */
   const toggleListing = (id) => {
     setListings((prev) => prev.map((l) => l.id === id ? { ...l, active: !l.active } : l));
@@ -122,11 +139,11 @@ export default function ProviderDashboard() {
           </p>
           <div className="flex gap-2 mt-3">
             <Link to="/provider/listings/new"
-              className="bg-brand-gold hover:bg-brand-gold-dark text-brand-charcoal-dark text-xs font-semibold px-4 py-2 rounded-full transition-colors flex items-center gap-1.5">
+              className="bg-brand-gold hover:bg-brand-gold-dark text-brand-charcoal-dark text-xs font-semibold px-4 py-2.5 rounded-full transition-all active:scale-[0.97] flex items-center gap-1.5">
               <PlusCircle size={14} /> Add Listing
             </Link>
             <Link to="/provider/profile"
-              className="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors flex items-center gap-1.5">
+              className="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-4 py-2.5 rounded-full transition-all active:scale-[0.97] flex items-center gap-1.5">
               <Edit size={14} /> Edit Profile
             </Link>
           </div>

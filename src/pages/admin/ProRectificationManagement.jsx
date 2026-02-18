@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   AlertCircle, Clock, AlertTriangle, CheckCircle2,
   Search, Eye, UserCheck, Gavel, ArrowUpRight,
 } from 'lucide-react';
 import { PRO_RECTIFICATION_STATUSES } from '../../data/proConstants.js';
+import * as proAdminService from '../../services/proAdmin.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PRO RECTIFICATION MANAGEMENT — Dispute rectification cases
@@ -105,6 +106,28 @@ export default function ProRectificationManagement() {
   const [cases, setCases]         = useState(MOCK_CASES);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch]       = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await proAdminService.getProRectifications({ page: 1, limit: 50 });
+        if (res.success && res.rectifications?.length) {
+          setCases(res.rectifications.map(r => ({
+            id: r.id,
+            caseNum: r.case_num || `REC-${r.id.slice(0, 3).toUpperCase()}`,
+            service: r.service || r.booking_title || '',
+            client: r.client_name || '',
+            provider: r.provider_name || '',
+            issue: r.category || r.description || '',
+            status: r.status || 'reported',
+            slaHoursRemaining: r.sla_hours_remaining ?? Math.max(0, 72 - Math.floor((Date.now() - new Date(r.created_at)) / 3600000)),
+            priority: r.priority || 'medium',
+            createdAt: r.created_at,
+          })));
+        }
+      } catch { /* keep mock fallback */ }
+    })();
+  }, []);
 
   /* ── Filter logic ──────────────────────────────────────── */
   const filtered = useMemo(() => {

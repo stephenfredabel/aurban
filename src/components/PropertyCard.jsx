@@ -70,7 +70,7 @@ export default function PropertyCard({ property, compact = false }) {
         <button
           onClick={handleWishlist}
           className={[
-            'absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all duration-200',
+            'absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all duration-200 active:scale-90',
             wished
               ? 'bg-red-500 text-white scale-110'
               : 'bg-white/90 backdrop-blur-sm text-gray-500 hover:text-red-500 hover:scale-110',

@@ -60,6 +60,15 @@
   }
   .scroll-y::-webkit-scrollbar { display: none; }
 
+  /* Aliases — used in multiple components */
+  .scrollbar-none,
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar,
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
   /* Focus visible — accessibility ring */
   *:focus-visible {
     outline: 2px solid rgba(239, 181, 11, 0.5);

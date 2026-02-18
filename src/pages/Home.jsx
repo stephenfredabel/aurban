@@ -180,7 +180,7 @@ export default function Home() {
             </p>
             <Link
               to={slide.cta.to}
-              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white transition-all rounded-xl bg-brand-gold hover:bg-brand-gold-dark hover:scale-105 shadow-lg"
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white transition-all rounded-xl bg-brand-gold hover:bg-brand-gold-dark hover:scale-[1.02] active:scale-[0.98] shadow-lg"
             >
               {slide.cta.label}
               <ArrowRight size={16} />
@@ -336,7 +336,7 @@ export default function Home() {
             {/* Provider types grid */}
             <div className="grid grid-cols-2 gap-3 mb-8 sm:grid-cols-4">
               {PROVIDER_TYPES.map(({ label, desc, emoji }) => (
-                <div key={label} className="p-4 text-center border bg-white/8 rounded-2xl border-white/10">
+                <div key={label} className="p-4 text-center border bg-white/8 rounded-2xl border-white/10 active:scale-[0.98] transition-transform">
                   <span className="block mb-2 text-2xl">{emoji}</span>
                   <p className="mb-1 text-xs font-bold text-white">{label}</p>
                   <p className="text-white/50 text-[11px] font-body">{desc}</p>
@@ -347,7 +347,7 @@ export default function Home() {
             <div className="flex items-center justify-center">
               <Link
                 to="/onboarding"
-                className="flex items-center gap-2 px-8 py-4 text-base font-bold text-white transition-colors shadow-lg bg-brand-gold hover:bg-brand-gold-dark rounded-2xl"
+                className="flex items-center gap-2 px-8 py-4 text-base font-bold text-white transition-all shadow-lg bg-brand-gold hover:bg-brand-gold-dark active:scale-[0.98] rounded-2xl"
               >
                 <Briefcase size={18} />
                 Become a Provider — it's free

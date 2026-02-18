@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   FileText, Search, ChevronRight, Download, Eye,
   CheckCircle, Clock, AlertCircle, XCircle, Calendar,
   Users, MapPin, DollarSign, Shield, Pen, Send,
   ChevronDown, ChevronUp,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase.js';
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER AGREEMENTS — Contracts, leases, service agreements
@@ -94,7 +96,38 @@ const MOCK_AGREEMENTS = [
 ];
 
 export default function ProviderAgreements() {
-  const [agreements] = useState(MOCK_AGREEMENTS);
+  const { user } = useAuth();
+  const [agreements, setAgreements] = useState(MOCK_AGREEMENTS);
+
+  useEffect(() => {
+    if (!user?.id || !isSupabaseConfigured()) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('agreements')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (!error && data?.length) {
+          setAgreements(data.map(a => ({
+            id: a.id,
+            type: a.type || 'rental',
+            status: a.status || 'active',
+            title: a.title || '',
+            client: a.counterparty || a.details?.client || '',
+            clientInitials: (a.counterparty || 'C').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+            property: a.details?.property || null,
+            location: a.details?.location || '',
+            startDate: a.signed_at ? new Date(a.signed_at).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD',
+            endDate: a.expires_at ? new Date(a.expires_at).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD',
+            value: a.details?.value || '',
+            signed: a.details?.signed || { provider: false, client: false },
+            milestones: a.details?.milestones || [],
+          })));
+        }
+      } catch { /* keep mock fallback */ }
+    })();
+  }, [user?.id]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState(null);

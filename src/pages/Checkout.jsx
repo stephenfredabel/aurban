@@ -611,7 +611,7 @@ export default function Checkout() {
 
       {/* ── Sticky bottom CTA ── */}
       {step < 4 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-100 dark:bg-brand-charcoal-dark dark:border-white/10">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-100 dark:bg-brand-charcoal-dark dark:border-white/10 pb-safe">
           <div className="flex items-center gap-3 px-4 py-3 mx-auto max-w-3xl">
             {step > 0 && (
               <button

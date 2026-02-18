@@ -256,8 +256,8 @@ function NotificationsTab() {
 
   return (
     <div className="space-y-5">
-      {/* Channel header */}
-      <div className="grid grid-cols-12 gap-2 px-3 pb-2 border-b border-gray-100 dark:border-white/10">
+      {/* Channel header — hidden on mobile */}
+      <div className="hidden sm:grid grid-cols-12 gap-2 px-3 pb-2 border-b border-gray-100 dark:border-white/10">
         <div className="col-span-6" />
         {NOTIFICATION_CHANNELS.map(ch => (
           <div key={ch.id} className="col-span-2 text-center">
@@ -271,12 +271,13 @@ function NotificationsTab() {
 
       {/* Notification rows */}
       {NOTIFICATION_TYPES.map(type => (
-        <div key={type.id} className="grid items-center grid-cols-12 gap-2 px-3 py-2 transition-colors rounded-xl hover:bg-brand-gray-soft dark:hover:bg-white/5">
-          <div className="col-span-6">
+        <div key={type.id} className="flex flex-col gap-2 px-3 py-3 transition-colors rounded-xl hover:bg-brand-gray-soft dark:hover:bg-white/5 sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 sm:py-2">
+          <div className="sm:col-span-6">
             <p className="text-sm font-semibold text-brand-charcoal-dark dark:text-white">{type.label}</p>
           </div>
+          <div className="flex items-center gap-4 sm:contents">
           {NOTIFICATION_CHANNELS.map(ch => (
-            <div key={ch.id} className="flex justify-center col-span-2">
+            <div key={ch.id} className="flex items-center gap-2 sm:justify-center sm:col-span-2">
               <button type="button"
                 onClick={() => toggle(type.id, ch.id)}
                 className={[

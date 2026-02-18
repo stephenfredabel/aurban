@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   AlertTriangle, Clock, MapPin, Shield,
   Phone, Snowflake, CheckCircle2, Search,
   AlertCircle, Radio, Eye,
 } from 'lucide-react';
+import * as proAdminService from '../../services/proAdmin.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PRO SAFETY MONITORING — Real-time safety for Pro bookings
@@ -108,9 +109,43 @@ function formatTime(ts) {
 export default function ProSafetyMonitoring() {
   const [activeTab, setActiveTab]     = useState('sos');
   const [sosAlerts, setSosAlerts]     = useState(MOCK_SOS_ALERTS);
-  const [bookings]                    = useState(MOCK_ACTIVE_BOOKINGS);
-  const [incidents]                   = useState(MOCK_INCIDENTS);
+  const [bookings, setBookings]       = useState(MOCK_ACTIVE_BOOKINGS);
+  const [incidents, setIncidents]     = useState(MOCK_INCIDENTS);
   const [search, setSearch]           = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [sosRes, incRes] = await Promise.all([
+          proAdminService.getActiveSOSAlerts({ page: 1, limit: 20 }),
+          proAdminService.getSafetyIncidents({ page: 1, limit: 20 }),
+        ]);
+        if (sosRes.success && sosRes.alerts?.length) {
+          setSosAlerts(sosRes.alerts.map(a => ({
+            id: a.id,
+            bookingRef: a.booking_ref || `PRO-${a.booking_id?.slice(0, 8) || ''}`,
+            providerName: a.provider_name || '',
+            clientName: a.client_name || '',
+            location: a.location || '',
+            triggeredAt: a.created_at,
+            service: a.service || '',
+            triggeredBy: a.triggered_by || 'client',
+            notes: a.reason || a.notes || '',
+          })));
+        }
+        if (incRes.success && incRes.incidents?.length) {
+          setIncidents(incRes.incidents.map(i => ({
+            id: i.id,
+            date: new Date(i.created_at).toISOString().split('T')[0],
+            type: i.type || 'SOS',
+            bookingRef: i.booking_ref || '',
+            outcome: i.resolution || i.notes || '',
+            resolvedBy: i.resolved_by || 'System',
+          })));
+        }
+      } catch { /* keep mock fallback */ }
+    })();
+  }, []);
 
   /* ── Search filter for bookings / incidents ────────────── */
   const filteredBookings = useMemo(() => {

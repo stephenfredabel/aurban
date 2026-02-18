@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../../context/AuthContext.jsx';
 import { sanitize } from '../../utils/security.js';
 import DashboardLayout from '../../Layout/DashboardLayout.jsx';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase.js';
 
 /* ════════════════════════════════════════════════════════════
    HISTORY — Recently viewed listings
@@ -111,6 +112,38 @@ export default function History() {
   const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => { saveHistory(items); }, [items]);
+
+  /* ── Fetch server-side history when Supabase is available ── */
+  useEffect(() => {
+    if (!user?.id || !isSupabaseConfigured()) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('browsing_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('viewed_at', { ascending: false })
+          .limit(MAX_HISTORY);
+        if (!error && data?.length) {
+          setItems(data.map(h => ({
+            id: h.id,
+            type: h.item_type || 'property',
+            title: h.item_title || '',
+            location: h.location || '',
+            price: h.price || 0,
+            pricePeriod: h.price_period || '',
+            category: h.category || 'rental',
+            bedrooms: h.bedrooms || null,
+            bathrooms: h.bathrooms || null,
+            image: h.image || null,
+            viewedAt: h.viewed_at,
+            viewCount: h.view_count || 1,
+            providerName: h.provider_name || '',
+          })));
+        }
+      } catch { /* keep sessionStorage fallback */ }
+    })();
+  }, [user?.id]);
 
   const removeItem = (id) => setItems((prev) => prev.filter((i) => i.id !== id));
   const clearAll = () => { setItems([]); setConfirmClear(false); };

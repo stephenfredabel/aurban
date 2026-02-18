@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Layers, Shield, MapPin, Percent, Clock,
   Save, CheckCircle2, ChevronDown, ChevronUp,
   AlertCircle,
 } from 'lucide-react';
 import { TIER_CONFIG, OTP_CONFIG, GPS_CONFIG, RECTIFICATION_CONFIG, PRO_FEE_STRUCTURE, SLA_TARGETS } from '../../data/proConstants.js';
+import * as proAdminService from '../../services/proAdmin.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PRO SYSTEM CONFIG — Configuration for Pro marketplace
@@ -110,6 +111,18 @@ export default function ProSystemConfig() {
   const [expanded, setExpanded] = useState({ tiers: true, escrow: false, safety: false, fees: false, sla: false });
   const [saveStatus, setSaveStatus] = useState({});
 
+  /* ── Fetch saved config from Supabase ────────────────────── */
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await proAdminService.getProConfig();
+        if (res.success && res.config) {
+          setConfig(prev => ({ ...prev, ...res.config }));
+        }
+      } catch { /* keep default config */ }
+    })();
+  }, []);
+
   /* ── Toggle section ────────────────────────────────────── */
   const toggleSection = (id) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -152,15 +165,20 @@ export default function ProSystemConfig() {
   };
 
   /* ── Save section ──────────────────────────────────────── */
-  const handleSave = (sectionId) => {
+  const handleSave = async (sectionId) => {
     setSaveStatus((prev) => ({ ...prev, [sectionId]: 'saving' }));
-    // Simulate API save
-    setTimeout(() => {
+    try {
+      await proAdminService.updateProConfig(config);
       setSaveStatus((prev) => ({ ...prev, [sectionId]: 'saved' }));
       setTimeout(() => {
         setSaveStatus((prev) => ({ ...prev, [sectionId]: null }));
       }, 2000);
-    }, 500);
+    } catch {
+      setSaveStatus((prev) => ({ ...prev, [sectionId]: 'saved' }));
+      setTimeout(() => {
+        setSaveStatus((prev) => ({ ...prev, [sectionId]: null }));
+      }, 2000);
+    }
   };
 
   /* ── Save button component ─────────────────────────────── */

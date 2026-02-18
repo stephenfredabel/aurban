@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Building2, MapPin, Star, BadgeCheck, MessageCircle,
   Phone, Package, Home, Wrench, Calendar, Users,
 } from 'lucide-react';
 import { useCurrency } from '../../hooks/useCurrency.js';
+import { getProProviderProfile } from '../../services/proProvider.service.js';
+import { getProperties } from '../../services/property.service.js';
 
 /* ── Mock data ─────────────────────────────────────────────── */
 const MOCK_COMPANY = {
@@ -59,13 +61,55 @@ export default function CompanyStore({ preview = false }) {
   const { companyId } = useParams();
   const { format }    = useCurrency();
 
-  /* In a real implementation these would come from an API call keyed
-     by companyId (or from provider context when preview === true).
-     For now we use mock data. */
-  const company  = MOCK_COMPANY;
-  const listings = MOCK_LISTINGS;
-
+  const [company, setCompany]   = useState(MOCK_COMPANY);
+  const [listings, setListings] = useState(MOCK_LISTINGS);
   const [activeTab, setActiveTab] = useState('properties');
+
+  useEffect(() => {
+    const id = companyId;
+    if (!id) return;
+    (async () => {
+      try {
+        const [profileRes, listingsRes] = await Promise.all([
+          getProProviderProfile(id),
+          getProperties({ providerId: id, limit: 100 }),
+        ]);
+        if (profileRes.success && profileRes.provider) {
+          const p = profileRes.provider;
+          setCompany(prev => ({
+            ...prev,
+            id: p.id,
+            name: p.name || prev.name,
+            description: p.description || prev.description,
+            logo: p.logo || null,
+            cacVerified: p.verified || false,
+            rcNumber: p.rc_number || prev.rcNumber,
+            location: p.location || prev.location,
+            yearEstablished: p.year_established || prev.yearEstablished,
+            teamSize: p.team_size || prev.teamSize,
+            website: p.website || prev.website,
+            stats: {
+              totalListings: listingsRes.properties?.length || prev.stats.totalListings,
+              avgRating: p.avg_rating || prev.stats.avgRating,
+              reviewCount: p.review_count || prev.stats.reviewCount,
+              yearsActive: p.year_established ? new Date().getFullYear() - p.year_established : prev.stats.yearsActive,
+            },
+          }));
+        }
+        if (listingsRes.success && listingsRes.properties?.length) {
+          setListings(listingsRes.properties.map(l => ({
+            id: l.id,
+            title: l.title || '',
+            category: l.category || l.type || 'rental',
+            price: l.price || 0,
+            image: l.image || l.images?.[0] || null,
+            type: l.listing_type || (l.category === 'building_materials' ? 'product' : 'property'),
+          })));
+        }
+      } catch { /* keep mock fallback */ }
+    })();
+  }, [companyId]);
+
   const filtered = filterByTab(listings, activeTab);
 
   const currentYear = new Date().getFullYear();
@@ -171,11 +215,11 @@ export default function CompanyStore({ preview = false }) {
               {/* Contact buttons */}
               {!preview && (
                 <div className="flex gap-2 mt-5">
-                  <button className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold transition-colors rounded-full bg-brand-gold hover:bg-brand-gold-dark text-brand-charcoal-dark">
+                  <button className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold transition-all rounded-full bg-brand-gold hover:bg-brand-gold-dark active:scale-[0.97] text-brand-charcoal-dark">
                     <MessageCircle size={14} />
                     Send Message
                   </button>
-                  <button className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors bg-gray-100 rounded-full dark:bg-white/10 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20">
+                  <button className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-gray-600 transition-all bg-gray-100 rounded-full dark:bg-white/10 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 active:scale-[0.97]">
                     <Phone size={14} />
                     Call
                   </button>

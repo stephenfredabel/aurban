@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { sanitize } from '../../utils/security.js';
+import { getProProviderStats } from '../../services/proProvider.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER ANALYTICS — Comprehensive dashboard analytics
@@ -331,6 +332,24 @@ export default function Analytics() {
   const [expandedListing, setExpandedListing] = useState(null);
   const [sortBy, setSortBy] = useState('views');
   const [compTab, setCompTab] = useState('properties');
+  const [revenueData, setRevenueData] = useState(MOCK_REVENUE);
+
+  /* ── Fetch real stats when available ──────────────────────── */
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const res = await getProProviderStats(user.id);
+        if (res.success && res.stats) {
+          const s = res.stats;
+          setRevenueData(prev => ({
+            ...prev,
+            totalEarnings: s.totalEarnings || prev.totalEarnings,
+          }));
+        }
+      } catch { /* keep mock fallback */ }
+    })();
+  }, [user?.id]);
 
   const isCompany = user?.accountType === 'company';
   const compData = isCompany ? MOCK_COMPETITIVE_COMPANY : MOCK_COMPETITIVE_INDIVIDUAL;

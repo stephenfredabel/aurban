@@ -5,7 +5,7 @@ import BottomNav from '../components/BottomNav';
 
 export default function MainLayout() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
       <Header />
       <HeaderNavigation />
       {/* 56px header + 47px nav = 103px total offset */}

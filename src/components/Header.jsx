@@ -143,7 +143,7 @@ export default function Header() {
 
           {/* Mobile search pill */}
           <button onClick={() => { setSearchOpen(true); setMenuOpen(false); }}
-            className="flex items-center flex-1 max-w-xs gap-2 px-4 border border-gray-100 rounded-full sm:hidden h-9 bg-gray-50 dark:bg-white/5 dark:border-white/5">
+            className="flex items-center flex-1 max-w-xs gap-2 px-4 border border-gray-100 rounded-full sm:hidden h-10 bg-gray-50 dark:bg-white/5 dark:border-white/5">
             <Search size={14} className="text-gray-300 shrink-0" />
             <span className="text-xs text-gray-300 truncate dark:text-gray-500">Search properties, services...</span>
           </button>
