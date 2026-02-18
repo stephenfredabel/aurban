@@ -70,15 +70,13 @@ export async function signInWithEmail(email, password) {
   }
 }
 
-// ── OAuth (Google) ──────────────────────────────────────────
+// ── OAuth ────────────────────────────────────────────────────
 
 /**
- * Sign in with Google OAuth.
- * @param {Object} options
- * @param {string} options.redirectTo - Where to redirect after login (default: '/')
- * @param {string} options.role - Role to assign if new user (default: 'user')
+ * Generic OAuth helper — stores role/redirect in sessionStorage then
+ * kicks off the Supabase OAuth flow for the given provider.
  */
-export async function signInWithGoogle({ redirectTo, role } = {}) {
+async function oauthSignIn(provider, { redirectTo, role } = {}) {
   const g = guard(); if (g) return g;
   try {
     const targetPath = redirectTo || '/';
@@ -90,7 +88,7 @@ export async function signInWithGoogle({ redirectTo, role } = {}) {
     sessionStorage.setItem('aurban_oauth_redirect', targetPath);
 
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider,
       options: { redirectTo: `${window.location.origin}${targetPath}` },
     });
     if (error) return { success: false, error: error.message };
@@ -98,6 +96,26 @@ export async function signInWithGoogle({ redirectTo, role } = {}) {
   } catch (err) {
     return { success: false, error: err.message };
   }
+}
+
+/**
+ * Sign in with Google OAuth.
+ * @param {Object} options
+ * @param {string} options.redirectTo - Where to redirect after login (default: '/')
+ * @param {string} options.role - Role to assign if new user (default: 'user')
+ */
+export function signInWithGoogle(options) {
+  return oauthSignIn('google', options);
+}
+
+/**
+ * Sign in with Apple OAuth.
+ * @param {Object} options
+ * @param {string} options.redirectTo - Where to redirect after login (default: '/')
+ * @param {string} options.role - Role to assign if new user (default: 'user')
+ */
+export function signInWithApple(options) {
+  return oauthSignIn('apple', options);
 }
 
 // ── Phone OTP ───────────────────────────────────────────────

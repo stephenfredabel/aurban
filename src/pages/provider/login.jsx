@@ -13,7 +13,8 @@ import { safeRedirect, loginLimiter } from "@/utils/security";
 
 import {
   signInWithEmail,
-  signInWithGoogle
+  signInWithGoogle,
+  signInWithApple,
 } from "@/services/supabase-auth.service";
 import OTPVerification from "@/components/auth/OTPVerification";
 
@@ -38,6 +39,14 @@ function GoogleIcon({ size = 20 }) {
   );
 }
 
+function AppleIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+    </svg>
+  );
+}
+
 
 export default function ProviderLogin() {
   const navigate = useNavigate();
@@ -47,6 +56,7 @@ export default function ProviderLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]         = useState(false);
   const [gLoading, setGLoading]       = useState(false);
+  const [aLoading, setALoading]       = useState(false);
   const [error, setError]             = useState('');
   const [success, setSuccess]         = useState('');
   const [form, setForm]               = useState({ email: params.get('email') || '', password: '' });
@@ -125,16 +135,8 @@ export default function ProviderLogin() {
     setGLoading(true); setError('');
     try {
       if (isSupabaseConfigured()) {
-        // Pass role='provider' and redirect to /provider
-        // signInWithGoogle stores these in sessionStorage before OAuth redirect
-        // AuthContext reads them after callback and applies the role
-        const res = await signInWithGoogle({
-          redirectTo: '/provider',
-          role: 'provider',
-        });
+        const res = await signInWithGoogle({ redirectTo: '/provider', role: 'provider' });
         if (!res.success) { setError(res.error || 'Google login failed.'); setGLoading(false); return; }
-        // OAuth redirect happens — page will reload at /provider
-        // onAuthStateChange in AuthContext handles session + role assignment
       } else {
         setError('Authentication service is not configured. Contact support.');
         setGLoading(false);
@@ -144,7 +146,25 @@ export default function ProviderLogin() {
     } finally {
       setGLoading(false);
     }
-  }, [navigate]);
+  }, []);
+
+  /* ── Apple login ────────────────────────────────────────── */
+  const handleApple = useCallback(async () => {
+    setALoading(true); setError('');
+    try {
+      if (isSupabaseConfigured()) {
+        const res = await signInWithApple({ redirectTo: '/provider', role: 'provider' });
+        if (!res.success) { setError(res.error || 'Apple login failed.'); setALoading(false); return; }
+      } else {
+        setError('Authentication service is not configured. Contact support.');
+        setALoading(false);
+      }
+    } catch {
+      setError('Apple login failed.');
+    } finally {
+      setALoading(false);
+    }
+  }, []);
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -196,15 +216,22 @@ export default function ProviderLogin() {
 
               <div className="space-y-5">
 
-                {/* Google */}
-                <button onClick={handleGoogle} disabled={gLoading}
-                  className="flex items-center justify-center w-full gap-3 py-3 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-200 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 rounded-full hover:bg-gray-50 dark:hover:bg-white/10 active:scale-[0.98]">
-                  {gLoading ? <Loader size={18} className="animate-spin" /> : <><GoogleIcon size={18} /> Continue with Google</>}
-                </button>
+                {/* OAuth buttons */}
+                <div className="space-y-3">
+                  <button onClick={handleGoogle} disabled={gLoading}
+                    className="flex items-center justify-center w-full gap-3 py-3 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-200 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 rounded-full hover:bg-gray-50 dark:hover:bg-white/10 active:scale-[0.98]">
+                    {gLoading ? <Loader size={18} className="animate-spin" /> : <><GoogleIcon size={18} /> With Google</>}
+                  </button>
+
+                  <button onClick={handleApple} disabled={aLoading}
+                    className="flex items-center justify-center w-full gap-3 py-3 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-200 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 rounded-full hover:bg-gray-50 dark:hover:bg-white/10 active:scale-[0.98]">
+                    {aLoading ? <Loader size={18} className="animate-spin" /> : <><AppleIcon size={18} /> With Apple</>}
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-4">
                   <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
-                  <span className="text-xs text-gray-400">or</span>
+                  <span className="text-xs text-gray-400">Or Sign In</span>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-white/10" />
                 </div>
 
