@@ -276,23 +276,25 @@ function NotificationsTab() {
             <p className="text-sm font-semibold text-brand-charcoal-dark dark:text-white">{type.label}</p>
           </div>
           <div className="flex items-center gap-4 sm:contents">
-          {NOTIFICATION_CHANNELS.map(ch => (
-            <div key={ch.id} className="flex items-center gap-2 sm:justify-center sm:col-span-2">
-              <button type="button"
-                onClick={() => toggle(type.id, ch.id)}
-                className={[
-                  'w-10 h-5 rounded-full transition-all relative',
-                  prefs[type.id]?.[ch.id]
-                    ? 'bg-brand-gold'
-                    : 'bg-gray-200 dark:bg-white/20',
-                ].join(' ')}>
-                <span className={[
-                  'absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all shadow-sm',
-                  prefs[type.id]?.[ch.id] ? 'right-0.5' : 'left-0.5',
-                ].join(' ')} />
-              </button>
-            </div>
-          ))}
+            {NOTIFICATION_CHANNELS.map(ch => (
+              <div key={ch.id} className="flex items-center gap-2 sm:justify-center sm:col-span-2">
+                <span className="text-[10px] text-gray-400 sm:hidden">{ch.label}</span>
+                <button type="button"
+                  onClick={() => toggle(type.id, ch.id)}
+                  className={[
+                    'w-10 h-5 rounded-full transition-all relative',
+                    prefs[type.id]?.[ch.id]
+                      ? 'bg-brand-gold'
+                      : 'bg-gray-200 dark:bg-white/20',
+                  ].join(' ')}>
+                  <span className={[
+                    'absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all shadow-sm',
+                    prefs[type.id]?.[ch.id] ? 'right-0.5' : 'left-0.5',
+                  ].join(' ')} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       ))}
 
