@@ -59,7 +59,7 @@ export default function ProviderProBookings() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg whitespace-nowrap transition-colors ${
+            className={`px-3 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-colors active:scale-[0.97] ${
               tab === t.id
                 ? 'bg-white dark:bg-gray-900 text-brand-charcoal-dark dark:text-white shadow-sm'
                 : 'text-gray-500 hover:text-brand-charcoal-dark dark:hover:text-white'

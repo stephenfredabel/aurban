@@ -227,7 +227,7 @@ export default function Reviews() {
             { key: '1', label: '1 Star' },
           ].map((f) => (
             <button key={f.key} onClick={() => setRatingFilter(f.key)}
-              className={`text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition-colors
+              className={`text-xs font-medium px-3 py-2.5 rounded-full whitespace-nowrap transition-colors active:scale-[0.97]
                 ${ratingFilter === f.key ? 'bg-brand-charcoal-dark text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200'}`}>
               {f.label}
             </button>
@@ -240,7 +240,7 @@ export default function Reviews() {
             { key: 'replied', label: 'Replied' },
           ].map((f) => (
             <button key={f.key} onClick={() => setStatusFilter(f.key)}
-              className={`text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition-colors
+              className={`text-xs font-medium px-3 py-2.5 rounded-full whitespace-nowrap transition-colors active:scale-[0.97]
                 ${statusFilter === f.key ? 'bg-brand-charcoal-dark text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200'}`}>
               {f.label}
               {f.key === 'unreplied' && (

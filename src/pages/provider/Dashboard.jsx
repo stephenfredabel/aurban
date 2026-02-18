@@ -277,14 +277,14 @@ export default function ProviderDashboard() {
               <div className="flex gap-2">
                 {['all', 'active', 'paused'].map((f) => (
                   <button key={f} onClick={() => setListingFilter(f)}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors capitalize
+                    className={`text-xs font-medium px-3 py-2.5 rounded-full transition-colors capitalize active:scale-[0.97]
                       ${listingFilter === f ? 'bg-brand-charcoal-dark text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200'}`}>
                     {f} {f === 'all' ? `(${listings.length})` : f === 'active' ? `(${activeCount})` : `(${listings.length - activeCount})`}
                   </button>
                 ))}
               </div>
               <Link to="/provider/listings/new"
-                className="bg-brand-gold hover:bg-brand-gold-dark text-brand-charcoal-dark text-xs font-semibold px-3 py-1.5 rounded-full transition-colors flex items-center gap-1">
+                className="bg-brand-gold hover:bg-brand-gold-dark text-brand-charcoal-dark text-xs font-semibold px-3 py-2.5 rounded-full transition-colors active:scale-[0.97] flex items-center gap-1">
                 <PlusCircle size={12} /> Add
               </Link>
             </div>
@@ -374,7 +374,7 @@ export default function ProviderDashboard() {
             <div className="flex gap-2">
               {['7d', '30d', '90d'].map((p) => (
                 <button key={p} onClick={() => setAnalyticsPeriod(p)}
-                  className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors
+                  className={`text-xs font-medium px-3 py-2.5 rounded-full transition-colors active:scale-[0.97]
                     ${analyticsPeriod === p ? 'bg-brand-charcoal-dark text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-500'}`}>
                   {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : '90 Days'}
                 </button>

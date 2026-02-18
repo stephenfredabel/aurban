@@ -53,7 +53,7 @@ export default function ProviderProListings() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded-md capitalize ${
+              className={`px-2.5 py-2 text-[10px] font-bold rounded-md capitalize transition-colors active:scale-[0.97] ${
                 filter === f ? 'bg-white dark:bg-gray-900 text-brand-charcoal-dark dark:text-white shadow-sm' : 'text-gray-500'
               }`}
             >
@@ -120,17 +120,17 @@ export default function ProviderProListings() {
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => toggleListing(listing.id)}
-                      className="p-2 text-gray-400 hover:text-brand-gold rounded-lg"
+                      className="p-2.5 text-gray-400 hover:text-brand-gold rounded-lg"
                       title={listing.active === false ? 'Activate' : 'Pause'}
                     >
                       {listing.active === false ? <ToggleLeft size={16} /> : <ToggleRight size={16} className="text-emerald-500" />}
                     </button>
-                    <button className="p-2 text-gray-400 hover:text-brand-gold rounded-lg" title="Edit">
+                    <button className="p-2.5 text-gray-400 hover:text-brand-gold rounded-lg" title="Edit">
                       <Edit2 size={14} />
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(listing.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 rounded-lg"
+                      className="p-2.5 text-gray-400 hover:text-red-500 rounded-lg"
                       title="Delete"
                     >
                       <Trash2 size={14} />

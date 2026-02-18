@@ -319,19 +319,19 @@ export default function Profile() {
               <div>
                 <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Display Name</label>
                 <input value={profile.displayName} onChange={(e) => updateProfile('displayName', e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-brand-charcoal-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold" />
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-brand-charcoal-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold" />
               </div>
               <div>
                 <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Tagline</label>
                 <input value={profile.tagline} onChange={(e) => updateProfile('tagline', e.target.value)}
                   placeholder="A short description of what you do"
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-brand-charcoal-dark dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold" />
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-brand-charcoal-dark dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold" />
               </div>
               <div>
                 <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">About / Bio</label>
                 <textarea value={profile.bio} onChange={(e) => updateProfile('bio', e.target.value)}
                   rows={5}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-brand-charcoal-dark dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold resize-none" />
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-brand-charcoal-dark dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold resize-none" />
                 <p className="text-[10px] text-gray-400 mt-1">This appears on your public profile. Be detailed but concise.</p>
               </div>
 
