@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Mail, Lock, Eye, EyeOff, AlertCircle,
-  CheckCircle2, Loader, Shield, Smartphone,
-  Send, LogIn, Building2, Briefcase,
+  CheckCircle2, Loader, Smartphone,
+  LogIn, Building2,
 } from 'lucide-react';
 
 import { useAuth } from "@/context/AuthContext";
@@ -54,7 +54,7 @@ class RateLimiter {
 export default function ProviderLogin() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { login } = useAuth();
+  useAuth(); // session handled by Supabase onAuthStateChange
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]         = useState(false);
@@ -104,25 +104,15 @@ export default function ProviderLogin() {
         setSuccess('Welcome back!');
         setTimeout(() => redirectAfterLogin(), 600);
       } else {
-        await new Promise(r => setTimeout(r, 1200));
-        login({
-          id: 'p_' + Date.now(),
-          name: 'Provider User',
-          email: form.email,
-          role: 'provider',
-          verified: true,
-          tier: { type: 'individual', level: 2, label: 'Verified Provider' },
-        });
-        rateLimiter.reset();
-        setSuccess('Welcome back!');
-        setTimeout(() => redirectAfterLogin(), 600);
+        setError('Authentication service is not configured. Contact support.');
+        setLoading(false);
       }
     } catch {
       setError('Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [form, rateLimiter, login, navigate, params]);
+  }, [form, rateLimiter, navigate, params]);
 
   /* ── Google login ───────────────────────────────────────── */
   const handleGoogle = useCallback(async () => {
@@ -140,24 +130,15 @@ export default function ProviderLogin() {
         // OAuth redirect happens — page will reload at /provider
         // onAuthStateChange in AuthContext handles session + role assignment
       } else {
-        await new Promise(r => setTimeout(r, 1500));
-        login({
-          id: 'gp_' + Date.now(),
-          name: 'Provider User',
-          email: 'provider@gmail.com',
-          role: 'provider',
-          verified: true,
-          tier: { type: 'individual', level: 1, label: 'Starter Provider' },
-        });
-        rateLimiter.reset();
-        redirectAfterLogin();
+        setError('Authentication service is not configured. Contact support.');
+        setGLoading(false);
       }
     } catch {
       setError('Google login failed.');
     } finally {
       setGLoading(false);
     }
-  }, [login, navigate]);
+  }, [navigate]);
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Mail, Lock, Eye, EyeOff, AlertCircle,
-  CheckCircle2, Loader, ArrowRight, Shield,
+  CheckCircle2, Loader, Shield,
   Smartphone, Send, LogIn,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -48,7 +48,7 @@ class RateLimiter {
 export default function Login() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { login } = useAuth();
+  useAuth(); // provides session context; login handled by onAuthStateChange
 
   const [mode, setMode]               = useState('password');
   const [showPassword, setShowPassword] = useState(false);
@@ -106,40 +106,24 @@ export default function Login() {
         setSuccess('Welcome back!');
         setTimeout(() => redirectAfterLogin(), 600);
       } else {
-        // Mock fallback
-        await new Promise(r => setTimeout(r, 1200));
-        const role = 'user';
-        if (Math.random() < 0.1) { setTwoFactorData({ tempToken: 'mock-2fa-token', role }); setLoading(false); return; }
-        login({ id: 'u_' + Date.now(), name: 'Demo User', email: form.email, role, verified: true });
-        rateLimiter.reset();
-        setSuccess('Welcome back!');
-        setTimeout(() => redirectAfterLogin(), 600);
+        setError('Authentication service is not configured. Contact support.');
+        setLoading(false);
       }
     } catch {
       setError('Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [form, rateLimiter, login, navigate, params]);
+  }, [form, rateLimiter, navigate, params]);
 
-  /* ── 2FA verify ─────────────────────────────────────────── */
+  /* ── 2FA verify (placeholder — wire to real 2FA when ready) ─ */
   const handle2FA = useCallback(async () => {
     if (twoFactorCode.length !== 6) return;
     setLoading(true); setError('');
-
-    try {
-      await new Promise(r => setTimeout(r, 800));
-      const role = twoFactorData?.role || 'user';
-      login({ id: 'u_' + Date.now(), name: 'Demo User', email: form.email, role, verified: true });
-      rateLimiter.reset();
-      setSuccess('Verified!');
-      setTimeout(() => redirectAfterLogin(), 600);
-    } catch {
-      setError('Invalid code. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [twoFactorCode, twoFactorData, login, navigate, params]);
+    // 2FA via Supabase MFA: supabase.auth.mfa.challengeAndVerify(...)
+    setError('2FA not yet enabled. Contact support.');
+    setLoading(false);
+  }, [twoFactorCode]);
 
   /* ── Google login ───────────────────────────────────────── */
   const handleGoogle = useCallback(async () => {
@@ -150,17 +134,15 @@ export default function Login() {
         if (!res.success) { setError(res.error || 'Google login failed.'); setGLoading(false); return; }
         // OAuth redirect will happen — onAuthStateChange handles session
       } else {
-        await new Promise(r => setTimeout(r, 1500));
-        login({ id: 'g_' + Date.now(), name: 'Google User', email: 'user@gmail.com', role: 'user', verified: true, avatar: null });
-        rateLimiter.reset();
-        redirectAfterLogin();
+        setError('Authentication service is not configured. Contact support.');
+        setGLoading(false);
       }
     } catch {
       setError('Google login failed.');
     } finally {
       setGLoading(false);
     }
-  }, [login, navigate]);
+  }, [navigate]);
 
   /* ── Magic link ─────────────────────────────────────────── */
   const sendMagicLink = useCallback(async () => {

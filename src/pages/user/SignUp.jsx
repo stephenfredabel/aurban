@@ -35,7 +35,7 @@ const RATE_LIMIT = { maxAttempts: 3, windowMs: 10 * 60 * 1000 };
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  useAuth();
 
   // Step 1 = registration form, Step 2 = OTP verification
   const [step, setStep]         = useState(1);
@@ -92,9 +92,9 @@ export default function SignUp() {
         // Move to OTP verification step
         setStep(2);
       } else {
-        // Mock mode — go to step 2 for demo
-        await new Promise(r => setTimeout(r, 800));
-        setStep(2);
+        setError('Authentication service is not configured. Contact support.');
+        setLoading(false);
+        return;
       }
     } catch {
       setError('Registration failed. Please try again.');
@@ -104,23 +104,11 @@ export default function SignUp() {
   }, [form, honeypot, attempts]);
 
   /* ── OTP verified (Step 2) ────────────────────────────────── */
-  const handleOTPVerified = useCallback(({ method }) => {
-    if (!isSupabaseConfigured()) {
-      // Mock mode — log in directly
-      login({
-        id: 'u_' + Date.now(),
-        name: form.fullName.trim(),
-        email: form.email.trim(),
-        role: 'user',
-        verified: false,
-        emailVerified: method === 'email',
-        whatsappVerified: method === 'phone',
-      });
-    }
-    // Supabase mode: verifyOtp auto-signs the user in → onAuthStateChange handles it
+  const handleOTPVerified = useCallback(() => {
+    // Supabase verifyOtp auto-signs the user in → onAuthStateChange handles the session
     setSuccess('Account verified! Welcome to Aurban.');
     setTimeout(() => navigate('/', { replace: true }), 800);
-  }, [form, login, navigate]);
+  }, [navigate]);
 
   /* ── Google signup ──────────────────────────────────────── */
   const handleGoogle = useCallback(async () => {
@@ -131,24 +119,16 @@ export default function SignUp() {
         if (!res.success) { setError(res.error || 'Google signup failed.'); setGLoading(false); return; }
         // OAuth redirect — Google = pre-verified email
       } else {
-        await new Promise(r => setTimeout(r, 1500));
-        login({
-          id: 'g_' + Date.now(),
-          name: 'Google User',
-          email: 'user@gmail.com',
-          role: 'user',
-          verified: true,
-          emailVerified: true,
-          avatar: null,
-        });
-        navigate('/', { replace: true });
+        setError('Authentication service is not configured. Contact support.');
+        setGLoading(false);
+        return;
       }
     } catch {
       setError('Google signup failed. Please try again.');
     } finally {
       setGLoading(false);
     }
-  }, [login, navigate]);
+  }, [navigate]);
 
   /* ── Step 2: OTP Verification ─────────────────────────────── */
   if (step === 2) {

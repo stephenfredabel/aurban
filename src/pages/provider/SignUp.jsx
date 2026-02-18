@@ -35,7 +35,7 @@ const RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
 
 export default function ProviderSignUp() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  useAuth();
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -111,7 +111,9 @@ export default function ProviderSignUp() {
           return;
         }
       } else {
-        await new Promise(r => setTimeout(r, 800));
+        setError('Authentication service is not configured. Contact support.');
+        setLoading(false);
+        return;
       }
       // Move to OTP verification step
       setStep(2);
@@ -123,26 +125,11 @@ export default function ProviderSignUp() {
   }, [form, honeypot, attempts]);
 
   /* ── OTP verified (Step 2) ────────────────────────────────── */
-  const handleOTPVerified = useCallback(({ method }) => {
-    if (!isSupabaseConfigured()) {
-      login({
-        id: 'p_' + Date.now(),
-        name: form.fullName.trim(),
-        email: form.email.trim(),
-        phone: form.whatsapp.trim(),
-        whatsapp: form.whatsapp.trim(),
-        role: 'provider',
-        verified: false,
-        verificationStatus: 'unverified',
-        emailVerified: method === 'email',
-        whatsappVerified: method === 'phone',
-        accountType: form.accountType,
-        tier: { type: form.accountType, level: 1, label: form.accountType === 'company' ? 'Registered Business (Basic)' : 'Basic Provider' },
-      });
-    }
+  const handleOTPVerified = useCallback(() => {
+    // Supabase verifyOtp auto-signs the user in → onAuthStateChange handles the session
     setSuccess('Account verified! Redirecting to your dashboard...');
     setTimeout(() => navigate('/provider', { replace: true }), 1000);
-  }, [form, login, navigate]);
+  }, [navigate]);
 
   /* ── Google signup ──────────────────────────────────────── */
   const handleGoogle = useCallback(async () => {
@@ -154,26 +141,16 @@ export default function ProviderSignUp() {
         const res = await signInWithGoogle();
         if (!res.success) { setError(res.error || 'Google signup failed.'); setGLoading(false); return; }
       } else {
-        await new Promise(r => setTimeout(r, 1500));
-        login({
-          id: 'gp_' + Date.now(),
-          name: 'Provider User',
-          email: 'provider@gmail.com',
-          role: 'provider',
-          verified: false,
-          verificationStatus: 'unverified',
-          emailVerified: true,
-          accountType: 'individual',
-          tier: { type: 'individual', level: 1, label: 'Basic Provider' },
-        });
-        navigate('/provider', { replace: true });
+        setError('Authentication service is not configured. Contact support.');
+        setGLoading(false);
+        return;
       }
     } catch {
       setError('Google signup failed. Please try again.');
     } finally {
       setGLoading(false);
     }
-  }, [login, navigate]);
+  }, [navigate]);
 
   /* ── Step 2: OTP Verification ─────────────────────────────── */
   if (step === 2) {
