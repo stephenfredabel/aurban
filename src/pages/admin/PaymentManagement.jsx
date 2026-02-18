@@ -86,8 +86,37 @@ export default function PaymentManagement() {
       try {
         const res = await adminService.getTransactions({ page: 1, limit: 50 });
         if (!cancelled && res.success && res.transactions?.length) {
-          setTransactions(res.transactions);
-          if (res.stats) setStats(res.stats);
+          const normalized = res.transactions.map((tx) => {
+            const rawAmount = Number(tx.amount || tx.rawAmount || 0);
+            return {
+              id: tx.id,
+              ref: tx.ref || tx.reference || `PAY-${tx.id}`,
+              user: tx.user_name || tx.user || tx.customer_name || 'Unknown',
+              amount: formatNaira(rawAmount),
+              rawAmount,
+              type: tx.type || (rawAmount < 0 ? 'outflow' : 'inflow'),
+              provider: tx.provider || tx.gateway || 'Paystack',
+              status: tx.status || 'pending',
+              date: tx.created_at ? tx.created_at.slice(0, 10) : (tx.date || ''),
+              escrowStuck: Boolean(tx.escrow_stuck || tx.escrowStuck),
+              escrowFrozen: Boolean(tx.escrow_frozen || tx.escrowFrozen),
+              raw: tx,
+            };
+          });
+          setTransactions(normalized);
+
+          if (res.stats) {
+            setStats(res.stats);
+          } else {
+            const escrowHeld = normalized.filter((t) => t.escrowStuck).reduce((s, t) => s + t.rawAmount, 0);
+            const pendingPayout = normalized.filter((t) => t.status === 'pending').reduce((s, t) => s + t.rawAmount, 0);
+            const revenueMonth = normalized.filter((t) => t.status === 'completed').reduce((s, t) => s + t.rawAmount, 0);
+            setStats([
+              { key: 'escrowHeld', label: 'Total Escrow Held', value: formatNaira(escrowHeld), icon: Wallet, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+              { key: 'pendingPayout', label: 'Pending Payouts', value: formatNaira(pendingPayout), icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10' },
+              { key: 'revenueMonth', label: 'Revenue This Month', value: formatNaira(revenueMonth), icon: ArrowUpRight, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+            ]);
+          }
           setUsingFallback(false);
         } else if (!cancelled) {
           setUsingFallback(true);

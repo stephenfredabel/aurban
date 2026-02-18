@@ -66,7 +66,19 @@ export default function ListingModeration() {
       try {
         const res = await adminService.getListingsForModeration({ page: 1, limit: 50 });
         if (!cancelled && res.success && res.listings?.length) {
-          setListings(res.listings);
+          const normalized = res.listings.map((l) => ({
+            id: l.id,
+            title: l.title || l.name || 'Listing',
+            provider: l.provider_name || l.provider || l.owner_name || 'Unknown',
+            category: l.category || l.type || 'Listing',
+            emoji: l.emoji || '📋',
+            price: l.price_label || (l.price ? `₦${Number(l.price).toLocaleString()}` : '—'),
+            status: l.moderation_status || l.status || 'pending',
+            submittedDate: l.created_at ? l.created_at.slice(0, 10) : '',
+            featured: Boolean(l.featured),
+            raw: l,
+          }));
+          setListings(normalized);
           setUsingFallback(false);
         } else if (!cancelled) {
           setUsingFallback(true);
@@ -94,29 +106,29 @@ export default function ListingModeration() {
   /* ── Actions ────────────────────────────────────────────── */
   const handleApprove = async (id) => {
     setListings((prev) => prev.map((l) => l.id === id ? { ...l, status: 'approved' } : l));
-    await adminService.moderateListing(id, { action: 'approve' });
+    await adminService.moderateListing(id, { action: 'approved' });
   };
 
   const handleFlag = async (id) => {
     setListings((prev) => prev.map((l) => l.id === id ? { ...l, status: 'flagged' } : l));
-    await adminService.moderateListing(id, { action: 'flag' });
+    await adminService.moderateListing(id, { action: 'flagged' });
   };
 
   const handleReject = async (id) => {
     setListings((prev) => prev.map((l) => l.id === id ? { ...l, status: 'rejected' } : l));
-    await adminService.moderateListing(id, { action: 'reject', reason: rejectReason });
+    await adminService.moderateListing(id, { action: 'rejected', reason: rejectReason });
     setRejectingId(null);
     setRejectReason('');
   };
 
   const handleFeature = async (id) => {
     setListings((prev) => prev.map((l) => l.id === id ? { ...l, featured: !l.featured } : l));
-    await adminService.moderateListing(id, { action: 'feature' });
+    await adminService.updateListing(id, { featured: !listings.find((l) => l.id === id)?.featured });
   };
 
   const handleRequestEdit = async (id) => {
     if (!editRequest.trim()) return;
-    await adminService.moderateListing(id, { action: 'request_edit', reason: editRequest });
+    await adminService.moderateListing(id, { action: 'edit_requested', reason: editRequest });
     setRequestEditId(null);
     setEditRequest('');
   };
@@ -126,7 +138,7 @@ export default function ListingModeration() {
     setListings((prev) => prev.map((l) => ids.includes(l.id) ? { ...l, status: 'approved' } : l));
     setSelectedIds(new Set());
     for (const id of ids) {
-      await adminService.moderateListing(id, { action: 'approve' });
+      await adminService.moderateListing(id, { action: 'approved' });
     }
   };
 

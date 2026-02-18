@@ -10,7 +10,7 @@ import ConfirmAction from '../../components/admin/ConfirmAction.jsx';
 import useAdminAction from '../../hooks/useAdminAction.js';
 import { AUDIT_ACTIONS } from '../../services/audit.service.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase.js';
+import * as adminService from '../../services/admin.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PROVIDER VERIFICATION — Queue of providers pending review
@@ -92,36 +92,28 @@ export default function ProviderVerification() {
     setLoading(true);
 
     async function loadProviders() {
-      if (isSupabaseConfigured()) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id, name, email, phone, whatsapp, role, account_type, verification_status, verified, tier, created_at')
-            .in('role', ['provider', 'host', 'agent', 'seller', 'service'])
-            .order('created_at', { ascending: false });
-          if (!error && data && !cancelled) {
-            setRequests(data.map(p => ({
-              id: p.id,
-              providerName: p.name || 'Unnamed Provider',
-              providerType: p.role === 'provider' ? (p.account_type === 'company' ? 'company' : 'individual') : p.role,
-              email: p.email || '',
-              whatsapp: p.whatsapp || p.phone || '',
-              accountType: p.account_type || 'individual',
-              submittedDocs: p.tier?.docs || [],
-              status: p.verification_status || 'unverified',
-              submittedAt: p.created_at,
-              notes: '',
-            })));
-            setLoading(false);
-            return;
-          }
-        } catch { /* fall through to mock */ }
-      }
-      // Fallback to mock
-      if (!cancelled) {
-        setUsingFallback(true);
-        setLoading(false);
-      }
+      try {
+        const res = await adminService.getVerificationQueue({ page: 1, limit: 100 });
+        if (!cancelled && res.success && res.submissions?.length) {
+          setRequests(res.submissions.map(p => ({
+            id: p.id,
+            providerName: p.name || p.user_name || 'Unnamed Provider',
+            providerType: p.type || p.role || 'individual',
+            email: p.email || '',
+            whatsapp: p.whatsapp || p.phone || '',
+            accountType: p.account_type || p.accountType || 'individual',
+            submittedDocs: p.documents || p.submittedDocs || [],
+            status: p.status || p.verification_status || 'unverified',
+            submittedAt: p.created_at || p.submittedAt,
+            notes: p.notes || '',
+            raw: p,
+          })));
+          setUsingFallback(false);
+        } else if (!cancelled) {
+          setUsingFallback(true);
+        }
+      } catch { /* fall through to mock */ }
+      if (!cancelled) setLoading(false);
     }
 
     loadProviders();
@@ -139,14 +131,8 @@ export default function ProviderVerification() {
     targetId: activeRequest?.id,
     targetType: 'verification',
     onExecute: async ({ reason }) => {
-      // Update Supabase profile if configured
-      if (isSupabaseConfigured() && activeRequest?.id) {
-        try {
-          await supabase.from('profiles').update({
-            verification_status: 'approved',
-            verified: true,
-          }).eq('id', activeRequest.id);
-        } catch { /* local update still applies */ }
+      if (activeRequest?.id) {
+        try { await adminService.approveVerification(activeRequest.id, { notes: reason }); } catch { /* keep optimistic */ }
       }
       setRequests((prev) => prev.map((r) => r.id === activeRequest?.id ? { ...r, status: 'approved', notes: reason } : r));
     },
@@ -163,13 +149,8 @@ export default function ProviderVerification() {
     targetId: activeRequest?.id,
     targetType: 'verification',
     onExecute: async ({ reason }) => {
-      if (isSupabaseConfigured() && activeRequest?.id) {
-        try {
-          await supabase.from('profiles').update({
-            verification_status: 'rejected',
-            verified: false,
-          }).eq('id', activeRequest.id);
-        } catch { /* local update still applies */ }
+      if (activeRequest?.id) {
+        try { await adminService.rejectVerification(activeRequest.id, { reason }); } catch { /* keep optimistic */ }
       }
       setRequests((prev) => prev.map((r) => r.id === activeRequest?.id ? { ...r, status: 'rejected', notes: reason } : r));
     },
@@ -186,12 +167,8 @@ export default function ProviderVerification() {
     targetId: activeRequest?.id,
     targetType: 'verification',
     onExecute: async ({ reason }) => {
-      if (isSupabaseConfigured() && activeRequest?.id) {
-        try {
-          await supabase.from('profiles').update({
-            verification_status: 'docs_requested',
-          }).eq('id', activeRequest.id);
-        } catch { /* local update still applies */ }
+      if (activeRequest?.id) {
+        try { await adminService.requestAdditionalDocs(activeRequest.id, { documents: reason ? [reason] : [] }); } catch { /* keep optimistic */ }
       }
       setRequests((prev) => prev.map((r) => r.id === activeRequest?.id ? { ...r, status: 'docs_requested', notes: reason } : r));
     },

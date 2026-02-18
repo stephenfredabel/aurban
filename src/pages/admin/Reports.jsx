@@ -65,7 +65,17 @@ export default function Reports() {
       try {
         const res = await adminService.getReports({ page: 1, limit: 50 });
         if (!cancelled && res.success && res.reports?.length) {
-          setReports(res.reports);
+          const normalized = res.reports.map((r) => ({
+            id: r.id,
+            reporter: r.reporter_name || r.reporter || r.reporter_id || 'Unknown',
+            reportedItem: r.target_label || r.reportedItem || r.target_id || 'Item',
+            reportType: r.type || r.reportType || 'Other',
+            priority: r.priority || 'low',
+            status: r.status || 'open',
+            date: r.created_at ? r.created_at.slice(0, 10) : (r.date || ''),
+            raw: r,
+          }));
+          setReports(normalized);
           setUsingFallback(false);
         } else if (!cancelled) {
           setUsingFallback(true);
@@ -94,21 +104,21 @@ export default function Reports() {
   const handleInvestigate = async (id) => {
     setReports((prev) => prev.map((r) => r.id === id ? { ...r, status: 'in_progress' } : r));
     try {
-      await adminService.resolveReport(id, { resolution: 'in_progress', notes: '' });
+      await adminService.updateReportStatus(id, 'in_progress', { resolution: 'in_progress', notes: '' });
     } catch { /* fallback: local state already updated */ }
   };
 
   const handleEscalate = async (id) => {
     setReports((prev) => prev.map((r) => r.id === id ? { ...r, status: 'escalated' } : r));
     try {
-      await adminService.resolveReport(id, { resolution: 'escalated', notes: '' });
+      await adminService.updateReportStatus(id, 'escalated', { resolution: 'escalated', notes: '' });
     } catch { /* fallback: local state already updated */ }
   };
 
   const handleResolve = async (id) => {
     setReports((prev) => prev.map((r) => r.id === id ? { ...r, status: 'resolved' } : r));
     try {
-      await adminService.resolveReport(id, { resolution: 'resolved', notes: resolveNotes });
+      await adminService.updateReportStatus(id, 'resolved', { resolution: 'resolved', notes: resolveNotes });
     } catch { /* fallback: local state already updated */ }
     setResolvingId(null);
     setResolveNotes('');

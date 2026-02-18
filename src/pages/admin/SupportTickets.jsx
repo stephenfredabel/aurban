@@ -10,6 +10,7 @@ import RequirePermission from '../../components/admin/RequirePermission.jsx';
 import ConfirmAction from '../../components/admin/ConfirmAction.jsx';
 import useAdminAction from '../../hooks/useAdminAction.js';
 import { AUDIT_ACTIONS } from '../../services/audit.service.js';
+import * as adminService from '../../services/admin.service.js';
 import { TICKET_CATEGORIES, SLA_TARGETS } from '../../utils/rbac.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -319,14 +320,41 @@ export default function SupportTickets() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    const timer = setTimeout(() => {
-      if (!cancelled) {
-        setUsingFallback(true);
-        setLoading(false);
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await adminService.getTickets({ page: 1, limit: 100 });
+        if (!cancelled && res.success && res.tickets?.length) {
+          const normalized = res.tickets.map((tk) => {
+            const responses = tk.responses || [];
+            const last = responses.length ? responses[responses.length - 1] : null;
+            return {
+              id: tk.id,
+              subject: tk.subject || 'Support Ticket',
+              userName: tk.user_name || tk.userName || tk.user || 'User',
+              userEmail: tk.user_email || tk.userEmail || '',
+              priority: tk.priority || 'medium',
+              status: tk.status || 'open',
+              category: tk.category || 'general',
+              createdAt: tk.created_at || tk.createdAt || new Date().toISOString(),
+              lastResponse: last?.timestamp || tk.updated_at || tk.updatedAt || tk.created_at || new Date().toISOString(),
+              messages: responses.length,
+              raw: tk,
+            };
+          });
+          setTickets(normalized);
+          setUsingFallback(false);
+        } else if (!cancelled) {
+          setUsingFallback(true);
+        }
+      } catch {
+        if (!cancelled) setUsingFallback(true);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    }, 600);
-    return () => { cancelled = true; clearTimeout(timer); };
+    }
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   /* ── Re-render every 30s to keep SLA timers live ─────── */
@@ -353,6 +381,9 @@ export default function SupportTickets() {
     targetType: 'ticket',
     onExecute: async ({ reason }) => {
       setTickets((prev) => prev.map((tk) => tk.id === activeTicket?.id ? { ...tk, status: 'escalated' } : tk));
+      if (activeTicket?.id) {
+        try { await adminService.escalateTicket(activeTicket.id, { reason }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveTicket(null),
   });
@@ -368,6 +399,9 @@ export default function SupportTickets() {
     targetType: 'ticket',
     onExecute: async ({ reason }) => {
       setTickets((prev) => prev.map((tk) => tk.id === activeTicket?.id ? { ...tk, status: 'closed' } : tk));
+      if (activeTicket?.id) {
+        try { await adminService.closeTicket(activeTicket.id, { resolution: reason }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveTicket(null),
   });
@@ -385,6 +419,9 @@ export default function SupportTickets() {
       setTickets((prev) => prev.map((tk) =>
         tk.id === activeTicket?.id ? { ...tk, status: 'escalated' } : tk,
       ));
+      if (activeTicket?.id) {
+        try { await adminService.escalateTicket(activeTicket.id, { reason }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => {
       setActiveTicket(null);
@@ -403,7 +440,7 @@ export default function SupportTickets() {
     }
   };
 
-  const sendResponse = (ticketId) => {
+  const sendResponse = async (ticketId) => {
     if (!responseText.trim()) return;
     setTickets((prev) =>
       prev.map((tk) =>
@@ -417,6 +454,9 @@ export default function SupportTickets() {
           : tk,
       ),
     );
+    try {
+      await adminService.respondToTicket(ticketId, { message: responseText.trim() });
+    } catch { /* keep optimistic */ }
     setRespondingTo(null);
     setResponseText('');
   };

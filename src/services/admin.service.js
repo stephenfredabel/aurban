@@ -126,6 +126,27 @@ export async function moderateListing(id, { action, reason }) {
   }
 }
 
+export async function updateListing(id, updates) {
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      if (!error) return { success: true, listing: data };
+    } catch { /* fall through to api.js */ }
+  }
+
+  try {
+    const data = await api.patch(`/admin/listings/${id}`, updates);
+    return { success: true, listing: data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
 // -- Bookings --
 
 export async function getAllBookings({ page = 1, limit = 20, status } = {}) {
@@ -144,6 +165,27 @@ export async function getAllBookings({ page = 1, limit = 20, status } = {}) {
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.message, bookings: [], total: 0 };
+  }
+}
+
+export async function updateBookingStatus(id, status, meta = {}) {
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update({ status, ...meta })
+        .eq('id', id)
+        .select()
+        .single();
+      if (!error) return { success: true, booking: data };
+    } catch { /* fall through to api.js */ }
+  }
+
+  try {
+    const data = await api.patch(`/admin/bookings/${id}/status`, { status, ...meta });
+    return { success: true, booking: data };
+  } catch (err) {
+    return { success: false, error: err.message };
   }
 }
 
@@ -282,6 +324,34 @@ export async function resolveReport(id, { resolution, notes }) {
 
   try {
     const data = await api.post(`/admin/reports/${id}/resolve`, { resolution, notes });
+    return { success: true, report: data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function updateReportStatus(id, status, { resolution, notes } = {}) {
+  const payload = {
+    status,
+    resolution,
+    notes,
+    ...(status === 'resolved' ? { resolved_at: new Date().toISOString() } : {}),
+  };
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+      if (!error) return { success: true, report: data };
+    } catch { /* fall through to api.js */ }
+  }
+
+  try {
+    const data = await api.patch(`/admin/reports/${id}`, payload);
     return { success: true, report: data };
   } catch (err) {
     return { success: false, error: err.message };
@@ -592,6 +662,27 @@ export async function rejectKYC(id, { reason }) {
 
   try {
     const data = await api.post(`/admin/kyc/${id}/reject`, { reason });
+    return { success: true, ...data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function flagKYC(id, { notes, riskLevel = 'high' } = {}) {
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('kyc_submissions')
+        .update({ status: 'flagged', risk_level: riskLevel, reviewer_notes: notes })
+        .eq('id', id)
+        .select()
+        .single();
+      if (!error) return { success: true, ...data };
+    } catch { /* fall through to api.js */ }
+  }
+
+  try {
+    const data = await api.post(`/admin/kyc/${id}/flag`, { notes, riskLevel });
     return { success: true, ...data };
   } catch (err) {
     return { success: false, error: err.message };

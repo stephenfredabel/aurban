@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, DollarSign, TrendingUp,
   Lock, Unlock, RotateCcw,
 } from 'lucide-react';
-import * as adminService from '../../services/admin.service.js';
+import * as orderService from '../../services/order.service.js';
 import RequirePermission from '../../components/admin/RequirePermission.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ORDER_STATUSES } from '../../context/OrderContext.jsx';
@@ -47,6 +47,7 @@ export default function MarketplaceOrders() {
   const [tab, setTab]           = useState('all');
   const [search, setSearch]     = useState('');
   const [loading, setLoading]   = useState(true);
+  const [usingFallback, setUsingFallback] = useState(false);
 
   useEffect(() => { document.title = 'Marketplace Orders — Admin'; }, []);
 
@@ -55,12 +56,30 @@ export default function MarketplaceOrders() {
     async function load() {
       setLoading(true);
       try {
-        const res = await adminService.getAllBookings({ page: 1, limit: 100 });
-        if (!cancelled && res.success && res.bookings?.length) {
-          // In production, this would be a separate endpoint for marketplace orders
+        const res = await orderService.getOrders({ page: 1, limit: 100 });
+        if (!cancelled && res.success && res.orders?.length) {
+          const normalized = res.orders.map((o) => ({
+            id: o.id,
+            ref: o.ref || o.reference || `ORD-${o.id}`,
+            buyer: o.buyer_name || o.buyerName || 'Unknown',
+            seller: o.seller_name || o.sellerName || 'Unknown',
+            items: Array.isArray(o.items) ? o.items.length : (o.items?.length || 0),
+            total: Number(o.total || 0),
+            status: o.status || 'pending_payment',
+            escrow: o.escrow_status || o.escrow || 'pending',
+            date: o.created_at || o.createdAt || Date.now(),
+            raw: o,
+          }));
+          setOrders(normalized);
+          setUsingFallback(false);
+        } else if (!cancelled) {
+          setUsingFallback(true);
         }
-      } catch { /* use mock */ }
-      if (!cancelled) setLoading(false);
+      } catch {
+        if (!cancelled) setUsingFallback(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
     load();
     return () => { cancelled = true; };
@@ -91,7 +110,7 @@ export default function MarketplaceOrders() {
     revenue:  orders.filter(o => ['completed'].includes(o.status)).reduce((s, o) => s + o.total, 0),
   }), [orders]);
 
-  const handleAction = (orderId, action) => {
+  const handleAction = async (orderId, action) => {
     setOrders(prev => prev.map(o => {
       if (o.id !== orderId) return o;
       if (action === 'freeze')  return { ...o, escrow: 'frozen' };
@@ -99,6 +118,16 @@ export default function MarketplaceOrders() {
       if (action === 'refund')  return { ...o, escrow: 'refunded', status: 'refunded' };
       return o;
     }));
+
+    try {
+      if (action === 'freeze') {
+        await orderService.updateOrderStatus(orderId, 'disputed', { escrow_status: 'frozen' });
+      } else if (action === 'release') {
+        await orderService.updateOrderStatus(orderId, 'completed', { escrow_status: 'released' });
+      } else if (action === 'refund') {
+        await orderService.updateOrderStatus(orderId, 'refunded', { escrow_status: 'refunded' });
+      }
+    } catch { /* keep optimistic */ }
   };
 
   const formatDate = (ts) => new Date(ts).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -148,6 +177,13 @@ export default function MarketplaceOrders() {
             </button>
           ))}
         </div>
+
+        {usingFallback && (
+          <div className="flex items-center gap-2 px-4 py-2.5 mb-4 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 rounded-xl">
+            <AlertTriangle size={14} className="shrink-0" />
+            {t('fallback', 'Could not reach server. Showing cached data.')}
+          </div>
+        )}
 
         {/* Orders table */}
         <div className="overflow-x-auto bg-white border border-gray-100 dark:border-white/10 rounded-2xl dark:bg-gray-900">

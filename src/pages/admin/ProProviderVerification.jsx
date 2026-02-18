@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Clock, CheckCircle2, Shield, TrendingUp,
   Search, FileText, Star, Eye, UserX, UserCheck,
   AlertCircle, ChevronRight,
 } from 'lucide-react';
 import { PRO_PROVIDER_LEVELS } from '../../data/proConstants.js';
+import * as proAdminService from '../../services/proAdmin.service.js';
 
 /* ════════════════════════════════════════════════════════════
    PRO PROVIDER VERIFICATION — Queue & level management
@@ -136,6 +137,29 @@ export default function ProProviderVerification() {
   const [upgradeList]                     = useState(MOCK_UPGRADES);
   const [companyList, setCompanyList]     = useState(MOCK_COMPANIES);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await proAdminService.getVerificationQueue({ page: 1, limit: 50, status: 'pending' });
+        if (!cancelled && res.success && res.providers?.length) {
+          setPendingList(res.providers.map((p) => ({
+            id: p.id,
+            name: p.name || p.provider_name || 'Provider',
+            category: p.category || p.service_category || 'Service',
+            appliedDate: p.created_at ? p.created_at.slice(0, 10) : '',
+            yearsExperience: p.years_experience || p.yearsExperience || 0,
+            certifications: p.certifications || [],
+            documents: (p.documents || []).map((d) => ({ name: d.name || d, uploaded: true })),
+            raw: p,
+          })));
+        }
+      } catch { /* keep mock */ }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
   /* ── Search ────────────────────────────────────────────── */
   const filterBySearch = (list, keys) => {
     if (!search.trim()) return list;
@@ -150,12 +174,14 @@ export default function ProProviderVerification() {
   const filteredUpgrades  = filterBySearch(upgradeList, ['name']);
 
   /* ── Actions ───────────────────────────────────────────── */
-  const handleApprovePending = (id) => {
+  const handleApprovePending = async (id) => {
     setPendingList((prev) => prev.filter((p) => p.id !== id));
+    try { await proAdminService.approveProvider(id, { level: 'verified' }); } catch { /* keep optimistic */ }
   };
 
-  const handleRejectPending = (id) => {
+  const handleRejectPending = async (id) => {
     setPendingList((prev) => prev.filter((p) => p.id !== id));
+    try { await proAdminService.rejectProvider(id, { reason: 'Rejected by admin' }); } catch { /* keep optimistic */ }
   };
 
   const handleReinstate = (id) => {

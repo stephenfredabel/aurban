@@ -66,7 +66,18 @@ export default function BookingOversight() {
       try {
         const res = await adminService.getAllBookings({ page: 1, limit: 50 });
         if (!cancelled && res.success && res.bookings?.length) {
-          setBookings(res.bookings);
+          const normalized = res.bookings.map((b) => ({
+            id: b.id,
+            client: b.user_name || b.client || b.buyer_name || 'Unknown',
+            provider: b.provider_name || b.provider || 'Unknown',
+            listing: b.listing_title || b.listing || b.listing_id || 'Listing',
+            date: b.date || b.created_at?.slice(0, 10) || '',
+            time: b.time || '',
+            status: b.status || 'pending',
+            escrow: b.escrow_amount ? `₦${Number(b.escrow_amount).toLocaleString()}` : (b.escrow || '₦0'),
+            raw: b,
+          }));
+          setBookings(normalized);
           setUsingFallback(false);
         } else if (!cancelled) {
           setUsingFallback(true);
@@ -84,15 +95,22 @@ export default function BookingOversight() {
   const filtered = activeTab === 'all' ? bookings : bookings.filter((b) => b.status === activeTab);
 
   /* ── Actions ────────────────────────────────────────────── */
-  const handleCancelBooking = (id) => {
+  const handleCancelBooking = async (id) => {
     setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'cancelled' } : b));
     setCancellingId(null);
+    try {
+      await adminService.updateBookingStatus(id, 'cancelled');
+    } catch { /* keep optimistic */ }
   };
 
-  const handleResolveDispute = (id) => {
+  const handleResolveDispute = async (id) => {
     setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'completed' } : b));
     setResolvingId(null);
+    const note = resolveNote;
     setResolveNote('');
+    try {
+      await adminService.updateBookingStatus(id, 'completed', { notes: note });
+    } catch { /* keep optimistic */ }
   };
 
   return (

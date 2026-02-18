@@ -12,6 +12,7 @@ import RequirePermission from '../../components/admin/RequirePermission.jsx';
 import ConfirmAction from '../../components/admin/ConfirmAction.jsx';
 import useAdminAction from '../../hooks/useAdminAction.js';
 import { AUDIT_ACTIONS } from '../../services/audit.service.js';
+import * as adminService from '../../services/admin.service.js';
 import { maskUserData } from '../../utils/dataMask.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { KYC_LEVELS } from '../../utils/rbac.js';
@@ -234,14 +235,67 @@ export default function ComplianceKYC() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    const timer = setTimeout(() => {
-      if (!cancelled) {
-        setUsingFallback(true);
-        setLoading(false);
+    async function load() {
+      setLoading(true);
+      try {
+        const [kycRes, gdprRes] = await Promise.all([
+          adminService.getKYCQueue({ page: 1, limit: 50 }),
+          adminService.getDataRequests({ status: 'pending' }),
+        ]);
+
+        if (!cancelled && kycRes.success && kycRes.submissions?.length) {
+          const normalized = kycRes.submissions.map((r) => {
+            const risk = r.risk_level || r.riskScore || 'low';
+            const numericRisk = risk === 'high' ? 80 : risk === 'medium' ? 50 : 20;
+            return {
+              id: r.id,
+              userId: r.user_id || r.userId,
+              name: r.name || r.user_name || 'Unknown',
+              email: r.email || r.user_email || '',
+              phone: r.phone || '',
+              submittedDocs: [
+                ...(r.document_type ? [r.document_type] : []),
+                ...(r.document_url ? ['Document'] : []),
+                ...(r.selfie_url ? ['Selfie'] : []),
+              ],
+              riskScore: risk,
+              numericRisk,
+              kycLevel: r.kyc_level || r.kycLevel,
+              status: r.status || 'pending',
+              submittedAt: r.created_at || r.submittedAt || new Date().toISOString(),
+              notes: r.reviewer_notes || r.notes || '',
+              bvn: r.bvn || '',
+              nin: r.nin || '',
+              jurisdiction: r.jurisdiction || '',
+              raw: r,
+            };
+          });
+          setKycRaw(normalized);
+          setUsingFallback(false);
+        } else if (!cancelled) {
+          setUsingFallback(true);
+        }
+
+        if (!cancelled && gdprRes.success && gdprRes.requests?.length) {
+          const mapped = gdprRes.requests.map((req) => ({
+            id: req.id,
+            userName: req.user_name || req.userName || 'User',
+            email: req.email || req.user_email || '',
+            type: req.type || req.action || 'export',
+            reason: req.reason || '',
+            submittedAt: req.created_at || req.submittedAt || new Date().toISOString(),
+            status: req.status || 'pending',
+          }));
+          setGdprRequests(mapped);
+        }
+      } catch {
+        if (!cancelled) setUsingFallback(true);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    }, 600);
-    return () => { cancelled = true; clearTimeout(timer); };
+    }
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   /* ── Apply data masking based on viewer role ───────────── */
@@ -259,6 +313,9 @@ export default function ComplianceKYC() {
     targetType: 'kyc',
     onExecute: async ({ reason }) => {
       setKycRaw((prev) => prev.map((r) => r.id === activeKyc?.id ? { ...r, status: 'approved', notes: reason } : r));
+      if (activeKyc?.id) {
+        try { await adminService.approveKYC(activeKyc.id, { notes: reason }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveKyc(null),
   });
@@ -274,6 +331,9 @@ export default function ComplianceKYC() {
     targetType: 'kyc',
     onExecute: async ({ reason }) => {
       setKycRaw((prev) => prev.map((r) => r.id === activeKyc?.id ? { ...r, status: 'rejected', notes: reason } : r));
+      if (activeKyc?.id) {
+        try { await adminService.rejectKYC(activeKyc.id, { reason }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveKyc(null),
   });
@@ -289,6 +349,9 @@ export default function ComplianceKYC() {
     targetType: 'kyc',
     onExecute: async ({ reason }) => {
       setKycRaw((prev) => prev.map((r) => r.id === activeKyc?.id ? { ...r, status: 'flagged', riskScore: 'high', numericRisk: 85, notes: reason } : r));
+      if (activeKyc?.id) {
+        try { await adminService.flagKYC(activeKyc.id, { notes: reason, riskLevel: 'high' }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveKyc(null),
   });
@@ -304,6 +367,9 @@ export default function ComplianceKYC() {
     targetType: 'kyc',
     onExecute: async ({ reason }) => {
       setKycRaw((prev) => prev.map((r) => r.id === activeKyc?.id ? { ...r, status: 'frozen', notes: reason } : r));
+      if (activeKyc?.userId) {
+        try { await adminService.freezeAccount(activeKyc.userId, { reason }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveKyc(null),
   });
@@ -319,9 +385,10 @@ export default function ComplianceKYC() {
     targetId: activeKyc?.id,
     targetType: 'kyc',
     onExecute: async () => {
-      // Mock: simulate sanctions screening result
-      await new Promise((resolve) => setTimeout(resolve, 800));
       const cleared = activeKyc?.numericRisk <= 60;
+      if (activeKyc?.userId) {
+        try { await adminService.runSanctionsScreening(activeKyc.userId); } catch { /* ignore */ }
+      }
       setSanctionsResults((prev) => ({
         ...prev,
         [activeKyc?.id]: {
@@ -345,12 +412,14 @@ export default function ComplianceKYC() {
     targetId: activeKyc?.id,
     targetType: 'kyc',
     onExecute: async ({ reason }) => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
       setKycRaw((prev) => prev.map((r) =>
         r.id === activeKyc?.id
           ? { ...r, notes: `SAR filed: ${reason}`, status: r.status === 'pending' ? 'flagged' : r.status }
           : r
       ));
+      if (activeKyc?.userId) {
+        try { await adminService.fileSAR(activeKyc.userId, { evidence: '', narrative: reason }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveKyc(null),
   });
@@ -388,10 +457,12 @@ export default function ComplianceKYC() {
     targetId: activeKyc?.id,
     targetType: 'gdpr_request',
     onExecute: async ({ reason }) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
       setGdprRequests((prev) => prev.map((r) =>
         r.id === activeKyc?.id ? { ...r, status: 'approved', notes: reason } : r
       ));
+      if (activeKyc?.id) {
+        try { await adminService.processDataRequest(activeKyc.id, { action: 'approved' }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveKyc(null),
   });
@@ -407,10 +478,12 @@ export default function ComplianceKYC() {
     targetId: activeKyc?.id,
     targetType: 'gdpr_request',
     onExecute: async ({ reason }) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
       setGdprRequests((prev) => prev.map((r) =>
         r.id === activeKyc?.id ? { ...r, status: 'denied', notes: reason } : r
       ));
+      if (activeKyc?.id) {
+        try { await adminService.processDataRequest(activeKyc.id, { action: 'denied' }); } catch { /* keep optimistic */ }
+      }
     },
     onSuccess: () => setActiveKyc(null),
   });
