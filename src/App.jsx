@@ -36,6 +36,7 @@ import AdminQuickAction     from './components/admin/AdminQuickAction.jsx';
 import { getTotalUnread }    from './services/adminMessaging.service.js';
 import { ADMIN_ENTRY_PATH } from './utils/rbac.js';
 import useAdminSecurity    from './hooks/useAdminSecurity.js';
+import useDashboardSecurity from './hooks/useDashboardSecurity.js';
 
 /* ════════════════════════════════════════════════════════════
    APP.JSX — Root application component
@@ -297,6 +298,9 @@ function ProviderAppLayout({ children }) {
   // Anti-screenshot, anti-screenrecord, anti-console on admin panels
   useAdminSecurity({ enabled: isAdmin });
 
+  // Lighter security for non-admin providers (console lockdown, sensitive right-click block)
+  useDashboardSecurity({ enabled: import.meta.env.PROD && !isAdmin });
+
   // Block search engine indexing on all provider/admin pages
   useEffect(() => {
     let meta = document.querySelector('meta[name="robots"]');
@@ -351,6 +355,8 @@ function ProviderAppLayout({ children }) {
    No provider-facing content, no public Header/Footer/BottomNav.
 ═══════════════════════════════════════════════════════════ */
 function UserAppLayout({ children }) {
+  useDashboardSecurity({ enabled: import.meta.env.PROD });
+
   return (
     <>
       <UserHeader />

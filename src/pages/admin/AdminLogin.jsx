@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Mail, Lock, Eye, EyeOff, AlertCircle,
+  Mail, Lock, AlertCircle,
   CheckCircle2, Loader, Shield, LogIn,
   Key, Smartphone, HelpCircle, ArrowLeft,
   Info, Clock, Wifi, Copy, Check,
@@ -12,6 +12,9 @@ import {
   AUTH_REQUIREMENTS, normalizeRole, getAuthRequirements,
 } from '../../utils/rbac.js';
 import useAdminSecurity from '../../hooks/useAdminSecurity.js';
+import usePWAInstall from '../../hooks/usePWAInstall.js';
+import PWAAdminGate from '../../components/pwa/PWAAdminGate.jsx';
+import SecurePasswordField from '../../components/security/SecurePasswordField.jsx';
 import { isSupabaseConfigured } from '../../lib/supabase.js';
 import { signInWithEmail, getProfile } from '../../services/supabase-auth.service.js';
 
@@ -326,8 +329,11 @@ export default function AdminLogin() {
     return () => { if (meta.parentNode) meta.parentNode.removeChild(meta); };
   }, []);
 
+  // PWA install gate
+  const { isInstalled, canInstall, isIOS } = usePWAInstall();
+  const [gateDismissed, setGateDismissed] = useState(false);
+
   /* ── State ───────────────────────────────────────────────── */
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
   const [success, setSuccess]           = useState('');
@@ -567,6 +573,15 @@ export default function AdminLogin() {
   /* ── Derived ────────────────────────────────────────────── */
   const timeoutMinutes = authReqs ? Math.round(authReqs.sessionTimeoutMs / 60000) : null;
 
+  /* ── PWA Install Gate ────────────────────────────────────── */
+  if (!isInstalled && !gateDismissed && (canInstall || isIOS)) {
+    return (
+      <div className="min-h-screen bg-gray-950">
+        <PWAAdminGate onContinueAnyway={() => setGateDismissed(true)} />
+      </div>
+    );
+  }
+
   /* ── Render ─────────────────────────────────────────────── */
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-gray-950">
@@ -666,32 +681,17 @@ export default function AdminLogin() {
                   </div>
                 </div>
 
-                {/* Password */}
-                <div>
-                  <label className="block mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock size={16} className="absolute text-gray-500 -translate-y-1/2 left-3.5 top-1/2" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={form.password}
-                      onChange={handleChange('password')}
-                      className="w-full h-12 pl-10 pr-12 text-sm text-white placeholder-gray-500 bg-gray-800 border rounded-xl border-white/10 focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold outline-none"
-                      placeholder="Enter password"
-                      autoComplete="current-password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute -translate-y-1/2 right-3 top-1/2 text-gray-500 hover:text-gray-300"
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
+                {/* Password (secure keyboard) */}
+                <SecurePasswordField
+                  value={form.password}
+                  onChange={(val) => setForm(prev => ({ ...prev, password: val }))}
+                  showVirtualKeyboard
+                  theme="dark"
+                  placeholder="Enter password"
+                  label="Password"
+                  disabled={loading}
+                  onSubmit={handleSubmit}
+                />
 
                 {/* Dev hint: password */}
                 <DevHint
@@ -761,6 +761,7 @@ export default function AdminLogin() {
                     type="text"
                     value={form.secretAnswer}
                     onChange={handleChange('secretAnswer')}
+                    onPaste={(e) => e.preventDefault()}
                     className="w-full h-12 pl-10 pr-4 text-sm text-white placeholder-gray-500 bg-gray-800 border rounded-xl border-white/10 focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold outline-none"
                     placeholder="Your answer"
                     autoComplete="off"

@@ -8,6 +8,7 @@ import {
   PanelLeftClose, PanelLeftOpen, BarChart2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import PWAInstallBanner from '../components/pwa/PWAInstallBanner.jsx';
 
 /* ════════════════════════════════════════════════════════════
    USER DASHBOARD LAYOUT — User sidebar + content wrapper
@@ -206,6 +207,7 @@ export default function UserDashboardLayout({ children }) {
         {/* ── Main content ─────────────────────────────────── */}
         <main className="flex-1 min-w-0 p-4 pb-24 md:pb-4 lg:py-6 lg:pr-6 lg:pl-2">
           <div className="lg:p-6 lg:rounded-2xl lg:border lg:border-gray-200/60 dark:lg:border-white/5 lg:bg-gray-50/50 dark:lg:bg-white/[0.01] lg:min-h-[calc(100vh-3rem)]">
+            <PWAInstallBanner variant="user" />
             {children}
           </div>
         </main>
