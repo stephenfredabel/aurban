@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef } from 'react';
 import {
   Download, Printer, Copy, Check,
   ShieldCheck, CheckCircle2,

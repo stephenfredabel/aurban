@@ -62,11 +62,11 @@ export default function Login() {
   const [needsVerification, setNeedsVerification] = useState(!!params.get('verify'));
 
   /* ── Helper: redirect BACK TO MARKETPLACE ───────────────── */
-  const redirectAfterLogin = () => {
+  const redirectAfterLogin = useCallback(() => {
     // safeRedirect ensures only same-origin paths are honored — no open redirect
     const redirect = safeRedirect(params.get('redirect') || '/');
     navigate(redirect, { replace: true });
-  };
+  }, [navigate, params]);
 
   /* ── Form submit ────────────────────────────────────────── */
   const handleSubmit = useCallback(async (e) => {
@@ -111,7 +111,7 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  }, [form, navigate, params]);
+  }, [form, redirectAfterLogin]);
 
   /* ── 2FA verify (placeholder — wire to real 2FA when ready) ─ */
   const handle2FA = useCallback(async () => {

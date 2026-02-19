@@ -13,7 +13,7 @@ export default function ResetPassword() {
   const [loading,      setLoading]            = useState(false);
   const [success,      setSuccess]            = useState(false);
   const [error,        setError]              = useState('');
-  const [tokenError,   setTokenError]         = useState(!token);
+  const [tokenError]         = useState(!token);
 
   const [form, setForm] = useState({
     password:        '',

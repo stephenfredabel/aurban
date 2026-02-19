@@ -27,7 +27,7 @@ const EMPLOYEE_RANGES = [
 ];
 
 export default function Step06_BusinessDocs() {
-  const { t }                          = useTranslation();
+  const { t: _t }                       = useTranslation();
   const { updateStep, nextStep, data } = useOnboarding();
   const { businessRegistry, code }     = useCountry();
 

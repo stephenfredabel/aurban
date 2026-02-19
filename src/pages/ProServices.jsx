@@ -126,7 +126,7 @@ function ProFilterDrawer({ filters, onChange, onClose }) {
 
 export default function ProServices() {
   const { listings } = useProListing();
-  const { symbol } = useCurrency();
+  useCurrency();
   const [params] = useSearchParams();
 
   const [keyword, setKeyword] = useState(params.get('q') || '');

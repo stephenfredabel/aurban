@@ -5,7 +5,6 @@ import {
   ChevronDown, ChevronLeft, ChevronRight,
   Users, ShieldCheck, Home,
 } from 'lucide-react';
-import { useCurrency }       from '../hooks/useCurrency.js';
 import PropertyCard          from '../components/PropertyCard.jsx';
 import { useProperty, NIGERIAN_STATES } from '../context/PropertyContext.jsx';
 

@@ -53,7 +53,7 @@ function validateStep(step, form) {
 }
 
 export default function MarketplaceListingForm({ onBack }) {
-  const { user }     = useAuth();
+  const { user: _user } = useAuth();
   const { symbol }   = useCurrency();
   const navigate     = useNavigate();
 

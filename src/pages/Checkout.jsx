@@ -53,23 +53,6 @@ export default function Checkout() {
   const [paymentError, setPaymentError] = useState('');
   const [orderRef, setOrderRef] = useState('');
 
-  // Redirect if cart is empty (except on confirmation)
-  if (items.length === 0 && step < 5) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <ShoppingCart size={48} className="mb-4 text-gray-200 dark:text-gray-700" />
-        <p className="mb-2 text-lg font-bold text-brand-charcoal-dark dark:text-white">Your cart is empty</p>
-        <p className="mb-5 text-sm text-gray-400">Add products before checking out</p>
-        <Link
-          to="/marketplace"
-          className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white rounded-xl bg-brand-gold hover:bg-brand-gold-dark"
-        >
-          Browse Marketplace <ArrowRight size={14} />
-        </Link>
-      </div>
-    );
-  }
-
   // Recalculate delivery based on choices
   const adjustedDelivery = useMemo(() => {
     let fee = 0;
@@ -93,6 +76,23 @@ export default function Checkout() {
     if (step === 3) return agreedToTerms;
     return true;
   }, [step, address, agreedToTerms]);
+
+  // Redirect if cart is empty (except on confirmation)
+  if (items.length === 0 && step < 5) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <ShoppingCart size={48} className="mb-4 text-gray-200 dark:text-gray-700" />
+        <p className="mb-2 text-lg font-bold text-brand-charcoal-dark dark:text-white">Your cart is empty</p>
+        <p className="mb-5 text-sm text-gray-400">Add products before checking out</p>
+        <Link
+          to="/marketplace"
+          className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white rounded-xl bg-brand-gold hover:bg-brand-gold-dark"
+        >
+          Browse Marketplace <ArrowRight size={14} />
+        </Link>
+      </div>
+    );
+  }
 
   const goNext = () => { if (validateStep()) setStep(s => Math.min(s + 1, STEPS.length - 1)); };
   const goBack = () => setStep(s => Math.max(s - 1, 0));

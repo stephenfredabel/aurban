@@ -5,7 +5,6 @@ import {
   CheckCircle2, XCircle, RotateCcw, Clock,
   DollarSign, User, Eye,
 } from 'lucide-react';
-import * as adminService from '../../services/admin.service.js';
 import RequirePermission from '../../components/admin/RequirePermission.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -79,13 +78,13 @@ const CATEGORY_LABELS = {
 };
 
 export default function DisputeResolution() {
-  const { t } = useTranslation('admin');
-  const { user } = useAuth();
+  useTranslation('admin');
+  useAuth();
 
   const [disputes, setDisputes] = useState(MOCK_DISPUTES);
   const [tab, setTab]           = useState('all');
   const [search, setSearch]     = useState('');
-  const [loading, setLoading]   = useState(true);
+  const [, setLoading]   = useState(true);
   const [resolveId, setResolveId] = useState(null);
   const [resolution, setResolution] = useState('');
   const [resolutionType, setResolutionType] = useState('full_refund');

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ChevronLeft, Calendar, MapPin, Shield, MessageSquare,
@@ -52,7 +52,6 @@ export default function ProBookingDetail() {
     );
   }
 
-  const tierCfg = TIER_CONFIG[booking.tier] || TIER_CONFIG[1];
   const statusDef = PRO_BOOKING_STATUSES[booking.status];
   const showOTP = ['provider_confirmed', 'en_route'].includes(booking.status);
   const showObservation = booking.status === 'observation';

@@ -15,7 +15,7 @@ const PATTERNS = [
   // WhatsApp or phone text cues  "wa: 0801...", "call 0812...", "whatsapp me 0803..."
   /\b(wa|whatsapp|watsapp|call me|phone|mobile|tel|contact me on|reach me on|chat on)\s*:?\s*(\+?[\d\s().-]{7,15})/gi,
   // Email addresses
-  /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g,
+  /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
   // Instagram / Telegram handles often used to evade masking
   /@[a-zA-Z0-9_.]{3,30}/g,
 ];

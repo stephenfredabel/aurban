@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation }    from 'react-i18next';
 import { useNavigate }       from 'react-router-dom';
 import { useAuth }           from '../../context/AuthContext.jsx';
@@ -112,8 +112,8 @@ function validateStep(step, form, category) {
 // Main Form Component
 // ─────────────────────────────────────────────────────────────
 export default function PropertyListingForm({ category, onBack }) {
-  const { t }          = useTranslation();
-  const { user }       = useAuth();
+  const { t: _t }      = useTranslation();
+  const { user: _user } = useAuth();
   const { symbol }     = useCurrency();
   const navigate       = useNavigate();
 
@@ -125,7 +125,7 @@ export default function PropertyListingForm({ category, onBack }) {
   const [submitted,  setSubmitted]  = useState(false);
 
   const currentStep = steps[stepIdx];
-  const isLast      = stepIdx === steps.length - 1;
+  const _isLast     = stepIdx === steps.length - 1;
   const isPreview   = currentStep === 'preview';
 
   // Update a single field

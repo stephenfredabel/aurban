@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 export default function TwoFactorSetup() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
 
   const [step, setStep]         = useState(1); // 1: intro | 2: scan QR | 3: verify | 4: backup codes
   const [code, setCode]         = useState('');

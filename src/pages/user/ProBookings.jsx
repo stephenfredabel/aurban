@@ -108,7 +108,6 @@ export default function ProBookings() {
         <div className="space-y-3">
           {filtered.map(booking => {
             const statusDef = PRO_BOOKING_STATUSES[booking.status];
-            const tierCfg = TIER_CONFIG[booking.tier] || TIER_CONFIG[1];
             const isObs = booking.status === 'observation';
 
             return (

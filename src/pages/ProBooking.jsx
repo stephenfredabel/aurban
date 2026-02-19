@@ -136,7 +136,7 @@ export default function ProBooking() {
       addBooking(booking);
       setCreatedBooking(booking);
       wizard.goTo(5);
-    } catch (err) {
+    } catch {
       setSubmitError('Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);

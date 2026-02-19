@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Calendar, Clock, Plus, X, Info } from 'lucide-react';
 import { DAYS_OF_WEEK, TIME_SLOTS } from '../../data/listingOptions.js';
 import Toggle from '../ui/Toggle.jsx';

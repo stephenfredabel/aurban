@@ -56,22 +56,22 @@ export default function SignUp() {
   const [honeypot, setHoneypot] = useState('');
   const [attempts, setAttempts] = useState([]);
 
-  const isBlocked = () => {
+  const isBlocked = useCallback(() => {
     const now = Date.now();
     const recent = attempts.filter(t => t > now - RATE_LIMIT.windowMs);
     return recent.length >= RATE_LIMIT.maxAttempts;
-  };
+  }, [attempts]);
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: sanitize(value) }));
 
   /* ── Validate ───────────────────────────────────────────── */
-  const validate = () => {
+  const validate = useCallback(() => {
     if (honeypot) return 'Something went wrong.';
     if (!form.fullName.trim() || form.fullName.trim().length < 2) return 'Please enter your full name.';
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Please enter a valid email address.';
     if (!form.password || form.password.length < 8) return 'Password must be at least 8 characters.';
     return null;
-  };
+  }, [honeypot, form]);
 
   /* ── Submit (Step 1) ──────────────────────────────────────── */
   const handleSubmit = useCallback(async (e) => {
@@ -110,7 +110,7 @@ export default function SignUp() {
     } finally {
       setLoading(false);
     }
-  }, [form, honeypot, attempts]);
+  }, [form, isBlocked, validate]);
 
   /* ── OTP verified (Step 2) ────────────────────────────────── */
   const handleOTPVerified = useCallback(() => {

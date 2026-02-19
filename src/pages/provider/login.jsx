@@ -128,7 +128,7 @@ export default function ProviderLogin() {
     } finally {
       setLoading(false);
     }
-  }, [form, navigate, params]);
+  }, [form]);
 
   /* ── Google login ───────────────────────────────────────── */
   const handleGoogle = useCallback(async () => {

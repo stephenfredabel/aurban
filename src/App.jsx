@@ -223,7 +223,7 @@ function ThemeInitializer({ children }) {
           document.documentElement.classList.add('dark');
         }
       }
-    } catch {}
+    } catch { /* ignore */ }
   }
   return children;
 }

@@ -115,8 +115,6 @@ export default function Orders() {
           {filtered.map((order) => {
             const status = ORDER_STATUSES[order.status] || ORDER_STATUSES.pending_payment;
             const itemCount = order.items?.reduce((s, i) => s + i.quantity, 0) || 0;
-            const firstEmoji = PRODUCT_CATEGORY_MAP[order.items?.[0]?.category]?.emoji || '📦';
-
             return (
               <Link
                 key={order.id}

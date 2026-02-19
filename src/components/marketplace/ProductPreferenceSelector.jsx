@@ -22,11 +22,11 @@ import {
 
 export default function ProductPreferenceSelector({ subcategory, values, onChange }) {
   const match = useMemo(() => getPreferenceGroupForSubcategory(subcategory), [subcategory]);
+  const groupKey = match?.groupKey;
+  const group = match?.group;
+  const products = useMemo(() => groupKey ? getProductsForGroup(groupKey) : [], [groupKey]);
 
   if (!match) return null;
-
-  const { groupKey, group } = match;
-  const products = useMemo(() => getProductsForGroup(groupKey), [groupKey]);
   const selectedProductKey = values?.product || '';
   const selectedProduct = products.find(p => p.key === selectedProductKey);
   const attributes = values?.attributes || {};

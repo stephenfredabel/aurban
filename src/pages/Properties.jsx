@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams, Link, useNavigate }         from 'react-router-dom';
+import { useSearchParams, Link }         from 'react-router-dom';
 import PageSEO from '../components/seo/PageSEO.jsx';
 import {
   SlidersHorizontal, Map, Grid3X3, Bell, BellOff,
@@ -93,7 +93,7 @@ const PER_PAGE = 12;
 // FILTER DRAWER
 // ─────────────────────────────────────────────────────────────
 
-function FilterDrawer({ filters, onChange, onClose, onClear }) {
+function FilterDrawer({ filters, onChange, onClose, onClear: _onClear }) {
   const { symbol } = useCurrency();
   const [local, setLocal] = useState(filters);
   const set = (k, v) => setLocal(f => ({ ...f, [k]: v }));
@@ -239,10 +239,9 @@ function SaveSearchBanner({ label, onSave, onDismiss }) {
 // ─────────────────────────────────────────────────────────────
 
 export default function Properties() {
-  const { symbol }      = useCurrency();
-  const { user }        = useAuth();
+  useCurrency();
+  useAuth();
   const [params, setParams] = useSearchParams();
-  const navigate        = useNavigate();
 
   // ── View & UI state ───────────────────────────────────────
   const [viewMode,      setViewMode]      = useState('grid');    // 'grid' | 'map'
@@ -292,7 +291,7 @@ export default function Properties() {
     if (filters.verified)              p.set('verified',  'true');
     if (sortBy !== 'newest')           p.set('sort',      sortBy);
     setParams(p, { replace: true });
-  }, [filters, keyword, sortBy]);
+  }, [filters, keyword, sortBy, setParams]);
 
   // ── Filter + sort logic ───────────────────────────────────
   const filtered = useMemo(() => {

@@ -235,6 +235,11 @@ function reducer(state, action) {
   }
 }
 
+// ── Status constants (stable references outside component) ──
+const ACTIVE_STATUSES = ['pending_payment', 'paid', 'accepted', 'processing', 'shipped', 'delivered'];
+const COMPLETED_STATUSES = ['completed', 'refunded'];
+const CANCELLED_STATUSES = ['cancelled'];
+
 // ── Context ─────────────────────────────────────────────────
 const OrderContext = createContext(null);
 
@@ -338,10 +343,6 @@ export function OrderProvider({ children }) {
   }, []);
 
   // ── Derived data ──────────────────────────────────────────
-  const ACTIVE_STATUSES = ['pending_payment', 'paid', 'accepted', 'processing', 'shipped', 'delivered'];
-  const COMPLETED_STATUSES = ['completed', 'refunded'];
-  const CANCELLED_STATUSES = ['cancelled'];
-
   const getActiveOrders = useMemo(() =>
     state.orders.filter(o => ACTIVE_STATUSES.includes(o.status)),
   [state.orders]);

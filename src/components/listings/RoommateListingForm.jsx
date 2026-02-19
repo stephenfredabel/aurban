@@ -122,7 +122,7 @@ function validateStep(step, form) {
 
 // ─────────────────────────────────────────────────────────────
 export default function RoommateListingForm({ onBack }) {
-  const { user }   = useAuth();
+  const { user: _user } = useAuth();
   const { symbol } = useCurrency();
   const navigate   = useNavigate();
 

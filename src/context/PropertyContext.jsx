@@ -469,12 +469,12 @@ export function PropertyProvider({ children }) {
   const toggleWishlist = useCallback((item) => {
     const exists = state.wishlist.find(w => w.id === item.id);
     const next = exists ? state.wishlist.filter(w => w.id !== item.id) : [...state.wishlist, { ...item, savedAt: new Date().toISOString() }];
-    try { sessionStorage.setItem('aurban_wishlist', JSON.stringify(next)); } catch {}
+    try { sessionStorage.setItem('aurban_wishlist', JSON.stringify(next)); } catch { /* ignore */ }
     // Sync to server if user is logged in (fire-and-forget)
     try {
       const session = sessionStorage.getItem('aurban_session');
       if (session) propertyService.syncWishlist(next.map(w => w.id));
-    } catch {}
+    } catch { /* ignore */ }
     dispatch({ type: 'SET_WISHLIST', wishlist: next });
   }, [state.wishlist]);
 
@@ -488,7 +488,7 @@ export function PropertyProvider({ children }) {
         dispatch({ type: 'ADD_LISTING', listing: result.property });
         return result;
       }
-    } catch {}
+    } catch { /* ignore */ }
     // Fallback: add locally
     dispatch({ type: 'ADD_LISTING', listing: { id: `local_${Date.now()}`, ...listing, status: 'active', postedAt: new Date().toISOString() } });
     return { success: true, local: true };
@@ -501,7 +501,7 @@ export function PropertyProvider({ children }) {
       if (result.success && result.properties?.length) {
         dispatch({ type: 'FETCH_SUCCESS', entity: 'properties', data: result.properties });
       }
-    } catch {}
+    } catch { /* ignore */ }
   }, []);
 
   const refreshServices = useCallback(async () => {
@@ -510,7 +510,7 @@ export function PropertyProvider({ children }) {
       if (result.success && result.properties?.length) {
         dispatch({ type: 'FETCH_SUCCESS', entity: 'services', data: result.properties });
       }
-    } catch {}
+    } catch { /* ignore */ }
   }, []);
 
   const refreshProducts = useCallback(async () => {
@@ -519,7 +519,7 @@ export function PropertyProvider({ children }) {
       if (result.success && result.properties?.length) {
         dispatch({ type: 'FETCH_SUCCESS', entity: 'products', data: result.properties });
       }
-    } catch {}
+    } catch { /* ignore */ }
   }, []);
 
   const refreshRelocationProviders = useCallback(async () => {
@@ -528,7 +528,7 @@ export function PropertyProvider({ children }) {
       if (result.success && result.providers?.length) {
         dispatch({ type: 'FETCH_SUCCESS', entity: 'relocationProviders', data: result.providers });
       }
-    } catch {}
+    } catch { /* ignore */ }
   }, []);
 
   const setSearchQuery = useCallback((query) => dispatch({ type: 'SET_SEARCH', query }), []);

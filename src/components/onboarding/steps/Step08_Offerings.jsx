@@ -41,7 +41,7 @@ const DEFAULT_SCHEDULE = DAYS.reduce((acc, d) => {
 }, {});
 
 export default function Step08_Offerings() {
-  const { t }                          = useTranslation();
+  const { t: _t }                       = useTranslation();
   const { updateStep, nextStep, data } = useOnboarding();
   const { currency }                   = useCurrency();
 

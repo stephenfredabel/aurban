@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Shield, Smartphone, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -9,7 +9,7 @@ export default function TwoFactorVerify() {
   const location = useLocation();
   const { login } = useAuth();
 
-  const sessionData = location.state || { email: 'user@example.com' };
+  const sessionData = useMemo(() => location.state || { email: 'user@example.com' }, [location.state]);
 
   const [code, setCode]       = useState('');
   const [loading, setLoading] = useState(false);

@@ -57,7 +57,7 @@ const INITIAL_DATA = {
 };
 
 export function OnboardingProvider({ children }) {
-  const { user } = useAuth();
+  useAuth();
 
   const [data, setData] = useState(() => {
     try {

@@ -234,7 +234,7 @@ function MarketplaceFilterDrawer({ filters, onChange, onClose }) {
 // ─────────────────────────────────────────────────────────────
 
 export default function Marketplace() {
-  const { symbol }  = useCurrency();
+  useCurrency();
   const { products } = useProperty();
   const [params]    = useSearchParams();
 

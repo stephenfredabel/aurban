@@ -32,7 +32,7 @@ const NIGERIAN_STATES = [
 ];
 
 export default function RegisterHost() {
-  const navigate = useNavigate();
+  useNavigate();
   const [step, setStep]   = useState(1);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);

@@ -12,8 +12,6 @@
  * when VITE_API_URL is set to a custom backend.
  */
 
-import { isSupabaseConfigured } from '../lib/supabase.js';
-
 // Use a dedicated API URL if provided, otherwise null (no fallback API)
 const BASE_URL = import.meta.env.VITE_API_URL || null;
 const TIMEOUT_MS = 15_000;

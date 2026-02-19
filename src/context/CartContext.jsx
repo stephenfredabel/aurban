@@ -26,7 +26,7 @@ function loadCart() {
 function persist(items) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, updatedAt: new Date().toISOString() }));
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 function reducer(state, action) {

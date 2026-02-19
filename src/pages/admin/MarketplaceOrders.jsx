@@ -41,12 +41,12 @@ const ESCROW_STYLES = {
 
 export default function MarketplaceOrders() {
   const { t } = useTranslation('admin');
-  const { user } = useAuth();
+  useAuth();
 
   const [orders, setOrders]     = useState(MOCK_ORDERS);
   const [tab, setTab]           = useState('all');
   const [search, setSearch]     = useState('');
-  const [loading, setLoading]   = useState(true);
+  const [, setLoading]   = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
 
   useEffect(() => { document.title = 'Marketplace Orders — Admin'; }, []);

@@ -47,7 +47,7 @@ const SKILL_LEVELS = [
 ];
 
 export default function Step07_IndividualDocs() {
-  const { t }                          = useTranslation();
+  const { t: _t }                       = useTranslation();
   const { updateStep, nextStep, data } = useOnboarding();
 
   const saved = data.individualDocs || {};

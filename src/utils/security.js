@@ -75,12 +75,12 @@ export function encodeHTML(str) {
 // ── Validation patterns ───────────────────────────────────────
 
 export const PATTERNS = {
-  EMAIL:    /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/,
+  EMAIL:    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PHONE_NG: /^(\+?234|0)[789][01]\d{8}$/,
-  PASSWORD: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&^_\-]{8,72}$/,
-  NAME:     /^[a-zA-ZÀ-ÖØ-öø-ÿ\s'\-]{2,80}$/,
+  PASSWORD: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&^_-]{8,72}$/,
+  NAME:     /^[a-zA-ZÀ-ÖØ-öø-ÿ\s'-]{2,80}$/,
   URL:      /^https?:\/\/[^\s/$.?#].[^\s]*$/i,
-  POSTCODE: /^[A-Z0-9\s\-]{3,12}$/i,
+  POSTCODE: /^[A-Z0-9\s-]{3,12}$/i,
   NUBAN:    /^\d{10}$/,
 };
 
@@ -101,7 +101,7 @@ export function checkPasswordStrength(password) {
     { re: /[A-Z]/,           hint: 'At least one uppercase letter'  },
     { re: /[a-z]/,           hint: 'At least one lowercase letter'  },
     { re: /\d/,              hint: 'At least one number'            },
-    { re: /[@$!%*#?&^_\-]/, hint: 'At least one special character' },
+    { re: /[@$!%*#?&^_-]/, hint: 'At least one special character' },
   ];
 
   const failed = checks.filter(({ re }) => !re.test(password)).map(({ hint }) => hint);

@@ -13,7 +13,7 @@ export default function ProviderInfoCard({ property, onMessage }) {
   const {
     providerId, providerName, providerRole, providerAvatar,
     providerRating, providerReviews, providerVerified, providerTier,
-    providerPhone,
+    providerPhone: _providerPhone,
   } = property;
 
   const initial = providerName?.charAt(0) || 'A';

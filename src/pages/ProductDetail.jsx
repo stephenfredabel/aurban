@@ -132,8 +132,8 @@ export default function ProductDetail() {
       sessionStorage.setItem('aurban_cart', JSON.stringify(cart));
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);
-    } catch {}
-  }, [product, qty]);
+    } catch { /* ignore */ }
+  }, [product, qty, selectedPrefs]);
 
   /* ── Not found ──────────────────────────────────────────── */
   if (!product) {
@@ -154,7 +154,7 @@ export default function ProductDetail() {
     category, subcategory, images, categoryFields,
     minOrder, maxOrder, stockQuantity, bulkPricing,
     negotiable, inStock, views, orderCount,
-    providerName, providerRating, providerReviews,
+    providerName,
     reviews, postedAt,
   } = product;
 
@@ -162,7 +162,6 @@ export default function ProductDetail() {
   const condBadge = CONDITION_BADGE[condition] || CONDITION_BADGE.new;
   const refundBadge = getRefundBadge(category);
   const unitLabel = UNIT_LABEL[pricingUnit] || pricePeriod || '';
-  const lineTotal = price * qty;
   const saved = isWishlisted(id);
   const descTruncated = description?.length > 400 && !showAllDesc;
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Home, Wrench, ShoppingBag, ChevronLeft, ChevronRight,
@@ -418,7 +418,7 @@ export default function CreateListing() {
         if (img?.preview) URL.revokeObjectURL(img.preview);
       });
     };
-  }, []);
+  }, [form.images]);
 
   /* ── Step validation ────────────────────────────────────── */
   const validateStep = useCallback(() => {

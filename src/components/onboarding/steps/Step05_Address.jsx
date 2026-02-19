@@ -68,7 +68,7 @@ const PROOF_HINTS = {
 };
 
 export default function Step05_Address() {
-  const { t }                          = useTranslation();
+  const { t: _t }                       = useTranslation();
   const { updateStep, nextStep, data } = useOnboarding();
   const { code: countryCode }          = useCountry();
 

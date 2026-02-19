@@ -150,6 +150,13 @@ export default function QuoteRequestModal({ provider, onClose }) {
     setSubmitting(false);
   }, []);
 
+  // ── Minimum date (tomorrow) ────────────────────────────
+  const minDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  }, []);
+
   // ── Progress bar ──────────────────────────────────────────
   const Progress = () => (
     <div className="flex items-center gap-0 mb-6">
@@ -227,13 +234,6 @@ export default function QuoteRequestModal({ provider, onClose }) {
 
   // ── Field helpers ──────────────────────────────────────────
   const fieldError = (key) => errors[key] ? <p className="mt-1 text-xs text-red-500">{errors[key]}</p> : null;
-
-  // ── Minimum date (tomorrow) ────────────────────────────────
-  const minDate = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
-  }, []);
 
   return (
     <div className="flex flex-col">

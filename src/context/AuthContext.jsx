@@ -98,12 +98,9 @@ export function AuthProvider({ children }) {
   const sbListenerRef = useRef(null);
 
   // Navigation for post-login redirect
-  let navigate = null;
-  try {
-    navigate = useNavigate();
-  } catch {
-    // If not inside Router (e.g. tests), navigation won't work — that's OK
-  }
+  // useNavigate must be called unconditionally (Rules of Hooks).
+  // AuthProvider is always rendered inside <Router>, so this is safe.
+  const navigate = useNavigate();
 
   /* ── Helper: load profile from Supabase and set user ───── */
   const loadSupabaseProfile = useCallback(async (sbUser, isNewSignIn = false) => {
@@ -236,6 +233,7 @@ export function AuthProvider({ children }) {
       cancelled = true;
       sbListenerRef.current?.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `loading` is read but also set inside this effect; adding it would cause infinite re-subscription loops
   }, [loadSupabaseProfile]);
 
   /* ── Login ──────────────────────────────────────────────── */

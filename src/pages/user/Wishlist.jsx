@@ -98,18 +98,18 @@ function loadWishlist() {
       if (!localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, stored);
       return parsed;
     }
-  } catch {}
+  } catch { /* ignore */ }
   return MOCK_WISHLIST;
 }
 
 function saveWishlist(items) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 export default function Wishlist() {
-  const { user } = useAuth();
+  useAuth();
   const [items, setItems]       = useState(() => loadWishlist());
   const [filter, setFilter]     = useState('all');
   const [search, setSearch]     = useState('');

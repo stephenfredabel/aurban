@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Settings as SettingsIcon, User, Building2, Shield, Bell, Wallet, FileText,
   Plus, ChevronRight, ChevronDown, ChevronUp, Check, X,
@@ -276,11 +276,10 @@ export default function Settings() {
 
   /* ── Security ───────────────────────────────────────────── */
   const [twoFactor, setTwoFactor] = useState(stored.security?.twoFactor ?? false);
-  const [showPassword, setShowPassword] = useState(false);
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState({ type: '', text: '' });
-  const [loginSessions, setLoginSessions] = useState([
+  const [loginSessions] = useState([
     { device: 'Chrome on MacBook Pro', location: 'Lagos, Nigeria', lastActive: 'Now', current: true },
     { device: 'Aurban App on iPhone 15', location: 'Lagos, Nigeria', lastActive: '2 hours ago', current: false },
   ]);
@@ -340,7 +339,7 @@ export default function Settings() {
   const updatePrivacy = (key, value) => setPrivacy((p) => ({ ...p, [key]: value }));
 
   /* ── Save handler ───────────────────────────────────────── */
-  const [saving, setSaving] = useState(false);
+  const [, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const handleSave = async () => {
     setSaving(true);

@@ -72,7 +72,7 @@ function formatDate(ts) {
 
 export default function ProviderVerification() {
   const { t } = useTranslation('admin');
-  const { user } = useAuth();
+  useAuth();
 
   const [requests, setRequests]           = useState(MOCK_REQUESTS);
   const [search, setSearch]               = useState('');

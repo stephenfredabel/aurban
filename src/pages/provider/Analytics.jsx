@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Eye, Users, MessageCircle, TrendingUp, TrendingDown,
@@ -14,7 +14,6 @@ import {
   Building2, TrendingUp as TrendingUpIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { sanitize } from '../../utils/security.js';
 import { getProProviderStats } from '../../services/proProvider.service.js';
 
 /* ════════════════════════════════════════════════════════════
@@ -332,7 +331,7 @@ export default function Analytics() {
   const [expandedListing, setExpandedListing] = useState(null);
   const [sortBy, setSortBy] = useState('views');
   const [compTab, setCompTab] = useState('properties');
-  const [revenueData, setRevenueData] = useState(MOCK_REVENUE);
+  const [, setRevenueData] = useState(MOCK_REVENUE);
 
   /* ── Fetch real stats when available ──────────────────────── */
   useEffect(() => {

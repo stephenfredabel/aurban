@@ -75,6 +75,11 @@ function reducer(state, action) {
   }
 }
 
+// ── Status constants (stable references outside component) ──
+const ACTIVE_STATUSES = ['pending', 'confirmed', 'provider_confirmed', 'en_route', 'checked_in', 'in_progress'];
+const OBSERVATION_STATUSES = ['complete', 'observation'];
+const COMPLETED_STATUSES = ['paid', 'completed'];
+
 // ── Context ─────────────────────────────────────────────────
 const ProBookingContext = createContext(null);
 
@@ -194,10 +199,6 @@ export function ProBookingProvider({ children }) {
   }, []);
 
   // ── Derived data ──────────────────────────────────────────
-  const ACTIVE_STATUSES = ['pending', 'confirmed', 'provider_confirmed', 'en_route', 'checked_in', 'in_progress'];
-  const OBSERVATION_STATUSES = ['complete', 'observation'];
-  const COMPLETED_STATUSES = ['paid', 'completed'];
-
   const getActiveBookings = useMemo(() =>
     state.bookings.filter(b => ACTIVE_STATUSES.includes(b.status)),
   [state.bookings]);

@@ -75,7 +75,7 @@ export default function useProEscrow(booking) {
   }, [booking, price, tierCfg]);
 
   // Simulate milestone release (in production → API call)
-  const releaseMilestone = useCallback(async (milestoneId) => {
+  const releaseMilestone = useCallback(async (_milestoneId) => {
     setProcessing(true);
     setError(null);
     try {

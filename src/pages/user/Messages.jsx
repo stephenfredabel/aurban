@@ -240,6 +240,7 @@ export default function Messages() {
     if (activeConvoData) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only auto-scroll when message count changes, not on every activeConvoData reference change
   }, [activeConvoData?.messages?.length]);
 
   /* ── Filtered conversations ─────────────────────────────── */

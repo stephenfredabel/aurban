@@ -38,13 +38,13 @@ const STATUS_STYLES = {
 };
 
 export default function VendorModeration() {
-  const { t } = useTranslation('admin');
-  const { user } = useAuth();
+  useTranslation('admin');
+  useAuth();
 
   const [vendors, setVendors] = useState(MOCK_VENDORS);
   const [tab, setTab]         = useState('all');
   const [search, setSearch]   = useState('');
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => { document.title = 'Vendor Moderation — Admin'; }, []);
 

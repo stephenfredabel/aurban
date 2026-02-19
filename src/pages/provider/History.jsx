@@ -94,14 +94,14 @@ function loadHistory() {
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) return JSON.parse(stored);
-  } catch {}
+  } catch { /* ignore */ }
   return MOCK_HISTORY;
 }
 
 function saveHistory(items) {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, MAX_HISTORY)));
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 export default function History() {

@@ -104,8 +104,8 @@ function validateStep(step, form) {
 
 // ─────────────────────────────────────────────────────────────
 export default function ServiceListingForm({ onBack }) {
-  const { t }          = useTranslation();
-  const { user }       = useAuth();
+  const { t: _t }      = useTranslation();
+  const { user: _user } = useAuth();
   const { symbol }     = useCurrency();
   const navigate       = useNavigate();
 
@@ -723,4 +723,84 @@ export default function ServiceListingForm({ onBack }) {
           <div className="bg-white dark:bg-brand-charcoal-dark rounded-2xl shadow-card p-5 space-y-4">
             {form.photos[0] && (
               <div className="aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-white/10">
-                <img src={
+                <img src={form.photos[0].url} alt="Service cover" className="object-cover w-full h-full" />
+              </div>
+            )}
+            <div className="p-5 space-y-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">{selectedCat?.icon}</span>
+                  <span className="text-xs font-bold tracking-wider uppercase text-brand-gold">{selectedCat?.label}</span>
+                </div>
+                <h3 className="text-xl font-extrabold font-display text-brand-charcoal-dark dark:text-white">{form.title || '(No title)'}</h3>
+                {form.pricingMode !== 'quote' && (
+                  <p className="mt-2 text-2xl font-extrabold font-display text-brand-charcoal-dark dark:text-white">
+                    {symbol}{form.basePrice ? Number(form.basePrice).toLocaleString() : '0'}
+                    <span className="ml-1 text-sm font-normal text-gray-400">
+                      {SERVICE_PRICING_MODES.find(m => m.value === form.pricingMode)?.label}
+                    </span>
+                    {form.negotiable && <span className="ml-2 text-sm font-normal text-emerald-500">(Negotiable)</span>}
+                  </p>
+                )}
+                {form.pricingMode === 'quote' && (
+                  <p className="mt-2 text-lg font-bold text-brand-gold">Request a Quote</p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {form.experience && <span className="capitalize tag bg-brand-gray-soft dark:bg-white/10 text-brand-charcoal dark:text-white">{EXPERIENCE_LEVELS.find(e => e.value === form.experience)?.label}</span>}
+                {form.state && <span className="tag bg-brand-gray-soft dark:bg-white/10 text-brand-charcoal dark:text-white"><MapPin size={12} className="inline mr-1" />{form.state}</span>}
+                {form.logisticsEnabled && <span className="text-blue-600 tag bg-blue-50 dark:bg-blue-500/10">Mobile service</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Checklist */}
+          <div className="space-y-2">
+            {[
+              { label: 'Category',         ok: !!form.category && !!form.subcategory },
+              { label: 'Title',            ok: form.title.length >= 10               },
+              { label: 'Description',      ok: form.description.length >= 80         },
+              { label: 'Experience level',  ok: !!form.experience                    },
+              { label: 'Pricing',           ok: form.pricingMode === 'quote' || Number(form.basePrice) > 0 },
+              { label: 'Photos (min 3)',    ok: form.photos.length >= 3              },
+            ].map(({ label, ok }) => (
+              <div key={label} className="flex items-center gap-3 text-sm">
+                {ok ? <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                    : <AlertCircle  size={16} className="text-amber-400 shrink-0"  />}
+                <span className={ok ? 'text-brand-charcoal-dark dark:text-white' : 'text-amber-600 dark:text-amber-400'}>
+                  {label}{!ok && ' — incomplete'}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-4 bg-brand-gray-soft dark:bg-white/5 rounded-2xl">
+            <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+              By submitting you confirm this service listing is accurate and agree to our{' '}
+              <a href="/legal/provider-agreement" className="font-semibold text-brand-gold" target="_blank" rel="noopener noreferrer">Provider Agreement</a>.
+              Aurban takes 8% on all completed transactions.
+            </p>
+          </div>
+          {errors.submit && <p className="text-sm text-center text-red-500">{errors.submit}</p>}
+        </div>
+      )}
+
+      {/* Nav footer */}
+      <div className="fixed bottom-0 left-0 right-0 flex items-center gap-3 px-4 py-4 mt-8 bg-white border-t border-gray-100 md:relative md:bottom-auto dark:bg-brand-charcoal-dark dark:border-white/10 md:border-0"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <button type="button" onClick={goBack}
+          className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-2 border-gray-200 dark:border-white/20 text-sm font-semibold text-brand-charcoal dark:text-white hover:border-gray-300 transition-colors">
+          <ChevronLeft size={16} />Back
+        </button>
+        <button type="button" onClick={isPreview ? handleSubmit : goNext} disabled={submitting}
+          className="flex items-center justify-center flex-1 gap-2 py-3 text-sm font-bold text-white transition-colors rounded-xl bg-brand-gold hover:bg-brand-gold-dark disabled:opacity-60">
+          {submitting
+            ? <><span className="w-4 h-4 border-2 rounded-full border-white/40 border-t-white animate-spin" /> Submitting…</>
+            : isPreview ? <><CheckCircle2 size={16} />Submit Service</>
+            : <>Continue <ChevronRight size={16} /></>
+          }
+        </button>
+      </div>
+    </div>
+  );
+}

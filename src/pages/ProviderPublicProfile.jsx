@@ -22,7 +22,7 @@ export default function ProviderPublicProfile() {
   const { id }   = useParams();
   const navigate = useNavigate();
   const { properties, services, products } = useProperty();
-  const { format: formatPrice } = useCurrency();
+  useCurrency();
 
   // Find all listings by this provider
   const providerListings = properties.filter(p => p.providerId === id);

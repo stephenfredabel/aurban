@@ -25,7 +25,7 @@ const PERKS = {
 };
 
 export default function TierBadge({ tier, compact = false }) {
-  const { format }     = useCurrency();
+  const { format: _format } = useCurrency();
   const config         = TIER_CONFIG[tier.type]?.[tier.level] || TIER_CONFIG.individual[1];
   const Icon           = config.icon;
   const cap            = getTierCap(tier);

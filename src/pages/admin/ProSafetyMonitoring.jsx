@@ -109,7 +109,7 @@ function formatTime(ts) {
 export default function ProSafetyMonitoring() {
   const [activeTab, setActiveTab]     = useState('sos');
   const [sosAlerts, setSosAlerts]     = useState(MOCK_SOS_ALERTS);
-  const [bookings, setBookings]       = useState(MOCK_ACTIVE_BOOKINGS);
+  const [bookings]       = useState(MOCK_ACTIVE_BOOKINGS);
   const [incidents, setIncidents]     = useState(MOCK_INCIDENTS);
   const [search, setSearch]           = useState('');
 

@@ -101,7 +101,7 @@ export default function OTPVerification({
     } finally {
       setLoading(false);
     }
-  }, [method, email, phoneNumber, countryCode, channel, selectedCountry]);
+  }, [method, email, phoneNumber, channel, selectedCountry]);
 
   /* ── Verify OTP ───────────────────────────────────────────── */
   const handleVerify = useCallback(async () => {

@@ -42,7 +42,7 @@ export default function ProviderHeader() {
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle('dark', next);
-    try { sessionStorage.setItem('aurban_theme', next ? 'dark' : 'light'); } catch {}
+    try { sessionStorage.setItem('aurban_theme', next ? 'dark' : 'light'); } catch { /* ignore */ }
   };
 
   /* ── Close dropdown on outside click ────────────────────── */

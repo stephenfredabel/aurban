@@ -47,16 +47,16 @@ class AdminRateLimiter {
   isBlocked() { this.cleanup(); return this.attempts.length >= RATE_LIMIT.maxAttempts; }
   record() {
     this.attempts.push(Date.now());
-    try { sessionStorage.setItem('admin_login_attempts', JSON.stringify(this.attempts)); } catch {}
+    try { sessionStorage.setItem('admin_login_attempts', JSON.stringify(this.attempts)); } catch { /* ignore */ }
   }
   cleanup() {
     const cutoff = Date.now() - RATE_LIMIT.windowMs;
     this.attempts = this.attempts.filter(t => t > cutoff);
-    try { sessionStorage.setItem('admin_login_attempts', JSON.stringify(this.attempts)); } catch {}
+    try { sessionStorage.setItem('admin_login_attempts', JSON.stringify(this.attempts)); } catch { /* ignore */ }
   }
   reset() {
     this.attempts = [];
-    try { sessionStorage.removeItem('admin_login_attempts'); } catch {}
+    try { sessionStorage.removeItem('admin_login_attempts'); } catch { /* ignore */ }
   }
   getRemainingTime() {
     if (!this.attempts.length) return 0;

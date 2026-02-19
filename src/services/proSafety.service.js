@@ -223,8 +223,6 @@ export async function resolveSOSAlert(alertId, { resolution, notes } = {}) {
 export async function getMaskedPhone(bookingId, role) {
   if (isSupabaseConfigured()) {
     try {
-      const field = role === 'provider' ? 'provider_name' : 'client_phone';
-      const phoneField = role === 'provider' ? 'client_phone' : 'provider_name';
       // Fetch the phone we want to mask
       const { data, error } = await supabase
         .from('pro_bookings')

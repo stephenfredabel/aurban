@@ -147,7 +147,7 @@ export default function Reviews() {
   }));
   const repliedCount = reviews.filter((r) => r.replied).length;
 
-  const handleReply = (reviewId) => {
+  const handleReply = () => {
     if (!replyText.trim()) return;
     setReplyText('');
     setReplyingTo(null);

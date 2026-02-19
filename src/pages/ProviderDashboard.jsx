@@ -146,7 +146,7 @@ export default function ProviderDashboard() {
     : (TAB_MAP[baseSegment] || TAB_MAP[segment] || 'overview');
 
   const [listings, setListings]             = useState(MOCK_LISTINGS);
-  const [listingsLoading, setListingsLoading] = useState(false);
+  const [, setListingsLoading] = useState(false);
   const [listingFilter, setListingFilter]   = useState('all');
   const [deleteConfirm, setDeleteConfirm]   = useState(null);
   const [analyticsPeriod, setAnalyticsPeriod] = useState('30d');
@@ -174,6 +174,14 @@ export default function ProviderDashboard() {
       navigate('/listings/new', { replace: true });
     }
   }, [segment, navigate]);
+
+  /* ── Filtered listings (must be before any early returns) ──── */
+  const filteredListings = useMemo(() => {
+    if (listingFilter === 'all') return listings;
+    if (listingFilter === 'active') return listings.filter((l) => l.active);
+    if (listingFilter === 'paused') return listings.filter((l) => !l.active);
+    return listings;
+  }, [listings, listingFilter]);
 
   /* ── Admin page routing (lazy-loaded) ─────────────────────── */
   if (isAdmin) {
@@ -221,14 +229,6 @@ export default function ProviderDashboard() {
     setListings((prev) => prev.filter((l) => l.id !== id));
     setDeleteConfirm(null);
   };
-
-  /* ── Filtered listings ──────────────────────────────────── */
-  const filteredListings = useMemo(() => {
-    if (listingFilter === 'all') return listings;
-    if (listingFilter === 'active') return listings.filter((l) => l.active);
-    if (listingFilter === 'paused') return listings.filter((l) => !l.active);
-    return listings;
-  }, [listings, listingFilter]);
 
   /* ── Stats ──────────────────────────────────────────────── */
   const totalViews     = listings.reduce((s, l) => s + l.views, 0);

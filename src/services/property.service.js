@@ -150,7 +150,7 @@ export async function getSimilar(propertyId, limit = 4) {
   try {
     const data = await api.get(`/properties/${propertyId}/similar`, { params: { limit } });
     return { success: true, properties: data.properties || [] };
-  } catch (err) {
+  } catch {
     return { success: false, properties: [] };
   }
 }

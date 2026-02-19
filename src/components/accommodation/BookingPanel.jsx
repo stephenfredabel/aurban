@@ -27,10 +27,10 @@ export default function BookingPanel({
   onBookInspection,
   onRequestBooking,
   onMessage,
-  compact = false,
+  compact: _compact = false,
 }) {
   const { format: formatPrice } = useCurrency();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
 
   const mode = property?.accommodationType || 'default';
   const isShortlet = mode === 'shortlet';

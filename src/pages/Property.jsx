@@ -57,7 +57,7 @@ const CATEGORY_LABELS = {
 
 export default function PropertyDetail() {
   const { id }  = useParams();
-  const { t }   = useTranslation();
+  useTranslation();
   const navigate = useNavigate();
   const { toggleWishlist, isWishlisted, getPropertyById, filterProperties } = useProperty();
   const { formatWithUnit } = useCurrency();
@@ -334,7 +334,7 @@ export default function PropertyDetail() {
               <BookingPanel
                 property={property}
                 onBookInspection={() => setBookingOpen(true)}
-                onRequestBooking={(data) => setBookingOpen(true)}
+                onRequestBooking={() => setBookingOpen(true)}
                 onMessage={handleMessage}
               />
             </div>

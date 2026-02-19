@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Clock, CheckCircle2, Shield, TrendingUp,
   Search, FileText, Star, Eye, UserX, UserCheck,
@@ -492,7 +492,6 @@ export default function ProProviderVerification() {
             </div>
           ) : (
             filteredCompanies.map((c) => {
-              const docsOk = c.documents.filter((d) => d.uploaded).length;
               return (
                 <div key={c.id} className="p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-card sm:p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">

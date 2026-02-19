@@ -117,7 +117,7 @@ function formatAction(action) {
 }
 
 export default function AuditLogs() {
-  const { user } = useAuth();
+  useAuth();
 
   const [logs, setLogs]                   = useState(MOCK_LOGS);
   const [search, setSearch]               = useState('');

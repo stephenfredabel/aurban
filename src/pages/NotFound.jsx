@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Home, Search }   from 'lucide-react';
 
 export default function NotFoundPage() {
-  const { t } = useTranslation();
+  useTranslation();
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center bg-white">
       <div className="flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-brand-gold/10">

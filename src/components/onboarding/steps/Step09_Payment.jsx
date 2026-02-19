@@ -125,7 +125,7 @@ const PAYOUT_METHODS = {
 };
 
 export default function Step09_Payment() {
-  const { t }                          = useTranslation();
+  const { t: _t }                       = useTranslation();
   const { updateStep, nextStep, data } = useOnboarding();
   const { code: countryCode }          = useCountry();
 

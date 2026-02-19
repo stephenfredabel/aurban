@@ -200,8 +200,6 @@ export default function Reports() {
           {filtered.map((report) => {
             const priority = PRIORITY_STYLES[report.priority] || PRIORITY_STYLES.low;
             const typeStyle = TYPE_STYLES[report.reportType] || TYPE_STYLES.Other;
-            const isHigh = report.priority === 'high';
-
             return (
               <div
                 key={report.id}

@@ -50,7 +50,7 @@ export default function MilestoneTracker({
   totalPrice = 0,
   onRelease,
   readonly = false,
-  bookingStatus,
+  bookingStatus: _bookingStatus,
 }) {
   const { symbol } = useCurrency();
 

@@ -53,7 +53,7 @@ const MINS_REMAINING = [8, 7, 6, 5, 4, 3, 2, 2, 2, 1, 1];
 export default function OnboardingShell() {
   const { t }                             = useTranslation();
   const navigate                          = useNavigate();
-  const { currentStep, progress, prevStep, data, totalSteps } = useOnboarding();
+  const { currentStep, progress, prevStep, data: _data, totalSteps } = useOnboarding();
   const containerRef                      = useRef(null);
   const prevStepRef                       = useRef(currentStep);
 

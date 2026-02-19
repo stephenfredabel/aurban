@@ -163,7 +163,7 @@ export default function EscalationPanel({ isOpen, onClose }) {
     } finally {
       setLoading(false);
     }
-  }, [role, statusFilter]);
+  }, [role, statusFilter, showToast]);
 
   useEffect(() => {
     if (isOpen) fetchEscalations();

@@ -47,7 +47,7 @@ const PROVIDER_TYPES = [
 ];
 
 export default function Step01_ProviderType() {
-  const { t }                          = useTranslation();
+  const { t: _t }                       = useTranslation();
   const { updateStep, nextStep, data } = useOnboarding();
   const [selected, setSelected]        = useState(data.providerType || '');
   const [error, setError]              = useState('');

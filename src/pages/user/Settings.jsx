@@ -9,7 +9,6 @@ import {
   ExternalLink, Lock,
 } from 'lucide-react';
 import { useAuth }      from '../../context/AuthContext.jsx';
-import { useCurrency }  from '../../hooks/useCurrency.js';
 import { updateProfile, updatePassword as sbUpdatePassword } from '../../services/supabase-auth.service.js';
 import { isSupabaseConfigured } from '../../lib/supabase.js';
 import { format }      from 'date-fns';

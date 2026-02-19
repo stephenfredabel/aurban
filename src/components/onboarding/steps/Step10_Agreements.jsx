@@ -62,7 +62,7 @@ const calcCompleteness = (data) => {
 };
 
 export default function Step10_Agreements() {
-  const { t }                          = useTranslation();
+  const { t: _t }                       = useTranslation();
   const { data, tier, finishOnboarding } = useOnboarding();
   const { updateUser }                 = useAuth();
   const navigate                       = useNavigate();

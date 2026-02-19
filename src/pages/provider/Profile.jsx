@@ -41,8 +41,8 @@ const NIGERIAN_STATES = [
 export default function Profile() {
   const { user, updateUser } = useAuth();
   const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
+  const [, setSaving] = useState(false);
+  const [, setSaveError] = useState('');
   const [previewMode, setPreviewMode] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
 
@@ -79,14 +79,14 @@ export default function Profile() {
   });
 
   /* ── Portfolio ──────────────────────────────────────────── */
-  const [portfolio, setPortfolio] = useState([
+  const [portfolio] = useState([
     { id: 'p1', title: '3BR Renovation — Lekki Phase 1', description: 'Full renovation including kitchen, bathrooms, and living areas', category: 'renovation' },
     { id: 'p2', title: 'Luxury Shortlet Interior — VI', description: 'Designed and furnished a 2-bedroom serviced apartment', category: 'interior' },
     { id: 'p3', title: 'Plumbing Overhaul — Ikoyi Estate', description: 'Complete replumbing of a 5-unit apartment complex', category: 'plumbing' },
   ]);
 
   /* ── Certifications ─────────────────────────────────────── */
-  const [certifications, setCertifications] = useState([
+  const [certifications] = useState([
     { id: 'c1', name: 'NIESV Certified Valuer', issuer: 'Nigerian Institution of Estate Surveyors', year: '2020', verified: true },
     { id: 'c2', name: 'Licensed Real Estate Agent', issuer: 'Lagos State Real Estate Board', year: '2019', verified: true },
     { id: 'c3', name: 'Professional Plumber Certificate', issuer: 'National Technical Board', year: '2018', verified: false },

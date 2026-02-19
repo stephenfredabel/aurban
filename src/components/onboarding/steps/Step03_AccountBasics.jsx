@@ -33,9 +33,9 @@ export default function Step03_AccountBasics() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp,     setOtp]     = useState('');
   const [phoneVerified, setPhoneVerified] = useState(saved.phoneVerified || false);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
-  const set = (field) => (val) =>
+  const _set = (field) => (val) =>
     setForm((prev) => ({ ...prev, [field]: val }));
 
   const setField = (field) => (e) =>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Shield, MapPin, Loader2, CheckCircle2, XCircle, Navigation } from 'lucide-react';
 import useGeoLocation from '../../hooks/useGeoLocation.js';
 import { OTP_CONFIG, GPS_CONFIG } from '../../data/proConstants.js';
@@ -19,12 +19,7 @@ export default function OTPCheckIn({ booking, onVerify, disabled }) {
 
   const geo = useGeoLocation();
 
-  // Auto-check GPS on mount
-  useEffect(() => {
-    checkGPS();
-  }, []);
-
-  async function checkGPS() {
+  const checkGPS = useCallback(async () => {
     if (!booking?.location?.lat) {
       // No GPS coordinates set — skip GPS check (will be verified server-side)
       setGpsStatus('success');
@@ -36,7 +31,7 @@ export default function OTPCheckIn({ booking, onVerify, disabled }) {
     setGpsMessage('Checking your location...');
 
     try {
-      const coords = await geo.getCurrentPosition();
+      const _coords = await geo.getCurrentPosition();
       const { within, distance } = geo.isWithinRadius(booking.location.lat, booking.location.lng, GPS_CONFIG.radiusMeters);
 
       if (within) {
@@ -50,7 +45,12 @@ export default function OTPCheckIn({ booking, onVerify, disabled }) {
       setGpsStatus('error');
       setGpsMessage(typeof err === 'string' ? err : 'Could not verify location');
     }
-  }
+  }, [booking?.location?.lat, booking?.location?.lng, geo]);
+
+  // Auto-check GPS on mount
+  useEffect(() => {
+    checkGPS();
+  }, [checkGPS]);
 
   function handleDigitChange(index, value) {
     if (!/^\d?$/.test(value)) return;

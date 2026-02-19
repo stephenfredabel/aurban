@@ -7,9 +7,9 @@ import { getRefundBadge } from '../../data/categoryFields.js';
 ════════════════════════════════════════════════════════════ */
 
 export default function DeliveryInfoCard({ product }) {
-  if (!product) return null;
-
   const { format } = useCurrency();
+
+  if (!product) return null;
   const {
     deliveryOption, deliveryFee, deliveryTime,
     deliveryAreas, category, warranty,

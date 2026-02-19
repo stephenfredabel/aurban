@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ChevronLeft, Calendar, MapPin, MessageSquare, Wrench,
@@ -52,11 +51,11 @@ export default function ProviderProBookingDetail() {
     updateStatus(booking.id, 'en_route');
   }
 
-  async function handleOTPVerify(code, position) {
+  async function handleOTPVerify() {
     checkIn(booking.id);
   }
 
-  async function handleCheckOut(data) {
+  async function handleCheckOut() {
     checkOut(booking.id);
   }
 

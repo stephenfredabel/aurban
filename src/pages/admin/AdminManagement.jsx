@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import RequirePermission from '../../components/admin/RequirePermission.jsx';
 import {
   ADMIN_ROLES, ROLE_LABELS, ROLE_COLORS, ROLE_HIERARCHY,
-  MOCK_ADMIN_ACCOUNTS, normalizeRole,
+  MOCK_ADMIN_ACCOUNTS,
 } from '../../utils/rbac.js';
 import * as adminService from '../../services/admin.service.js';
 

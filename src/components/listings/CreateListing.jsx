@@ -48,7 +48,7 @@ const TOP_CATEGORIES = [
 ];
 
 export default function CreateListing() {
-  const { user }      = useAuth();
+  const { user: _user } = useAuth();
   const navigate      = useNavigate();
   const [type, setType]        = useState(null);    // 'property'|'service'|'marketplace'|'roommate'
   const [category, setCategory]= useState(null);    // property sub-category

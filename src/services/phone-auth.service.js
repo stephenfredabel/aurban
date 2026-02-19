@@ -12,7 +12,7 @@ import { requestPhoneOTP, verifyAndSignIn, formatNigerianPhone } from '../servic
  *   onError(message) — optional error callback
  *   defaultRole — 'user' | 'provider' (default: 'user')
  */
-export default function PhoneAuth({ onSuccess, onCancel, onError, defaultRole = 'user' }) {
+export default function PhoneAuth({ onSuccess, onCancel, onError }) {
   const [step, setStep] = useState('phone'); // 'phone' | 'otp' | 'verifying' | 'done'
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);

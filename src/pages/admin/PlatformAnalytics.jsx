@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  TrendingUp, TrendingDown, Users, Package, Calendar,
+  TrendingUp, TrendingDown, Users, User, Package, Calendar,
   Wallet, MapPin, BarChart2, Eye, Globe, ShoppingCart,
   Clock, DollarSign, Activity, UserPlus, Repeat,
   Smartphone, Monitor, ArrowUpRight, Download,
@@ -10,7 +10,6 @@ import {
   RefreshCw, Radio, Search, Award, Trophy,
   ArrowDownRight,
 } from 'lucide-react';
-import * as adminService from '../../services/admin.service.js';
 import * as competitiveService from '../../services/competitive.service.js';
 import RequirePermission from '../../components/admin/RequirePermission.jsx';
 

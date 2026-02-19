@@ -416,7 +416,7 @@ const TABS = [
 
 export default function UserDashboard() {
   const { user }      = useAuth();
-  const navigate      = useNavigate();
+  useNavigate();
   const [activeTab, setActiveTab] = useState('saved');
 
   const displayName = user?.name?.split(' ')?.[0] || 'there';

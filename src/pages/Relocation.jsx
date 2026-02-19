@@ -159,7 +159,7 @@ function RelocationFilterDrawer({ filters, onChange, onClose }) {
 // ─────────────────────────────────────────────────────────────
 
 export default function Relocation() {
-  const { symbol }              = useCurrency();
+  useCurrency();
   const { relocationProviders } = useProperty();
   const [params]                = useSearchParams();
 

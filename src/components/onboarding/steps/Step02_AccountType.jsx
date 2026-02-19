@@ -37,7 +37,7 @@ const ACCOUNT_TYPES = [
 ];
 
 export default function Step02_AccountType() {
-  const { t }                          = useTranslation();
+  const { t: _t }                       = useTranslation();
   const { updateStep, nextStep, data } = useOnboarding();
   const [selected, setSelected]        = useState(data.accountType || 'individual');
 

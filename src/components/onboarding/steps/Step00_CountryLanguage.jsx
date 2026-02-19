@@ -17,7 +17,7 @@ import {
 } from '../../../config/languages.js';
 
 export default function Step00_CountryLanguage() {
-  const { t }                              = useTranslation();
+  const { t: _t }                           = useTranslation();
   const { updateStep, nextStep, data }     = useOnboarding();
   const { countryCode, languageCode, changeCountry, changeLanguage } = useLocale();
 

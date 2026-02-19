@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Search, X, Menu, User, Heart, Bell, MessageSquare, ShoppingCart,
@@ -38,11 +38,10 @@ export default function Header() {
   const { searchQuery, setSearchQuery } = useProperty();
   const { totalUnread }                 = useMessaging();
   const navigate                        = useNavigate();
-  const location                        = useLocation();
 
   const { itemCount }                 = useCart();
   const [searchOpen,  setSearchOpen]  = useState(false);
-  const [menuOpen,    setMenuOpen]    = useState(false);
+  const [_menuOpen,   setMenuOpen]    = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [cartOpen,    setCartOpen]    = useState(false);
   const [inputValue,  setInputValue]  = useState(searchQuery || '');
@@ -62,7 +61,7 @@ export default function Header() {
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle('dark', next);
-    try { sessionStorage.setItem('aurban_theme', next ? 'dark' : 'light'); } catch {}
+    try { sessionStorage.setItem('aurban_theme', next ? 'dark' : 'light'); } catch { /* ignore */ }
   };
 
   /* ── Close dropdowns on outside click ───────────────────── */

@@ -22,7 +22,7 @@ const CONDITION_STYLES = {
 
 export default function VendorStore() {
   const { id } = useParams();
-  const { products, getProductsBySeller } = useProperty();
+  const { getProductsBySeller } = useProperty();
   const { symbol } = useCurrency();
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('all');

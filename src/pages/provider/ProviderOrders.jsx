@@ -24,7 +24,7 @@ const TABS = [
 
 export default function ProviderOrders() {
   const { user } = useAuth();
-  const { orders, getOrdersBySeller, updateStatus } = useOrder();
+  const { getOrdersBySeller, updateStatus } = useOrder();
   const { symbol } = useCurrency();
   const [tab, setTab] = useState('new');
   const [search, setSearch] = useState('');

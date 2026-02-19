@@ -86,7 +86,7 @@ function pctChange(curr, prev) {
 }
 
 export default function UserAnalytics() {
-  const { user } = useAuth();
+  useAuth();
   const [period, setPeriod] = useState('30d');
   const [activeSection, setActiveSection] = useState('activity');
   const [loading, setLoading] = useState(true);
@@ -412,7 +412,7 @@ export default function UserAnalytics() {
                     { label: 'Items Saved', value: activity.itemsSaved, pct: activity.propertiesViewed > 0 ? Math.round((activity.itemsSaved / activity.propertiesViewed) * 100) : 0 },
                     { label: 'Inquiries Sent', value: activity.inquiriesSent, pct: activity.propertiesViewed > 0 ? Math.round((activity.inquiriesSent / activity.propertiesViewed) * 100) : 0 },
                     { label: 'Orders / Bookings', value: activity.ordersPlaced, pct: activity.propertiesViewed > 0 ? Math.round((activity.ordersPlaced / activity.propertiesViewed) * 100) : 0 },
-                  ].map((step, i) => {
+                  ].map((step) => {
                     const width = Math.max(step.pct, 4);
                     return (
                       <div key={step.label}>

@@ -6,7 +6,7 @@ import { getLanguagesByRegion, getLanguage } from '../i18n/config.js';
  * Convenience hook for language-related operations
  */
 export function useLanguage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { languageCode, rtl, changeLanguage } = useLocale();
 
   return {

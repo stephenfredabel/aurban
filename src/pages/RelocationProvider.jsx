@@ -71,7 +71,7 @@ export default function RelocationProviderDetail() {
   const {
     name, avatar, coverImage, portfolioImages = [],
     verified, tier, rating, reviews = 0, completedMoves,
-    yearsActive, responseTime, serviceTypes = [],
+    responseTime, serviceTypes = [],
     serviceAreas = [], priceRange = {}, description, bio,
     highlights = [], insurance, gpsTracking, location,
   } = provider;

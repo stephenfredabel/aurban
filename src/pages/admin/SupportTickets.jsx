@@ -297,7 +297,7 @@ function SlaWarningBadge({ ticket }) {
 
 export default function SupportTickets() {
   const { t } = useTranslation('admin');
-  const { user } = useAuth();
+  useAuth();
 
   const [tickets, setTickets]               = useState(MOCK_TICKETS);
   const [search, setSearch]                 = useState('');
@@ -467,7 +467,7 @@ export default function SupportTickets() {
   };
 
   /* ── Route handler ───────────────────────────────────── */
-  const handleRoute = (ticket, target) => {
+  const handleRoute = (ticket) => {
     setActiveTicket(ticket);
     setRouteOpen(null);
     // Short delay so activeTicket is set before confirm modal opens
