@@ -40,19 +40,26 @@ export default function BottomNav() {
       {/* ── Become a Provider banner (non-providers, mobile) ── */}
       {!isProvider && !user && (
         <div className="fixed left-0 right-0 z-40 px-4 pb-2 pointer-events-none bottom-16 md:hidden">
-          <Link to="/provider/signup"
-            className="pointer-events-auto flex items-center justify-between px-5 py-3 rounded-2xl
-              bg-brand-charcoal-dark text-white shadow-lg border border-white/10
-              active:scale-[0.98] transition-transform">
-            <div className="flex items-center gap-3">
+          <div className="pointer-events-auto flex items-center justify-between px-4 py-3 rounded-2xl
+              bg-brand-charcoal-dark text-white shadow-lg border border-white/10">
+            <div className="flex items-center gap-3 min-w-0">
               <AurbanLogo size="xs" variant="white" />
-              <div>
-                <p className="text-sm font-bold leading-tight">Become a Provider</p>
+              <div className="min-w-0">
+                <p className="text-sm font-bold leading-tight truncate">Become a Provider</p>
                 <p className="text-[11px] text-white/50 font-body mt-0.5">List · Offer services · Sell</p>
               </div>
             </div>
-            <span className="ml-3 text-sm font-bold text-brand-gold shrink-0">Start →</span>
-          </Link>
+            <div className="flex items-center gap-2 ml-3 shrink-0">
+              <Link to="/provider/login"
+                className="px-3 py-1.5 text-[11px] font-semibold text-white bg-white/10 rounded-full active:scale-[0.95] transition-transform">
+                Log in
+              </Link>
+              <Link to="/provider/signup"
+                className="px-3 py-1.5 text-[11px] font-bold text-brand-charcoal-dark bg-brand-gold rounded-full active:scale-[0.95] transition-transform">
+                Sign up
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 

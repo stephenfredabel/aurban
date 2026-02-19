@@ -63,7 +63,7 @@ export default function Footer() {
   if (hide) return null;
 
   return (
-    <footer className="pb-20 mt-12 border-t border-gray-100 bg-gray-50 dark:bg-gray-900 dark:border-white/5 md:pb-0">
+    <footer className="hidden mt-12 border-t border-gray-100 md:block bg-gray-50 dark:bg-gray-900 dark:border-white/5">
 
       {/* ══════════════════════════════════════════════════════
            PROVIDER SECTION — Login / Signup for providers
